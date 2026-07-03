@@ -2,7 +2,7 @@ const Razorpay = require("razorpay");
 const crypto = require("crypto");
 
 const RazorpayPayment = require("../models/RazorpayPayment");
-const Application = require("../models/Application");
+const Application = require("../models/application");
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,

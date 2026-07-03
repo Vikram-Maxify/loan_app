@@ -1,16 +1,13 @@
 require("dotenv").config();
 
 const express = require("express");
-
 const cors = require("cors");
-
 const connectDB = require("./config/db");
-
 const cookieParser = require("cookie-parser");
-
+const path = require("path");
 
 const dns = require("dns");
-dns.setServers(['8.8.8.8', '1.1.1.1']);
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
 connectDB();
 
@@ -18,13 +15,17 @@ const app = express();
 
 app.use(cookieParser());
 
-
 app.use(
-    cors({
-        origin: "http://localhost:5173", // frontend URL
-        credentials: true,
-    })
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://ownpocket.live",
+      "https://www.ownpocket.live",
+    ],
+    credentials: true,
+  })
 );
+
 app.use(express.json());
 
 app.use("/api/auth", require("./routes/authRoutes"));
@@ -34,8 +35,17 @@ app.use("/api/loan", require("./routes/loanRoutes"));
 app.use("/api/razorpay", require("./routes/razorpayRoutes"));
 app.use("/api/application", require("./routes/applicationRoutes"));
 
-app.listen(process.env.PORT, () => {
+// React Build
+const clientPath = path.join(__dirname, "Client", "dist");
 
-    console.log(`Server running on ${process.env.PORT}`);
+app.use(express.static(clientPath));
 
+app.get(/^(?!\/api).*/, (req, res) => {
+  res.sendFile(path.join(clientPath, "index.html"));
+});
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on ${PORT}`);
 });

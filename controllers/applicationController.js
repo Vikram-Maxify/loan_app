@@ -17,9 +17,10 @@ exports.createApplication = async (req, res) => {
             forPurposeOfLoan,
             relativesReferenceContact,
             whatDoYouDo,
+            employmentDetails,
         } = req.body;
 
-        // Validation
+        // Basic Validation
         if (
             !fullName ||
             !mobileNumber ||
@@ -33,8 +34,75 @@ exports.createApplication = async (req, res) => {
         ) {
             return res.status(400).json({
                 success: false,
-                message: "All fields are required.",
+                message: "All required fields are mandatory.",
             });
+        }
+
+        // Employment Validation
+        switch (whatDoYouDo) {
+            case "Self Employed":
+                if (
+                    !employmentDetails?.selfEmployed?.businessType ||
+                    !employmentDetails?.selfEmployed?.businessName ||
+                    employmentDetails?.selfEmployed?.yearsInBusiness == null ||
+                    employmentDetails?.selfEmployed?.annualTurnover == null
+                ) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Please fill all Self Employed details.",
+                    });
+                }
+                break;
+
+            case "Employed (Private)":
+                if (
+                    !employmentDetails?.privateEmployee?.companyName ||
+                    !employmentDetails?.privateEmployee?.designation ||
+                    !employmentDetails?.privateEmployee?.department ||
+                    employmentDetails?.privateEmployee?.yearsOfExperience == null ||
+                    employmentDetails?.privateEmployee?.monthlySalary == null
+                ) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Please fill all Private Employee details.",
+                    });
+                }
+                break;
+
+            case "Government Employed":
+                if (
+                    !employmentDetails?.governmentEmployee?.organizationName ||
+                    !employmentDetails?.governmentEmployee?.designation ||
+                    !employmentDetails?.governmentEmployee?.department ||
+                    employmentDetails?.governmentEmployee?.yearsOfService == null ||
+                    !employmentDetails?.governmentEmployee?.payScale
+                ) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Please fill all Government Employee details.",
+                    });
+                }
+                break;
+
+            case "Not Employed":
+                if (
+                    !employmentDetails?.notEmployed?.currentStatus ||
+                    !employmentDetails?.notEmployed?.sourceOfIncome ||
+                    employmentDetails?.notEmployed?.monthlyIncome == null ||
+                    !employmentDetails?.notEmployed?.futureEmploymentPlans
+                ) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Please fill all Not Employed details.",
+                    });
+                }
+                break;
+
+            default:
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid employment type.",
+                });
         }
 
         const application = await Application.create({
@@ -48,6 +116,7 @@ exports.createApplication = async (req, res) => {
             forPurposeOfLoan,
             relativesReferenceContact,
             whatDoYouDo,
+            employmentDetails,
         });
 
         return res.status(201).json({
@@ -57,6 +126,7 @@ exports.createApplication = async (req, res) => {
         });
     } catch (error) {
         console.error(error);
+
         return res.status(500).json({
             success: false,
             message: "Something went wrong.",

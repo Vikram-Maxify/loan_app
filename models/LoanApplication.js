@@ -279,7 +279,6 @@ loanApplicationSchema.pre("save", function (next) {
       Math.floor(Math.random() * 999);
   }
 
-  next();
 });
 
 module.exports = mongoose.model(

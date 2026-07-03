@@ -1,10 +1,10 @@
 import React from 'react'
-import YourLoanLogin from '../Components/LoginPage'
+import OnPocketLogin from '../Components/LoginPage'
 
 const Homepage = () => {
   return (
     <div>
-        <YourLoanLogin />
+        <OnPocketLogin />
     </div>
   )
 }

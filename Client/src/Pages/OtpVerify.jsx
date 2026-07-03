@@ -52,7 +52,7 @@ function LoanIcon() {
     );
 }
 
-export default function YourLoanOtpVerify() {
+export default function OnPocketOtpVerify() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { loading, error: authError } = useSelector((state) => state.auth);
@@ -201,7 +201,7 @@ export default function YourLoanOtpVerify() {
                             <LoanIcon />
                             <div>
                                 <p className="text-[#0F1B3D] font-bold text-[19px] leading-none">
-                                    YourLoan
+                                    OnPocket
                                 </p>
                                 <p className="text-[#8A8F9E] text-[12px] mt-1 tracking-wide">
                                     Smart Loans For Business

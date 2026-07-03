@@ -27,7 +27,7 @@ const STEPS = [
     { id: "3", label: "Review & Submit" },
 ];
 
-export default function YourLoanReviewSubmit() {
+export default function OnPocketReviewSubmit() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { loading, error, application, formDraft, cibilData, bankDraft } = useSelector((state) => state.application);
@@ -114,18 +114,7 @@ export default function YourLoanReviewSubmit() {
 
     return (
         <div className="min-h-screen w-full bg-[#E7E4DA] flex items-center justify-center py-10 px-4">
-            <div className="w-[390px] shrink-0 bg-white rounded-[2.75rem] border-[6px] border-[#0F1B3D] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.35)] overflow-hidden relative">
-                {/* status bar */}
-                <div className="h-9 bg-white flex items-center justify-between px-7">
-                    <span className="text-[11px] font-mono tracking-wide text-[#0F1B3D]">
-                        9:41
-                    </span>
-                    <div className="flex items-center gap-1">
-                        <div className="w-3.5 h-2 rounded-[1px] border border-[#0F1B3D]/70" />
-                        <div className="w-3.5 h-2 rounded-[1px] border border-[#0F1B3D]/70" />
-                    </div>
-                </div>
-
+            <div className="w-[390px] shrink-0 bg-[#F5F6FA] rounded-[2rem] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
                 <div className="max-h-[900px] overflow-y-auto">
                     {/* header */}
                     <div className="flex items-center justify-between px-4 py-3.5 bg-white border-b border-[#EEF0F5]">
@@ -143,7 +132,7 @@ export default function YourLoanReviewSubmit() {
                             </div>
                             <div>
                                 <p className="text-[15px] font-bold text-[#0F1B3D] leading-none">
-                                    YourLoan
+                                    OnPocket
                                 </p>
                                 <p className="text-[10px] text-[#8A8F9E] mt-0.5">
                                     Smart Loans For Business
@@ -273,33 +262,7 @@ export default function YourLoanReviewSubmit() {
                         </div>
                     </div>
 
-                    {/* bank details summary */}
-                    <div className="mx-4 mt-4 bg-white border border-[#EEF0F5] rounded-2xl p-4">
-                        <div className="flex items-center justify-between mb-3.5">
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-lg bg-[#DCE6FB] flex items-center justify-center">
-                                    <CreditCard size={16} className="text-[#2A4BDE]" />
-                                </div>
-                                <p className="text-[15px] font-bold text-[#0F1B3D]">
-                                    Bank Details
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col gap-3">
-                            {bankRows.map((row) => (
-                                <div key={row.label} className="flex items-center gap-3">
-                                    <row.icon size={14} className="text-[#8A8F9E] shrink-0" />
-                                    <span className="text-[11.5px] text-[#8A8F9E] w-[108px] shrink-0">
-                                        {row.label}
-                                    </span>
-                                    <span className="text-[12.5px] font-semibold text-[#0F1B3D] text-right flex-1">
-                                        {row.value}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    
 
                     {/* terms checkbox */}
                     <div className="mx-4 mt-4">

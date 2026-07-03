@@ -110,7 +110,7 @@ function ClipboardIllustration() {
     );
 }
 
-export default function YourLoanLogin() {
+export default function OnPocketLogin() {
     const dispatch = useDispatch();
     const { loading, error } = useSelector((state) => state.auth);
     const [name, setName] = useState("");
@@ -191,7 +191,7 @@ export default function YourLoanLogin() {
                             <LoanIcon />
                             <div>
                                 <p className="text-[#0F1B3D] font-bold text-[19px] leading-none">
-                                    YourLoan
+                                    OnPocket
                                 </p>
                                 <p className="text-[#8A8F9E] text-[12px] mt-1 tracking-wide">
                                     Smart Loans For Business

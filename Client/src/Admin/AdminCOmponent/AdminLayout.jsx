@@ -1,31 +1,38 @@
+// AdminLayout.jsx
 import React, { useState } from 'react';
 import {
     Menu, X, LayoutDashboard, Users, Settings, LogOut,
     ChevronDown, Bell, Search, UserCircle
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 
 const AdminLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const location = useLocation();
 
-    // Dummy nav items
+    // Nav items with correct paths
     const navItems = [
-        { name: 'Dashboard', icon: LayoutDashboard, to: '#' },
-        { name: 'Users', icon: Users, to: '#' },
-        { name: 'Settings', icon: Settings, to: '#' },
+        { name: 'Dashboard', icon: LayoutDashboard, to: '/admin/dashboard' },
+        { name: 'Users', icon: Users, to: '/admin/users' },
+        { name: 'Settings', icon: Settings, to: '/admin/settings' },
     ];
+
+    // Check if a nav item is active
+    const isActive = (path) => {
+        return location.pathname === path;
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 flex">
             {/* ========== SIDEBAR ========== */}
             <aside
                 className={`
-          fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200
-          transform transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:translate-x-0 lg:static lg:inset-auto
-          flex flex-col
-        `}
+                    fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200
+                    transform transition-transform duration-300 ease-in-out
+                    ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+                    lg:translate-x-0 lg:static lg:inset-auto
+                    flex flex-col
+                `}
             >
                 {/* Sidebar header */}
                 <div className="h-16 flex items-center px-6 border-b border-gray-200">
@@ -38,8 +45,16 @@ const AdminLayout = () => {
                     {navItems.map((item) => (
                         <Link
                             key={item.name}
-                            href={item.href}
-                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                            to={item.to}
+                            className={`
+                                flex items-center gap-3 px-3 py-2.5 rounded-lg 
+                                transition-colors
+                                ${isActive(item.to) 
+                                    ? 'bg-indigo-50 text-indigo-700' 
+                                    : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-700'
+                                }
+                            `}
+                            onClick={() => setSidebarOpen(false)}
                         >
                             <item.icon className="w-5 h-5" />
                             <span className="font-medium">{item.name}</span>
@@ -99,36 +114,7 @@ const AdminLayout = () => {
 
                 {/* ========== PAGE CONTENT ========== */}
                 <main className="flex-1 p-4 lg:p-6">
-                    {/* Dashboard cards grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
-                        {['Total Users', 'Revenue', 'Orders', 'Visitors'].map((title, i) => (
-                            <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-                                <p className="text-sm text-gray-500 font-medium">{title}</p>
-                                <p className="text-2xl font-bold text-gray-800 mt-1">
-                                    {i === 0 ? '12,345' : i === 1 ? '$54,321' : i === 2 ? '789' : '10.2k'}
-                                </p>
-                                <div className="mt-3 text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full inline-block">
-                                    +{i + 2}% from last month
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Placeholder chart / table area */}
-                    <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 h-64 flex items-center justify-center text-gray-400">
-                            <span className="text-sm">📊 Chart placeholder</span>
-                        </div>
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 h-64 flex items-center justify-center text-gray-400">
-                            <span className="text-sm">📋 Recent activity</span>
-                        </div>
-                    </div>
-
-                    {/* Additional content row */}
-                    <div className="mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-                        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Welcome back, Admin</h3>
-                        <p className="text-gray-700 mt-1">This is your dashboard layout with sidebar and topbar.</p>
-                    </div>
+                    <Outlet />
                 </main>
             </div>
         </div>

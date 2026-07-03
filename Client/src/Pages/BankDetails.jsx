@@ -68,10 +68,6 @@ export default function YourLoanBankDetails() {
             setSubmitError("IFSC code should be 11 characters");
             return false;
         }
-        if (!uploaded) {
-            setSubmitError("Please upload a cancelled cheque or passbook");
-            return false;
-        }
         return true;
     };
 
@@ -295,58 +291,6 @@ export default function YourLoanBankDetails() {
                         </div>
                     </div>
 
-                    {/* cheque upload card */}
-                    <div className="mx-4 mt-4 bg-white border border-[#EEF0F5] rounded-2xl p-4">
-                        <div className="flex items-center gap-2.5 mb-1">
-                            <div className="w-8 h-8 rounded-lg bg-[#DCE6FB] flex items-center justify-center shrink-0">
-                                <FileImage size={16} className="text-[#2A4BDE]" />
-                            </div>
-                            <p className="text-[15px] font-bold text-[#0F1B3D]">
-                                Cancelled Cheque / Passbook
-                            </p>
-                        </div>
-                        <p className="text-[11px] text-[#8A8F9E] mb-3.5 ml-[42px]">
-                            Helps us verify your account faster
-                        </p>
-
-                        <button
-                            type="button"
-                            onClick={handleFileUpload}
-                            disabled={isSubmitting || uploaded}
-                            className={`w-full flex items-center justify-between rounded-xl border px-3.5 py-3 transition-colors ${
-                                uploaded
-                                    ? "border-[#1FA24C] bg-[#EAF6EC]"
-                                    : "border-dashed border-[#D6DCEA] bg-[#F8F9FB] hover:border-[#2A4BDE]"
-                            } ${(isSubmitting || uploaded) ? "cursor-default" : "cursor-pointer"}`}
-                        >
-                            <div className="flex items-center gap-3">
-                                <div
-                                    className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                                        uploaded ? "bg-[#1FA24C]" : "bg-white border border-[#E7E9F0]"
-                                    }`}
-                                >
-                                    {uploaded ? (
-                                        <Check size={16} className="text-white" />
-                                    ) : (
-                                        <Upload size={15} className="text-[#8A8F9E]" />
-                                    )}
-                                </div>
-                                <div className="text-left">
-                                    <p className="text-[12.5px] font-semibold text-[#0F1B3D]">
-                                        {uploaded ? "cheque_leaf.jpg" : "Upload document"}
-                                    </p>
-                                    <p className="text-[10.5px] text-[#8A8F9E] mt-0.5">
-                                        {uploaded ? "Uploaded successfully" : "JPG or PNG, up to 5MB"}
-                                    </p>
-                                </div>
-                            </div>
-                            {!uploaded && (
-                                <span className="text-[11.5px] font-semibold text-[#2A4BDE] shrink-0">
-                                    Browse
-                                </span>
-                            )}
-                        </button>
-                    </div>
 
                     {/* Error message */}
                     {submitError && (

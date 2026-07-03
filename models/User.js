@@ -9,6 +9,11 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
+    password: {
+      type: String,
+      select: false,
+    },
+
     fullName: {
       type: String,
       trim: true,
@@ -29,13 +34,9 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
 
-    otp: {
-      type: String,
-    },
+    otp: String,
 
-    otpExpire: {
-      type: Date,
-    },
+    otpExpire: Date,
 
     isVerified: {
       type: Boolean,
@@ -47,7 +48,6 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
 
-    // Role
     role: {
       type: String,
       enum: ["user", "admin"],

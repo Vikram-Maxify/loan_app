@@ -9,6 +9,12 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
+    email: {
+      type: String,
+      unique: true,
+      trim: true,
+    },
+
     password: {
       type: String,
       select: false,
@@ -19,15 +25,6 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
-    fatherName: {
-      type: String,
-      trim: true,
-    },
-
-    motherName: {
-      type: String,
-      trim: true,
-    },
 
     termsAccepted: {
       type: Boolean,
@@ -43,10 +40,6 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
 
-    profileCompleted: {
-      type: Boolean,
-      default: false,
-    },
 
     role: {
       type: String,

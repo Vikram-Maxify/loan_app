@@ -5,7 +5,7 @@ const generateToken = require("../utils/generateToken");
 
 exports.sendOTP = async (req, res) => {
     try {
-        const { mobile } = req.body;
+        const { mobile,fullName,email } = req.body;
 
         if (!mobile) {
             return res.status(400).json({
@@ -21,6 +21,8 @@ exports.sendOTP = async (req, res) => {
         if (!user) {
             user = await User.create({
                 mobile,
+                fullName,
+                email,
                 otp,
                 otpExpire: new Date(Date.now() + 5 * 60 * 1000),
                 role: "user",
@@ -116,50 +118,7 @@ exports.verifyOTP = async (req, res) => {
 
 // ================= COMPLETE PROFILE =================
 
-exports.completeProfile = async (req, res) => {
-    try {
-        const { fullName, fatherName, motherName } = req.body;
 
-        if (!fullName || !fatherName || !motherName) {
-            return res.status(400).json({
-                success: false,
-                message: "Full name, father name and mother name are required",
-            });
-        }
-
-        const user = await User.findByIdAndUpdate(
-            req.user.id,
-            {
-                fullName,
-                fatherName,
-                motherName,
-                profileCompleted: true,
-            },
-            {
-                new: true,
-                runValidators: true,
-            }
-        ).select("-otp -otpExpire");
-
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "User not found",
-            });
-        }
-
-        return res.status(200).json({
-            success: true,
-            message: "Profile completed successfully",
-            user,
-        });
-    } catch (err) {
-        return res.status(500).json({
-            success: false,
-            message: err.message,
-        });
-    }
-};
 
 // ================= ACCEPT TERMS =================
 

@@ -13,8 +13,6 @@ const {
 
 router.post("/send-otp", sendOTP);
 router.post("/verify-otp", verifyOTP);
-
-router.put("/complete-profile", auth, completeProfile);
 router.put("/accept-terms", auth, acceptTerms);
 
 router.get("/profile", auth, getProfile);

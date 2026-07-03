@@ -86,14 +86,16 @@ exports.verifyOTP = async (req, res) => {
 
         await user.save();
 
-        const token = generateToken(user._id);
+        const token = generateToken({
+            id: user._id,
+            role: user.role,
+        });
 
-        // Store JWT in HTTP Only Cookie
         res.cookie("token", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 Days
+            maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
         const userData = await User.findById(user._id).select("-otp -otpExpire");
@@ -101,7 +103,7 @@ exports.verifyOTP = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: "OTP verified successfully",
-            token, // Optional (remove if only cookie auth)
+            token,
             user: userData,
         });
     } catch (err) {

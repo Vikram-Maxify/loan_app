@@ -1,29 +1,36 @@
+const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const generateToken = require("../utils/generateToken");
 
-// ===============================
-// Admin Login
-// ===============================
 exports.adminLogin = async (req, res) => {
   try {
-    const { mobile } = req.body;
+    const { mobile, password } = req.body;
 
-    if (!mobile) {
+    if (!mobile || !password) {
       return res.status(400).json({
         success: false,
-        message: "Mobile number is required",
+        message: "Mobile and password are required",
       });
     }
 
     const admin = await User.findOne({
       mobile,
       role: "admin",
-    });
+    }).select("+password");
 
     if (!admin) {
       return res.status(401).json({
         success: false,
-        message: "Invalid admin credentials",
+        message: "Invalid mobile or password",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, admin.password);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid mobile or password",
       });
     }
 
@@ -31,6 +38,8 @@ exports.adminLogin = async (req, res) => {
       id: admin._id,
       role: admin.role,
     });
+
+    admin.password = undefined;
 
     res.status(200).json({
       success: true,

@@ -20,13 +20,18 @@ exports.createPayment = async (req, res) => {
         console.log("Request Body:", req.body);
         console.log("User ID:", req.user.id);
 
-        // Search by _id instead of applicationId
         const application = await Application.findOne({
-            _id: applicationId,  // Changed from applicationId to _id
+            applicationId: applicationId,
             user: req.user.id,
         });
 
         console.log("Application Found:", application);
+
+        const allApplications = await Application.find().select(
+            "_id applicationId user"
+        );
+
+        console.log("All Applications:", allApplications);
 
         if (!application) {
             return res.status(404).json({

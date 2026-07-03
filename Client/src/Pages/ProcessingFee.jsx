@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     ArrowLeft,
     ArrowRight,
@@ -11,10 +11,11 @@ import {
     CreditCard,
     Building2,
     QrCode,
+    Loader2,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { createPayment } from "../redux/slice/paymentSlice";
-import { createLoanApplication } from "../redux/slice/loanApplicationSlice";
+import { useNavigate } from "react-router-dom";
+import { createPayment, verifyPayment } from "../redux/slice/paymentSlice";
 
 const PAYMENT_METHODS = [
     { id: "upi", label: "UPI", icon: QrCode },
@@ -28,45 +29,174 @@ const BREAKDOWN = [
     { label: "GST (18%)", value: "₹ 59", emphasis: false },
 ];
 
+// Load Razorpay script
+const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+        document.body.appendChild(script);
+    });
+};
+
 export default function YourLoanProcessingFee() {
     const dispatch = useDispatch();
-    const { loading, error } = useSelector((state) => state.payment);
-    const { loading: loanLoading, error: loanError } = useSelector((state) => state.loanApplication);
+    const navigate = useNavigate();
+    const { loading, error, order, payment, paymentStatus } = useSelector((state) => state.payment);
     const [selectedMethod, setSelectedMethod] = useState("upi");
+    const [isRazorpayLoaded, setIsRazorpayLoaded] = useState(false);
+    const [razorpayError, setRazorpayError] = useState(null);
 
-const handlePayNow = async () => {
-    let loanApplication = JSON.parse(
-        localStorage.getItem("loanApplication") || "{}"
-    );
+    // Load Razorpay script on component mount
+    useEffect(() => {
+        loadRazorpayScript().then((loaded) => {
+            setIsRazorpayLoaded(loaded);
+            if (!loaded) {
+                setRazorpayError("Failed to load payment gateway. Please refresh and try again.");
+            }
+        });
+    }, []);
 
-    let applicationId = loanApplication._id;
+    // Handle payment response from Razorpay
+    const handleRazorpayResponse = async (response) => {
+        try {
+            // Verify payment with backend
+            const verifyResult = await dispatch(verifyPayment({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+            })).unwrap();
 
-    try {
-        if (!applicationId) {
-            const response = await dispatch(createLoanApplication()).unwrap();
+            if (verifyResult.success) {
+                // Payment successful
+                localStorage.setItem('paymentId', verifyResult.payment._id);
+                localStorage.setItem('paymentStatus', 'success');
+                navigate('/payment-success', {
+                    state: {
+                        payment: verifyResult.payment,
+                        orderId: response.razorpay_order_id,
+                        paymentId: response.razorpay_payment_id,
+                    }
+                });
+            }
+        } catch (err) {
+            console.error("Payment verification failed:", err);
+            setRazorpayError(err || "Payment verification failed. Please contact support.");
+        }
+    };
 
-            loanApplication = response.data;
-
-            applicationId = loanApplication._id;
-
-            localStorage.setItem(
-                "loanApplication",
-                JSON.stringify(loanApplication)
-            );
+    // Handle Razorpay payment
+    const openRazorpay = (orderData, paymentData) => {
+        if (!isRazorpayLoaded) {
+            setRazorpayError("Payment gateway is not loaded. Please try again.");
+            return;
         }
 
-        await dispatch(
-            createPayment({
-                applicationId,
-                amount: 259,
+        const options = {
+            key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+            amount: orderData.amount,
+            currency: orderData.currency,
+            name: 'YourLoan',
+            description: 'Loan Processing Fee',
+            order_id: orderData.id,
+            receipt: orderData.receipt,
+            prefill: {
+                name: '',
+                email: '',
+                contact: '',
+            },
+            notes: {
+                applicationId: paymentData.applicationId,
                 paymentMethod: selectedMethod,
-            })
-        ).unwrap();
+            },
+            theme: {
+                color: '#2A4BDE',
+            },
+            handler: handleRazorpayResponse,
+            modal: {
+                ondismiss: function() {
+                    // Payment cancelled by user
+                    setRazorpayError("Payment cancelled. Please try again.");
+                }
+            }
+        };
 
-    } catch (err) {
-        console.error(err);
+        try {
+            const razorpay = new window.Razorpay(options);
+            razorpay.open();
+        } catch (err) {
+            console.error("Razorpay initialization failed:", err);
+            setRazorpayError("Failed to initialize payment. Please try again.");
+        }
+    };
+
+    const handlePayNow = async () => {
+        try {
+            setRazorpayError(null);
+
+            // Get application from localStorage
+            const loanApplication = JSON.parse(
+                localStorage.getItem("loanApplication") || "{}"
+            );
+            
+            // Try to get applicationId from multiple sources
+            let applicationId = localStorage.getItem("applicationId");
+            
+            if (!applicationId && loanApplication._id) {
+                applicationId = loanApplication._id;
+            }
+            
+            if (!applicationId && loanApplication.applicationId) {
+                applicationId = loanApplication.applicationId;
+            }
+
+            if (!applicationId) {
+                setRazorpayError("Application ID not found. Please submit your application first.");
+                return;
+            }
+
+            console.log("Sending applicationId:", applicationId); // Debug log
+
+            // Create payment order
+            const result = await dispatch(createPayment({
+                applicationId: applicationId,
+                amount: 259,
+            })).unwrap();
+
+            if (result.success) {
+                // Store payment info in localStorage
+                localStorage.setItem('currentOrderId', result.order.id);
+                localStorage.setItem('paymentAmount', '259');
+                
+                // Open Razorpay checkout
+                openRazorpay(result.order, result.payment);
+            }
+        } catch (err) {
+            console.error("Payment creation failed:", err);
+            setRazorpayError(err || "Failed to initiate payment. Please try again.");
+        }
+    };
+
+    // Check if payment is already completed
+    useEffect(() => {
+        const paymentStatus = localStorage.getItem('paymentStatus');
+        if (paymentStatus === 'success') {
+            navigate('/payment-success');
+        }
+    }, [navigate]);
+
+    // Show loading state
+    if (loading) {
+        return (
+            <div className="min-h-screen w-full bg-[#E7E4DA] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-3">
+                    <Loader2 size={40} className="animate-spin text-[#2A4BDE]" />
+                    <p className="text-[#0F1B3D] font-medium">Creating payment...</p>
+                </div>
+            </div>
+        );
     }
-};
 
     return (
         <div className="min-h-screen w-full bg-[#E7E4DA] flex items-center justify-center py-10 px-4">
@@ -75,7 +205,13 @@ const handlePayNow = async () => {
                 <div className="max-h-[900px] overflow-y-auto">
                     {/* header */}
                     <div className="flex items-center justify-between px-4 py-3.5 bg-white border-b border-[#EEF0F5]">
-                        <button type="button" aria-label="Go back" className="text-[#0F1B3D] shrink-0">
+                        <button 
+                            type="button" 
+                            aria-label="Go back" 
+                            className="text-[#0F1B3D] shrink-0"
+                            onClick={() => navigate(-1)}
+                            disabled={loading}
+                        >
                             <ArrowLeft size={20} />
                         </button>
                         <div className="flex items-center gap-2 flex-1 justify-center">
@@ -175,11 +311,12 @@ const handlePayNow = async () => {
                                         key={method.id}
                                         type="button"
                                         onClick={() => setSelectedMethod(method.id)}
+                                        disabled={loading}
                                         className={`flex items-center justify-center gap-2.5 py-3 px-3 rounded-xl border-2 transition-all duration-200 ${
                                             isSelected
                                                 ? "border-[#2A4BDE] bg-[#EEF4FF]"
                                                 : "border-[#E7E9F0] bg-white hover:border-[#BCC8F0]"
-                                        }`}
+                                        } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
                                     >
                                         <Icon
                                             size={16}
@@ -208,24 +345,58 @@ const handlePayNow = async () => {
                         </p>
                     </div>
 
+                    {/* Error messages */}
+                    {(error || razorpayError) && (
+                        <div className="mx-4 mt-2 bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5">
+                            <p className="text-[12px] text-red-600 flex items-center gap-2">
+                                <span className="text-red-500">⚠</span>
+                                {error || razorpayError}
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Payment Status */}
+                    {paymentStatus && (
+                        <div className={`mx-4 mt-2 rounded-xl px-3.5 py-2.5 ${
+                            paymentStatus === 'success' 
+                                ? 'bg-green-50 border border-green-200 text-green-700'
+                                : paymentStatus === 'failed'
+                                ? 'bg-red-50 border border-red-200 text-red-700'
+                                : 'bg-yellow-50 border border-yellow-200 text-yellow-700'
+                        }`}>
+                            <p className="text-[12px] flex items-center gap-2">
+                                Status: {paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1)}
+                            </p>
+                        </div>
+                    )}
+
                     {/* pay now button */}
                     <div className="px-4 mt-5">
                         <button
                             type="button"
                             onClick={handlePayNow}
-                            disabled={loading || loanLoading}
-                            className="w-full h-12 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[14.5px] flex items-center justify-center gap-2 hover:bg-[#1A3BAE] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                            disabled={loading || !isRazorpayLoaded}
+                            className={`w-full h-12 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${
+                                loading || !isRazorpayLoaded
+                                    ? "opacity-70 cursor-not-allowed"
+                                    : "hover:bg-[#1A3BAE] active:scale-[0.99]"
+                            }`}
                         >
-                            {loading || loanLoading ? "Creating Payment..." : "Pay ₹ 259 Now"}
-                            <ArrowRight size={16} />
+                            {loading ? (
+                                <>
+                                    <Loader2 size={18} className="animate-spin" />
+                                    Creating Payment...
+                                </>
+                            ) : !isRazorpayLoaded ? (
+                                "Loading Payment Gateway..."
+                            ) : (
+                                <>
+                                    Pay ₹ 259 Now
+                                    <ArrowRight size={16} />
+                                </>
+                            )}
                         </button>
                     </div>
-
-                    {(error || loanError) && (
-                        <p className="text-[11px] text-red-600 text-center mt-3 px-4">
-                            {error || loanError}
-                        </p>
-                    )}
 
                     <p className="flex items-center justify-center gap-1.5 text-[11px] text-[#8A8F9E] py-4">
                         <Lock size={11} />

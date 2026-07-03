@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
     Menu,
     Star,
@@ -14,9 +14,10 @@ import {
     Headset,
     Briefcase,
     ArrowRight,
-    RotateCw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import BrandLogo from "../Components/BrandLogo";
+import {OwnPocketLogo} from "../Components/Header";
 
 const FEATURES_TOP = [
     { icon: Zap, label: ["Quick Approval", "in 24 Hours"] },
@@ -48,37 +49,38 @@ const FEATURES_GRID = [
     },
 ];
 
-export default function OnPocketHome() {
+export default function OwnPocketHome() {
 
     const navigate = useNavigate();
 
 const handleContinue = () => {
         navigate('/home');
 };
+
+useEffect(() => {
+    // Scroll to top on route change
+    window.scrollTo(0, 0);
+  }, []);
+
     return (
-        <div className="min-h-screen w-full bg-[#E7E4DA] flex items-center justify-center py-10 px-4">
-            <div className="w-[390px] shrink-0 bg-[#F5F6FA] rounded-[2rem] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
+        <div className=" w-full bg-white flex items-center justify-center">
+            <div className="max-w-[480px] w-full shrink-0 bg-[#F5F6FA] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
             
-                <div className="max-h-[900px] overflow-y-auto">
+                <div className="  overflow-y-auto">
                     {/* header */}
-                    <div className="flex items-center justify-between px-5 py-4 bg-white border-b border-[#EEF0F5]">
-                        <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-full bg-[#2A4BDE] flex items-center justify-center shrink-0">
-                                <RotateCw size={17} className="text-white" strokeWidth={2.25} />
-                            </div>
-                            <div>
-                                <p className="text-[17px] font-bold text-[#0F1B3D] leading-none">
-                                    OnPocket
-                                </p>
-                                <p className="text-[11px] text-[#8A8F9E] mt-1">
-                                    Smart Loans For Business
-                                </p>
-                            </div>
-                        </div>
-                        <button type="button" aria-label="Open menu">
-                            <Menu size={22} className="text-[#2A4BDE]" strokeWidth={2.25} />
-                        </button>
-                    </div>
+                   <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100">
+    <div className="flex items-center gap-2">
+        <OwnPocketLogo />
+        <h1 className="text-xl font-bold text-gray-800">OwnPocket</h1>
+    </div>
+    <button 
+        type="button" 
+        aria-label="Open menu"
+        className="p-2 rounded-lg hover:bg-gray-50 transition-colors"
+    >
+        <Menu size={22} className="text-[#2A4BDE]" strokeWidth={2.25} />
+    </button>
+</div>
 
                     {/* hero */}
                     <div className="bg-[#EEF1FA] px-5 pt-6 pb-8">

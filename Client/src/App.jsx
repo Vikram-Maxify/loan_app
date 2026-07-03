@@ -1,19 +1,33 @@
 import './App.css'
 import Homepage from './Pages/Homepage'
-import { Route, Routes } from 'react-router-dom'
-import OnPocketOtpVerify from './Pages/OtpVerify'
-import OnPocketHome from './Pages/LoanHome'
-import OnPocketApplicationForm from './Pages/ApplicationForm'
-import OnPocketCibilCheck from './Pages/CibilCheck'
-import OnPocketApproved from './Pages/ApprovedPage'
-import OnPocketReviewSubmit from './Pages/LoanReview'
-import OnPocketBankDetails from './Pages/BankDetails'
-import OnPocketProcessingFee from './Pages/ProcessingFee'
+import { Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, useRef } from 'react'
+import OwnPocketOtpVerify from './Pages/OtpVerify'
+import OwnPocketHome from './Pages/LoanHome'
+import OwnPocketApplicationForm from './Pages/ApplicationForm'
+import OwnPocketCibilCheck from './Pages/CibilCheck'
+import OwnPocketApproved from './Pages/ApprovedPage'
+import OwnPocketReviewSubmit from './Pages/LoanReview'
+import OwnPocketBankDetails from './Pages/BankDetails'
+import OwnPocketProcessingFee from './Pages/ProcessingFee'
 import AdminLayout from './Admin/AdminCOmponent/AdminLayout'
 import UsersPage from './Admin/AdminPage/UserPage'
 import PaymentCheckout from './Pages/PaymentPage'
 
 function App() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const normalizedOnLoad = useRef(false)
+
+  useEffect(() => {
+    if (!normalizedOnLoad.current) {
+      normalizedOnLoad.current = true
+      if (location.pathname !== '/') {
+        navigate('/', { replace: true })
+      }
+    }
+  }, [location.pathname, navigate])
+
   return (
     <>
       
@@ -27,14 +41,14 @@ function App() {
 
         
         <Route path='/home' element={<Homepage />} />
-        <Route path='/verify-otp' element={<OnPocketOtpVerify />} />
-        <Route path='/' element={<OnPocketHome />} />
-        <Route path='/apply-form' element={<OnPocketApplicationForm />} />
-        <Route path='/cibilcheck' element={<OnPocketCibilCheck />} />
-        <Route path='/Loanreview' element={<OnPocketReviewSubmit />} />
-        <Route path='/approvedpage' element={<OnPocketApproved />} />
-        <Route path='/bank-detail' element={<OnPocketBankDetails />} />
-        <Route path='/processing-fee' element={<OnPocketProcessingFee />} />
+        <Route path='/verify-otp' element={<OwnPocketOtpVerify />} />
+        <Route path='/' element={<OwnPocketHome />} />
+        <Route path='/apply-form' element={<OwnPocketApplicationForm />} />
+        <Route path='/cibilcheck' element={<OwnPocketCibilCheck />} />
+        <Route path='/Loanreview' element={<OwnPocketReviewSubmit />} />
+        <Route path='/approvedpage' element={<OwnPocketApproved />} />
+        <Route path='/bank-detail' element={<OwnPocketBankDetails />} />
+        <Route path='/processing-fee' element={<OwnPocketProcessingFee />} />
         <Route path='/processing-payment' element={<PaymentCheckout />} />
       </Routes>
     </>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
     ArrowLeft,
     ArrowRight,
@@ -19,6 +19,7 @@ import {
     validateName,
     validatePhone,
 } from "../utils/validation";
+import OwnPocketHeader from "./Header";
 
 const STEPS = [
     { id: "1", label: "Enter Details" },
@@ -26,40 +27,14 @@ const STEPS = [
     { id: "3", label: "Get Started" },
 ];
 
-function LoanIcon() {
-    return (
-        <svg viewBox="0 0 40 40" className="w-9 h-9">
-            <circle cx="20" cy="20" r="20" fill="#2F6BFF" />
-            <path
-                d="M12 14a9 9 0 0 1 15.5-4.2"
-                stroke="#FFFFFF"
-                strokeWidth="2"
-                fill="none"
-                strokeLinecap="round"
-            />
-            <path d="M27 6.5 L28.5 11 L24 10.2 Z" fill="#FFFFFF" />
-            <path
-                d="M28 26a9 9 0 0 1-15.5 4.2"
-                stroke="#FFFFFF"
-                strokeWidth="2"
-                fill="none"
-                strokeLinecap="round"
-            />
-            <path d="M13 33.5 L11.5 29 L16 29.8 Z" fill="#FFFFFF" />
-            <text
-                x="20"
-                y="25"
-                textAnchor="middle"
-                fontSize="14"
-                fontWeight="700"
-                fill="#FFFFFF"
-                fontFamily="sans-serif"
-            >
-                ₹
-            </text>
-        </svg>
-    );
-}
+// Improved email validation function
+const isValidEmail = (email) => {
+    if (!email || email.trim() === "") return true; // Empty is valid (optional)
+    
+    // More comprehensive email validation
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email.trim());
+};
 
 function ClipboardIllustration() {
     return (
@@ -110,95 +85,184 @@ function ClipboardIllustration() {
     );
 }
 
-export default function OnPocketLogin() {
+export default function OwnPocketLogin() {
     const dispatch = useDispatch();
     const { loading, error } = useSelector((state) => state.auth);
-    const [name, setName] = useState("");
-    const [phone, setPhone] = useState("");
-    const [email, setEmail] = useState("");
+    const pendingAuth = JSON.parse(localStorage.getItem("pendingAuth") || "{}");
+    
+    const [name, setName] = useState(pendingAuth.fullName || "");
+    const [phone, setPhone] = useState(() => {
+        const mobile = pendingAuth.mobile || "";
+        return mobile.replace(/\D/g, "");
+    });
+    const [email, setEmail] = useState(pendingAuth.email || "");
     const [focused, setFocused] = useState(null);
     const [formError, setFormError] = useState(null);
+    const [phoneError, setPhoneError] = useState(null);
+    const [nameError, setNameError] = useState(null);
+    const [emailError, setEmailError] = useState(null);
 
     const navigate = useNavigate();
 
-    const handleContinue = async () => {
-        if (isValid) {
-            try {
-                const mobile = formattedPhone.replace(/\D/g, "");
-                const validationError =
-                    validateName(name, "Full name") ||
-                    validatePhone(mobile) ||
-                    validateEmail(email);
+    // Save to localStorage
+    useEffect(() => {
+        localStorage.setItem(
+            "pendingAuth",
+            JSON.stringify({
+                ...pendingAuth,
+                mobile: phone.replace(/\D/g, ""),
+                fullName: name.trim(),
+                email: email.trim(),
+            })
+        );
+    }, [name, phone, email]);
 
-                if (validationError) {
-                    setFormError(validationError);
-                    return;
-                }
-
-                const result = await dispatch(
-                    sendOTP({
-                        mobile,
-                        fullName: name.trim(),
-                        email: email.trim(),
-                    })
-                ).unwrap();
-
-                localStorage.setItem(
-                    "pendingAuth",
-                    JSON.stringify({
-                        mobile,
-                        fullName: name.trim(),
-                        email: email.trim(),
-                        otp: result.otp,
-                    })
-                );
-
-                navigate("/verify-otp");
-            } catch {
-                // The slice owns the error message shown below the button.
-            }
+    // Validate name on blur
+    const handleNameBlur = () => {
+        if (name.trim().length > 0 && name.trim().length < 2) {
+            setNameError("Please enter your full name (minimum 2 characters)");
+        } else if (name.trim().length > 0 && !validateName(name, "Full name")) {
+            setNameError("Please enter a valid name (letters only)");
+        } else {
+            setNameError(null);
         }
     };
 
+    // Validate email on blur - FIXED
+    const handleEmailBlur = () => {
+        if (email.trim().length > 0 && !isValidEmail(email)) {
+            setEmailError("Please enter a valid email address (e.g., name@domain.com)");
+        } else {
+            setEmailError(null);
+        }
+    };
+
+    const handleContinue = async () => {
+        const mobile = phone.replace(/\D/g, "");
+        
+        // Validate phone number length
+        if (mobile.length !== 10) {
+            setPhoneError("Please enter a valid 10-digit mobile number");
+            return;
+        }
+
+        // Validate name
+        if (!name.trim() || name.trim().length < 2) {
+            setNameError("Please enter your full name (minimum 2 characters)");
+            return;
+        }
+
+        // Validate email - FIXED
+        if (email.trim() && !isValidEmail(email)) {
+            setEmailError("Please enter a valid email address (e.g., name@domain.com)");
+            return;
+        }
+
+        try {
+            const result = await dispatch(
+                sendOTP({
+                    mobile,
+                    fullName: name.trim(),
+                    email: email.trim(),
+                })
+            ).unwrap();
+
+            localStorage.setItem(
+                "pendingAuth",
+                JSON.stringify({
+                    mobile,
+                    fullName: name.trim(),
+                    email: email.trim(),
+                    otp: result.otp,
+                })
+            );
+
+            navigate("/verify-otp");
+        } catch (err) {
+            setFormError(err.message || "Failed to send OTP. Please try again.");
+        }
+    };
+
+    // Format phone for display only
     const formattedPhone = useMemo(() => {
         const digits = phone.replace(/\D/g, "").slice(0, 10);
-        if (digits.length <= 5) return digits;
-        return `${digits.slice(0, 5)} ${digits.slice(5)}`;
+        if (digits.length <= 4) return digits;
+        if (digits.length <= 8) return `${digits.slice(0, 4)} ${digits.slice(4)}`;
+        return `${digits.slice(0, 4)} ${digits.slice(4, 8)} ${digits.slice(8)}`;
     }, [phone]);
 
-    const isValid =
-        !validateName(name, "Full name") &&
-        formattedPhone.replace(/\D/g, "").length === 10 &&
-        !validatePhone(formattedPhone) &&
-        !validateEmail(email);
+    // Get raw digits from phone
+    const rawPhoneDigits = phone.replace(/\D/g, "");
+
+    // Get validation state
+    const getPhoneValidationState = () => {
+        const digits = phone.replace(/\D/g, "");
+        if (digits.length === 0) return 'empty';
+        if (digits.length === 10) return 'valid';
+        return 'invalid';
+    };
+
+    const phoneState = getPhoneValidationState();
+    
+    // FIXED: Check if all fields are valid with improved email validation
+    const isValid = useMemo(() => {
+        const isNameValid = name.trim().length >= 2;
+        const isPhoneValid = rawPhoneDigits.length === 10;
+        const isEmailValid = !email.trim() || isValidEmail(email);
+        
+        return isNameValid && isPhoneValid && isEmailValid;
+    }, [name, rawPhoneDigits, email]);
+
+    // Debug logging - remove in production
+    useEffect(() => {
+        console.log("Validation Status:", {
+            name: name.trim(),
+            nameLength: name.trim().length,
+            isNameValid: name.trim().length >= 2,
+            phone: rawPhoneDigits,
+            phoneLength: rawPhoneDigits.length,
+            isPhoneValid: rawPhoneDigits.length === 10,
+            email: email,
+            isEmailValid: !email.trim() || isValidEmail(email),
+            isValid: isValid,
+            emailValidationResult: email.trim() ? isValidEmail(email) : "empty"
+        });
+    }, [name, rawPhoneDigits, email, isValid]);
+
+    // Handle phone change - store only digits
+    const handlePhoneChange = (value) => {
+        // Remove all non-digits
+        const digits = value.replace(/\D/g, "").slice(0, 10);
+        setPhone(digits);
+        setFormError(null);
+        setPhoneError(null);
+    };
+
+    const handlePhoneBlur = () => {
+        const mobile = phone.replace(/\D/g, "");
+        if (mobile.length > 0 && mobile.length !== 10) {
+            setPhoneError("Please enter a valid 10-digit mobile number");
+        } else {
+            setPhoneError(null);
+        }
+    };
+
+    // Get field border color
+    const getFieldBorder = (field) => {
+        if (focused === field) return "border-[#2F6BFF]";
+        if (field === 'name' && nameError) return "border-red-500";
+        if (field === 'phone' && phoneError) return "border-red-500";
+        if (field === 'email' && emailError) return "border-red-500";
+        return "border-[#E3E5EC]";
+    };
 
     return (
-        <div className="min-h-screen w-full bg-[#EEF0F5] flex items-center justify-center py-10 px-4">
+        <div className="w-full bg-[#EEF0F5] flex items-center justify-center">
             {/* Phone frame */}
-            <div className="w-[390px] shrink-0 bg-[#F5F6FA] rounded-[2rem] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
-                <div className="max-h-[900px] overflow-y-auto">
+            <div className="max-w-[480px] w-full shrink-0 bg-[#F5F6FA] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
+                <div className="overflow-y-auto">
                     {/* Header */}
-                    <div className="bg-white px-6 pt-6 pb-5 border-b border-[#ECEDF3]">
-                        <button
-                            type="button"
-                            aria-label="Go back"
-                            className="text-[#0F1B3D] hover:opacity-70 transition-opacity mb-6"
-                        >
-                            <ArrowLeft size={20} strokeWidth={2.25} />
-                        </button>
-
-                        <div className="flex items-center gap-3">
-                            <LoanIcon />
-                            <div>
-                                <p className="text-[#0F1B3D] font-bold text-[19px] leading-none">
-                                    OnPocket
-                                </p>
-                                <p className="text-[#8A8F9E] text-[12px] mt-1 tracking-wide">
-                                    Smart Loans For Business
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                    <OwnPocketHeader />
 
                     {/* Step Tracker */}
                     <div className="bg-[#F0F2F8] px-6 py-6">
@@ -263,14 +327,10 @@ export default function OnPocketLogin() {
                         {/* Full Name */}
                         <div className="mb-4">
                             <label className="text-[12.5px] font-semibold text-[#0F1B3D] mb-1.5 block">
-                                Full Name
+                                Full Name <span className="text-red-500">*</span>
                             </label>
                             <div
-                                className={`flex items-center gap-2.5 rounded-xl border px-3.5 py-3 transition-colors ${
-                                    focused === "name"
-                                        ? "border-[#2F6BFF]"
-                                        : "border-[#E3E5EC]"
-                                }`}
+                                className={`flex items-center gap-2.5 rounded-xl border px-3.5 py-3 transition-colors ${getFieldBorder('name')}`}
                             >
                                 <User size={16} className="text-[#9AA0AE] shrink-0" />
                                 <input
@@ -280,25 +340,34 @@ export default function OnPocketLogin() {
                                     onChange={(e) => {
                                         setName(onlyLetters(e.target.value).slice(0, 60));
                                         setFormError(null);
+                                        setNameError(null);
                                     }}
                                     onFocus={() => setFocused("name")}
-                                    onBlur={() => setFocused(null)}
+                                    onBlur={() => {
+                                        setFocused(null);
+                                        handleNameBlur();
+                                    }}
                                     className="flex-1 min-w-0 text-[14px] text-[#0F1B3D] placeholder:text-[#B5B9C4] bg-transparent outline-none"
                                 />
+                                {name.trim().length >= 2 && (
+                                    <span className="text-emerald-500 text-xs">✓</span>
+                                )}
                             </div>
+                            {nameError && (
+                                <p className="text-[11.5px] text-red-500 mt-1.5 flex items-center gap-1">
+                                    <span className="inline-block w-1 h-1 rounded-full bg-red-500"></span>
+                                    {nameError}
+                                </p>
+                            )}
                         </div>
 
                         {/* Mobile Number */}
                         <div className="mb-4">
                             <label className="text-[12.5px] font-semibold text-[#0F1B3D] mb-1.5 block">
-                                Mobile Number
+                                Mobile Number <span className="text-red-500">*</span>
                             </label>
                             <div
-                                className={`flex items-center rounded-xl border transition-colors ${
-                                    focused === "phone"
-                                        ? "border-[#2F6BFF]"
-                                        : "border-[#E3E5EC]"
-                                }`}
+                                className={`flex items-center rounded-xl border transition-colors ${getFieldBorder('phone')}`}
                             >
                                 <div className="flex items-center gap-1 pl-3.5 pr-3 py-3 border-r border-[#E3E5EC] text-[#0F1B3D] text-[14px]">
                                     <Phone size={15} className="text-[#9AA0AE]" />
@@ -308,30 +377,52 @@ export default function OnPocketLogin() {
                                 <input
                                     type="tel"
                                     inputMode="numeric"
-                                    placeholder="Enter your mobile number"
+                                    placeholder="Enter 10-digit mobile number"
                                     value={formattedPhone}
-                                    onChange={(e) => {
-                                        setPhone(onlyDigits(e.target.value, 10));
-                                        setFormError(null);
-                                    }}
+                                    onChange={(e) => handlePhoneChange(e.target.value)}
                                     onFocus={() => setFocused("phone")}
-                                    onBlur={() => setFocused(null)}
+                                    onBlur={() => {
+                                        setFocused(null);
+                                        handlePhoneBlur();
+                                    }}
                                     className="flex-1 min-w-0 px-3.5 py-3 text-[14px] text-[#0F1B3D] placeholder:text-[#B5B9C4] bg-transparent outline-none"
                                 />
+                                {phoneState === 'valid' && (
+                                    <span className="text-emerald-500 text-xs mr-3">✓</span>
+                                )}
+                            </div>
+                            {phoneError && (
+                                <p className="text-[11.5px] text-red-500 mt-1.5 flex items-center gap-1">
+                                    <span className="inline-block w-1 h-1 rounded-full bg-red-500"></span>
+                                    {phoneError}
+                                </p>
+                            )}
+                            <div className="flex justify-between mt-1">
+                                <span className={`text-[10px] ${
+                                    phoneState === 'valid' 
+                                        ? "text-emerald-500" 
+                                        : phoneState === 'invalid'
+                                        ? "text-amber-500"
+                                        : "text-[#B5B9C4]"
+                                }`}>
+                                    {phone.replace(/\D/g, "").length}/10 digits
+                                </span>
+                                {phoneState === 'valid' && (
+                                    <span className="text-[10px] text-emerald-500">✓ Valid</span>
+                                )}
+                                {phoneState === 'invalid' && phone.replace(/\D/g, "").length > 0 && (
+                                    <span className="text-[10px] text-amber-500">Need 10 digits</span>
+                                )}
                             </div>
                         </div>
 
-                        {/* Email ID */}
+                        {/* Email ID - FIXED with better validation */}
                         <div className="mb-5">
                             <label className="text-[12.5px] font-semibold text-[#0F1B3D] mb-1.5 block">
-                                Email ID
+                                Email ID <span className="text-gray-400 text-xs">(optional)</span>
                             </label>
                             <div
-                                className={`flex items-center gap-2.5 rounded-xl border px-3.5 py-3 transition-colors ${
-                                    focused === "email"
-                                        ? "border-[#2F6BFF]"
-                                        : "border-[#E3E5EC]"
-                                }`}
+                                className={`flex items-center gap-2.5 rounded-xl border px-3.5 py-3 transition-colors ${getFieldBorder('email')}`}
                             >
                                 <Mail size={16} className="text-[#9AA0AE] shrink-0" />
                                 <input
@@ -339,14 +430,33 @@ export default function OnPocketLogin() {
                                     placeholder="Enter your email address"
                                     value={email}
                                     onChange={(e) => {
-                                        setEmail(e.target.value.trim());
+                                        setEmail(e.target.value);
                                         setFormError(null);
+                                        setEmailError(null);
                                     }}
                                     onFocus={() => setFocused("email")}
-                                    onBlur={() => setFocused(null)}
+                                    onBlur={() => {
+                                        setFocused(null);
+                                        handleEmailBlur();
+                                    }}
                                     className="flex-1 min-w-0 text-[14px] text-[#0F1B3D] placeholder:text-[#B5B9C4] bg-transparent outline-none"
                                 />
+                                {email.trim() && isValidEmail(email) && (
+                                    <span className="text-emerald-500 text-xs">✓</span>
+                                )}
                             </div>
+                            {emailError && (
+                                <p className="text-[11.5px] text-red-500 mt-1.5 flex items-center gap-1">
+                                    <span className="inline-block w-1 h-1 rounded-full bg-red-500"></span>
+                                    {emailError}
+                                </p>
+                            )}
+                            {email.trim() && !isValidEmail(email) && !emailError && (
+                                <p className="text-[11.5px] text-amber-500 mt-1.5 flex items-center gap-1">
+                                    <span className="inline-block w-1 h-1 rounded-full bg-amber-500"></span>
+                                    Please enter a valid email address
+                                </p>
+                            )}
                         </div>
 
                         {/* Continue Button */}
@@ -355,15 +465,37 @@ export default function OnPocketLogin() {
                             disabled={!isValid || loading}
                             onClick={handleContinue}
                             className={`w-full h-12 rounded-xl flex items-center justify-center gap-2 text-[15px] font-semibold transition-all ${
-                                isValid
-                                    ? "bg-[#2F6BFF] text-white hover:bg-[#2558D6] active:scale-[0.99]"
-                                    : "bg-[#2F6BFF] text-white opacity-90"
+                                isValid && !loading
+                                    ? "bg-[#2F6BFF] text-white hover:bg-[#2558D6] active:scale-[0.99] cursor-pointer"
+                                    : "bg-[#2F6BFF] text-white opacity-60 cursor-not-allowed"
                             }`}
                         >
-                            {loading ? "Sending OTP..." : "Continue"}
-                            <ArrowRight size={16} />
+                            {loading ? (
+                                <>
+                                    <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+                                    Sending OTP...
+                                </>
+                            ) : (
+                                <>
+                                    Continue
+                                    <ArrowRight size={16} />
+                                </>
+                            )}
                         </button>
 
+                        {/* Show why button is disabled */}
+                        {!isValid && !loading && (
+                            <div className="mt-3 text-center">
+                                <p className="text-[11px] text-amber-600">
+                                    {!name.trim() || name.trim().length < 2 ? "⚠️ Please enter your full name" : 
+                                     rawPhoneDigits.length !== 10 ? "⚠️ Please enter 10-digit mobile number" :
+                                     email.trim() && !isValidEmail(email) ? "⚠️ Please enter valid email address" : 
+                                     "⚠️ Please fill all required fields"}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Combined Error Display */}
                         {(formError || error) && (
                             <p className="text-[11.5px] text-red-600 mt-3 text-center">
                                 {formError || error}

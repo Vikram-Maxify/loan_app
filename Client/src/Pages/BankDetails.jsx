@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     ArrowLeft,
     ArrowRight,
@@ -23,10 +23,11 @@ import {
     validateIFSC,
     validateName,
 } from "../utils/validation";
+import OwnPocketHeader from "../Components/Header";
 
 const ACCOUNT_TYPES = ["Savings", "Current"];
 
-export default function OnPocketBankDetails() {
+export default function OwnPocketBankDetails() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { loading, error, bankDraft } = useSelector((state) => state.application);
@@ -35,7 +36,7 @@ export default function OnPocketBankDetails() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState(null);
     const [fieldErrors, setFieldErrors] = useState({});
-    
+
     // Form data state
     const [formData, setFormData] = useState({
         accountHolderName: "",
@@ -115,42 +116,20 @@ export default function OnPocketBankDetails() {
         }
     };
 
-    return (
-        <div className="min-h-screen w-full bg-[#E7E4DA] flex items-center justify-center py-10 px-4">
-            <div className="w-[390px] shrink-0 bg-[#F5F6FA] rounded-[2rem] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
-                                {/* status bar */}
+    useEffect(() => {
+        // Scroll to top on route change
+        window.scrollTo(0, 0);
+      }, []);
+    
 
-                <div className="max-h-[900px] overflow-y-auto">
+    return (
+        <div className="min-h-screen w-full bg-white flex items-center justify-center">
+            <div className="max-w-[480px] w-full shrink-0 bg-[#F5F6FA] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
+                {/* status bar */}
+
+                <div className="  overflow-y-auto">
                     {/* header */}
-                    <div className="flex items-center justify-between px-4 py-3.5 bg-white border-b border-[#EEF0F5]">
-                        <button 
-                            type="button" 
-                            aria-label="Go back" 
-                            className="text-[#0F1B3D] shrink-0"
-                            disabled={isSubmitting}
-                        >
-                            <ArrowLeft size={20} />
-                        </button>
-                        <div className="flex items-center gap-2 flex-1 justify-center">
-                            <div className="w-8 h-8 rounded-full bg-[#2A4BDE] flex items-center justify-center shrink-0">
-                                <RotateCw size={14} className="text-white" strokeWidth={2.25} />
-                            </div>
-                            <div>
-                                <p className="text-[15px] font-bold text-[#0F1B3D] leading-none">
-                                    OnPocket
-                                </p>
-                                <p className="text-[10px] text-[#8A8F9E] mt-0.5">
-                                    Smart Loans For Business
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-1 text-[#2A4BDE] shrink-0">
-                            <ShieldCheck size={14} />
-                            <span className="text-[10.5px] font-semibold whitespace-nowrap">
-                                100% Secure
-                            </span>
-                        </div>
-                    </div>
+                    <OwnPocketHeader />
 
                     {/* title block */}
                     <div className="px-5 pt-5 pb-1">
@@ -185,9 +164,9 @@ export default function OnPocketBankDetails() {
                             </p>
                         </div>
 
-                        <Field 
-                            label="Account Holder Name" 
-                            icon={<User size={15} />} 
+                        <Field
+                            label="Account Holder Name"
+                            icon={<User size={15} />}
                             placeholder="Enter name as per bank account"
                             value={formData.accountHolderName}
                             onChange={(val) => handleInputChange('accountHolderName', onlyLetters(val).slice(0, 60))}
@@ -195,10 +174,10 @@ export default function OnPocketBankDetails() {
                             error={fieldErrors.accountHolderName}
                         />
                         <div className="h-3.5" />
-                        
-                        <Field 
-                            label="Bank Name" 
-                            icon={<Landmark size={15} />} 
+
+                        <Field
+                            label="Bank Name"
+                            icon={<Landmark size={15} />}
                             placeholder="e.g. State Bank of India"
                             value={formData.bankName}
                             onChange={(val) => handleInputChange('bankName', onlyLetters(val).slice(0, 60))}
@@ -206,11 +185,11 @@ export default function OnPocketBankDetails() {
                             error={fieldErrors.bankName}
                         />
                         <div className="h-3.5" />
-                        
-                        <Field 
-                            label="Account Number" 
-                            icon={<Hash size={15} />} 
-                            placeholder="Enter account number" 
+
+                        <Field
+                            label="Account Number"
+                            icon={<Hash size={15} />}
+                            placeholder="Enter account number"
                             type="tel"
                             value={formData.accountNumber}
                             onChange={(val) => handleInputChange('accountNumber', onlyDigits(val, 18))}
@@ -220,11 +199,11 @@ export default function OnPocketBankDetails() {
                             error={fieldErrors.accountNumber}
                         />
                         <div className="h-3.5" />
-                        
-                        <Field 
-                            label="Confirm Account Number" 
-                            icon={<Hash size={15} />} 
-                            placeholder="Re-enter account number" 
+
+                        <Field
+                            label="Confirm Account Number"
+                            icon={<Hash size={15} />}
+                            placeholder="Re-enter account number"
                             type="tel"
                             value={formData.confirmAccountNumber}
                             onChange={(val) => handleInputChange('confirmAccountNumber', onlyDigits(val, 18))}
@@ -234,10 +213,10 @@ export default function OnPocketBankDetails() {
                             error={fieldErrors.confirmAccountNumber}
                         />
                         <div className="h-3.5" />
-                        
-                        <Field 
-                            label="IFSC Code" 
-                            icon={<KeyRound size={15} />} 
+
+                        <Field
+                            label="IFSC Code"
+                            icon={<KeyRound size={15} />}
                             placeholder="e.g. SBIN0001234"
                             value={formData.ifscCode}
                             onChange={(val) => handleInputChange('ifscCode', uppercaseAlnum(val, 11))}
@@ -259,11 +238,10 @@ export default function OnPocketBankDetails() {
                                         key={type}
                                         onClick={() => !isSubmitting && setAccountType(type)}
                                         disabled={isSubmitting}
-                                        className={`flex items-center justify-between rounded-lg border px-3.5 py-3 ${
-                                            selected
+                                        className={`flex items-center justify-between rounded-lg border px-3.5 py-3 ${selected
                                                 ? "border-[#2A4BDE] bg-[#EAF0FD]"
                                                 : "border-[#E7E9F0] bg-white"
-                                        } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
+                                            } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
                                     >
                                         <span
                                             className={`text-[13px] font-semibold ${selected ? "text-[#2A4BDE]" : "text-[#0F1B3D]"
@@ -306,11 +284,10 @@ export default function OnPocketBankDetails() {
                             type="button"
                             onClick={submitBankDetails}
                             disabled={isSubmitting || loading}
-                            className={`w-full h-12 rounded-xl font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${
-                                isSubmitting || loading
+                            className={`w-full h-12 rounded-xl font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${isSubmitting || loading
                                     ? "bg-[#2A4BDE] text-white opacity-70 cursor-not-allowed"
                                     : "bg-[#2A4BDE] text-white hover:bg-[#1A3BAE] active:scale-[0.99]"
-                            }`}
+                                }`}
                         >
                             {isSubmitting || loading ? (
                                 <>
@@ -342,9 +319,8 @@ function Field({ label, icon, placeholder, type = "text", value, onChange, disab
             <label className="text-[11.5px] font-semibold text-[#0F1B3D] mb-1.5 block">
                 {label}
             </label>
-            <div className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 ${
-                disabled ? "bg-[#F8F9FB]" : "bg-white"
-            } ${error ? "border-red-300" : "border-[#E7E9F0]"}`}>
+            <div className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 ${disabled ? "bg-[#F8F9FB]" : "bg-white"
+                } ${error ? "border-red-300" : "border-[#E7E9F0]"}`}>
                 <span className="text-[#8A8F9E] shrink-0">{icon}</span>
                 <input
                     type={type}
@@ -354,9 +330,8 @@ function Field({ label, icon, placeholder, type = "text", value, onChange, disab
                     disabled={disabled}
                     inputMode={inputMode}
                     maxLength={maxLength}
-                    className={`flex-1 min-w-0 text-[13px] text-[#0F1B3D] placeholder:text-[#B5B9C4] outline-none bg-transparent ${
-                        disabled ? "cursor-not-allowed" : ""
-                    }`}
+                    className={`flex-1 min-w-0 text-[13px] text-[#0F1B3D] placeholder:text-[#B5B9C4] outline-none bg-transparent ${disabled ? "cursor-not-allowed" : ""
+                        }`}
                 />
             </div>
             {error && <p className="text-[10.5px] text-red-600 mt-1">{error}</p>}

@@ -16,8 +16,10 @@ import {
     Calculator,
 } from "lucide-react";
 import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { setCibilDraft } from "../redux/slice/applicationSlice";
 import { validateAmount } from "../utils/validation";
+import OwnPocketHeader from "../Components/Header";
 
 const STEPS = [
     { id: "1", label: "Personal Details" },
@@ -55,8 +57,9 @@ function calcEmi(principal, annualRatePercent, months) {
     return (principal * r * factor) / (factor - 1);
 }
 
-export default function OnPocketCibilCheck() {
+export default function OwnPocketCibilCheck() {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const [phase, setPhase] = useState("checking"); // checking | result
     const [stageIndex, setStageIndex] = useState(0);
     const targetScore = useRef(600 + Math.floor(Math.random() * 101)); // 600-700
@@ -150,45 +153,25 @@ export default function OnPocketCibilCheck() {
         dispatch(setCibilDraft(cibilData));
         localStorage.setItem("cibilData", JSON.stringify(cibilData));
 
-        // Navigate to loan review page
-        window.location.href = "/Loanreview";
+        // Navigate to loan review page using React Router's navigate
+        setTimeout(() => {
+            navigate("/Loanreview");
+        }, 500);
     };
 
-    return (
-        <div className="min-h-screen w-full bg-[#E7E4DA] flex items-center justify-center py-10 px-4">
-            <div className="w-[390px] shrink-0 bg-[#F5F6FA] rounded-[2rem] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
+    useEffect(() => {
+    // Scroll to top on route change
+    window.scrollTo(0, 0);
+  }, []);
 
-                <div className="max-h-[900px] overflow-y-auto">
+
+    return (
+        <div className="min-h-screen w-full bg-white flex items-center justify-center">
+            <div className="max-w-[480px] w-full shrink-0 bg-[#F5F6FA] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
+
+                <div className="  overflow-y-auto">
                     {/* header */}
-                    <div className="flex items-center justify-between px-4 py-3.5 bg-white border-b border-[#EEF0F5]">
-                        <button
-                            type="button"
-                            aria-label="Go back"
-                            className="text-[#0F1B3D] shrink-0"
-                            disabled={isNavigating}
-                        >
-                            <ArrowLeft size={20} />
-                        </button>
-                        <div className="flex items-center gap-2 flex-1 justify-center">
-                            <div className="w-8 h-8 rounded-full bg-[#2A4BDE] flex items-center justify-center shrink-0">
-                                <RotateCw size={14} className="text-white" strokeWidth={2.25} />
-                            </div>
-                            <div>
-                                <p className="text-[15px] font-bold text-[#0F1B3D] leading-none">
-                                    OnPocket
-                                </p>
-                                <p className="text-[10px] text-[#8A8F9E] mt-0.5">
-                                    Smart Loans For Business
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-1 text-[#2A4BDE] shrink-0">
-                            <ShieldCheck size={14} />
-                            <span className="text-[10.5px] font-semibold whitespace-nowrap">
-                                100% Secure
-                            </span>
-                        </div>
-                    </div>
+                    <OwnPocketHeader />
 
                     {/* step tracker */}
                     <div className="px-6 py-5 border-b border-[#EEF0F5]">

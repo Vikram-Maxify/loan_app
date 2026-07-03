@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
     ArrowLeft,
     Menu,
@@ -43,14 +43,14 @@ const CONFETTI = [
     { top: "48px", left: "76px", size: 4, color: "#EC4899" },
 ];
 
-export default function OnPocketApproved() {
+export default function OwnPocketApproved() {
     const [aadhaarFile, setAadhaarFile] = useState(null);
     const [panFile, setPanFile] = useState(null);
     const [aadhaarPreview, setAadhaarPreview] = useState(null);
     const [panPreview, setPanPreview] = useState(null);
     const [uploadError, setUploadError] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    
+
     const aadhaarInputRef = useRef(null);
     const panInputRef = useRef(null);
 
@@ -69,7 +69,7 @@ export default function OnPocketApproved() {
         }
 
         setUploadError(null);
-        
+
         // Create preview
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -82,7 +82,7 @@ export default function OnPocketApproved() {
             }
         };
         reader.readAsDataURL(file);
-        
+
         return true;
     };
 
@@ -171,9 +171,15 @@ export default function OnPocketApproved() {
         }
     };
 
+    useEffect(() => {
+        // Scroll to top on route change
+        window.scrollTo(0, 0);
+      }, []);
+    
+
     return (
-        <div className="min-h-screen w-full bg-[#E7E4DA] flex items-center justify-center py-10 px-4">
-            <div className="w-[390px] shrink-0 bg-white rounded-[2.75rem] border-[6px] border-[#0F1B3D] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.35)] overflow-hidden relative">
+        <div className="min-h-screen w-full bg-white flex items-center justify-center py-10 px-4">
+            <div className="max-w-[480px] w-full shrink-0 bg-white rounded-[2.75rem] border-[6px] border-[#0F1B3D] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.35)] overflow-hidden relative">
                 {/* status bar */}
                 <div className="h-9 bg-white flex items-center justify-between px-7">
                     <span className="text-[11px] font-mono tracking-wide text-[#0F1B3D]">
@@ -185,10 +191,22 @@ export default function OnPocketApproved() {
                     </div>
                 </div>
 
-                <div className="max-h-[900px] overflow-y-auto">
+                <div className="  overflow-y-auto">
                     {/* header */}
                     <div className="flex items-center justify-between px-5 py-4 bg-white border-b border-[#EEF0F5]">
-                        <button type="button" aria-label="Go back" className="text-[#0F1B3D]">
+                        <button
+                            type="button"
+                            aria-label="Go back"
+                            className="text-[#0F1B3D] shrink-0"
+                            disabled={isSubmitting}
+                            onClick={() => {
+                                if (window.history.length > 1) {
+                                    navigate(-1);
+                                } else {
+                                    navigate("/");
+                                }
+                            }}
+                        >
                             <ArrowLeft size={20} />
                         </button>
                         <div className="flex items-center gap-2.5">
@@ -197,7 +215,7 @@ export default function OnPocketApproved() {
                             </div>
                             <div>
                                 <p className="text-[17px] font-bold text-[#0F1B3D] leading-none">
-                                    OnPocket
+                                    OwnPocket
                                 </p>
                                 <p className="text-[11px] text-[#8A8F9E] mt-1">
                                     Smart Loans For Business
@@ -328,9 +346,9 @@ export default function OnPocketApproved() {
                                     {aadhaarPreview ? (
                                         <div className="flex items-center gap-2">
                                             <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-[#EEF0F5]">
-                                                <img 
-                                                    src={aadhaarPreview} 
-                                                    alt="Aadhaar preview" 
+                                                <img
+                                                    src={aadhaarPreview}
+                                                    alt="Aadhaar preview"
                                                     className="w-full h-full object-cover"
                                                 />
                                             </div>
@@ -379,9 +397,9 @@ export default function OnPocketApproved() {
                                     {panPreview ? (
                                         <div className="flex items-center gap-2">
                                             <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-[#EEF0F5]">
-                                                <img 
-                                                    src={panPreview} 
-                                                    alt="PAN preview" 
+                                                <img
+                                                    src={panPreview}
+                                                    alt="PAN preview"
                                                     className="w-full h-full object-cover"
                                                 />
                                             </div>
@@ -484,11 +502,10 @@ export default function OnPocketApproved() {
                             type="button"
                             onClick={handleSubmit}
                             disabled={isSubmitting}
-                            className={`w-full h-12 rounded-xl font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${
-                                isSubmitting
+                            className={`w-full h-12 rounded-xl font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${isSubmitting
                                     ? "bg-[#2A4BDE] text-white opacity-70 cursor-not-allowed"
                                     : "bg-[#2A4BDE] text-white hover:bg-[#1A3BAE] active:scale-[0.99]"
-                            }`}
+                                }`}
                         >
                             {isSubmitting ? (
                                 <>

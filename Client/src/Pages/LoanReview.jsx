@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
     ArrowLeft,
     ArrowRight,
@@ -20,6 +20,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { acceptApplicationTerms } from "../redux/slice/applicationSlice";
+import OwnPocketHeader from "../Components/Header";
 
 const STEPS = [
     { id: "1", label: "Personal Details" },
@@ -27,7 +28,7 @@ const STEPS = [
     { id: "3", label: "Review & Submit" },
 ];
 
-export default function OnPocketReviewSubmit() {
+export default function OwnPocketReviewSubmit() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { loading, error, application, formDraft, cibilData, bankDraft } = useSelector((state) => state.application);
@@ -112,40 +113,18 @@ export default function OnPocketReviewSubmit() {
         }
     };
 
+    useEffect(() => {
+        // Scroll to top on route change
+        window.scrollTo(0, 0);
+      }, []);
+    
+
     return (
-        <div className="min-h-screen w-full bg-[#E7E4DA] flex items-center justify-center py-10 px-4">
-            <div className="w-[390px] shrink-0 bg-[#F5F6FA] rounded-[2rem] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
-                <div className="max-h-[900px] overflow-y-auto">
+        <div className=" w-full bg-white flex items-center justify-center">
+            <div className="max-w-[480px] w-full shrink-0 bg-[#F5F6FA] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
+                <div className="  overflow-y-auto">
                     {/* header */}
-                    <div className="flex items-center justify-between px-4 py-3.5 bg-white border-b border-[#EEF0F5]">
-                        <button 
-                            type="button" 
-                            aria-label="Go back" 
-                            className="text-[#0F1B3D] shrink-0"
-                            disabled={isSubmitting}
-                        >
-                            <ArrowLeft size={20} />
-                        </button>
-                        <div className="flex items-center gap-2 flex-1 justify-center">
-                            <div className="w-8 h-8 rounded-full bg-[#2A4BDE] flex items-center justify-center shrink-0">
-                                <RotateCw size={14} className="text-white" strokeWidth={2.25} />
-                            </div>
-                            <div>
-                                <p className="text-[15px] font-bold text-[#0F1B3D] leading-none">
-                                    OnPocket
-                                </p>
-                                <p className="text-[10px] text-[#8A8F9E] mt-0.5">
-                                    Smart Loans For Business
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-1 text-[#2A4BDE] shrink-0">
-                            <ShieldCheck size={14} />
-                            <span className="text-[10.5px] font-semibold whitespace-nowrap">
-                                100% Secure
-                            </span>
-                        </div>
-                    </div>
+                    <OwnPocketHeader />
 
                     {/* step tracker */}
                     <div className="px-6 py-5 border-b border-[#EEF0F5]">
@@ -158,8 +137,8 @@ export default function OnPocketReviewSubmit() {
                                         <div className="flex flex-col items-center gap-1.5 w-[76px]">
                                             <div
                                                 className={`w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold ${done || active
-                                                        ? "bg-[#2A4BDE] text-white"
-                                                        : "border border-[#D6DCEA] text-[#8A8F9E]"
+                                                    ? "bg-[#2A4BDE] text-white"
+                                                    : "border border-[#D6DCEA] text-[#8A8F9E]"
                                                     }`}
                                             >
                                                 {done ? <Check size={13} /> : step.id}
@@ -218,7 +197,13 @@ export default function OnPocketReviewSubmit() {
                                     <span className="text-[11.5px] text-[#8A8F9E] w-[108px] shrink-0">
                                         {row.label}
                                     </span>
-                                    <span className="text-[12.5px] font-semibold text-[#0F1B3D] text-right flex-1">
+                                    <span
+                                        className={`flex-1 min-w-0 text-[12.5px] font-semibold text-[#0F1B3D] text-right ${row.label === "Email ID"
+                                            ? "truncate"
+                                            : "whitespace-nowrap"
+                                            }`}
+                                        title={row.value}
+                                    >
                                         {row.value}
                                     </span>
                                 </div>
@@ -262,7 +247,7 @@ export default function OnPocketReviewSubmit() {
                         </div>
                     </div>
 
-                    
+
 
                     {/* terms checkbox */}
                     <div className="mx-4 mt-4">
@@ -270,14 +255,13 @@ export default function OnPocketReviewSubmit() {
                             type="button"
                             onClick={() => !isSubmitting && setAgreed((v) => !v)}
                             disabled={isSubmitting}
-                            className={`w-full flex items-start gap-3 bg-white border border-[#EEF0F5] rounded-2xl p-4 text-left ${
-                                isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-                            }`}
+                            className={`w-full flex items-start gap-3 bg-white border border-[#EEF0F5] rounded-2xl p-4 text-left ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+                                }`}
                         >
                             <div
                                 className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 mt-0.5 ${agreed
-                                        ? "bg-[#2A4BDE] border-[#2A4BDE]"
-                                        : "border-[#C7CCD6] bg-white"
+                                    ? "bg-[#2A4BDE] border-[#2A4BDE]"
+                                    : "border-[#C7CCD6] bg-white"
                                     }`}
                             >
                                 {agreed && <Check size={13} className="text-white" />}
@@ -313,11 +297,10 @@ export default function OnPocketReviewSubmit() {
                             type="button"
                             onClick={handleSubmit}
                             disabled={!agreed || isSubmitting || loading}
-                            className={`w-full h-12 rounded-xl font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${
-                                agreed && !isSubmitting && !loading
-                                    ? "bg-[#2A4BDE] text-white hover:bg-[#1A3BAE] active:scale-[0.99]"
-                                    : "bg-[#EDEBE3] text-[#A9ACB6] cursor-not-allowed"
-                            }`}
+                            className={`w-full h-12 rounded-xl font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${agreed && !isSubmitting && !loading
+                                ? "bg-[#2A4BDE] text-white hover:bg-[#1A3BAE] active:scale-[0.99]"
+                                : "bg-[#EDEBE3] text-[#A9ACB6] cursor-not-allowed"
+                                }`}
                         >
                             {isSubmitting || loading ? (
                                 <>

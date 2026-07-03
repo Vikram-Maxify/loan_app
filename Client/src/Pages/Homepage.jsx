@@ -1,10 +1,10 @@
 import React from 'react'
-import OnPocketLogin from '../Components/LoginPage'
+import OwnPocketLogin from '../Components/LoginPage'
 
 const Homepage = () => {
   return (
     <div>
-        <OnPocketLogin />
+        <OwnPocketLogin />
     </div>
   )
 }

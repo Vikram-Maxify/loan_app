@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { verifyOTP } from "../redux/slice/authSlice";
 import { onlyDigits, validateOTP } from "../utils/validation";
+import OwnPocketHeader from "../Components/Header";
 
 const STEPS = [
     { id: "1", label: "Enter Details" },
@@ -52,7 +53,7 @@ function LoanIcon() {
     );
 }
 
-export default function OnPocketOtpVerify() {
+export default function OwnPocketOtpVerify() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { loading, error: authError } = useSelector((state) => state.auth);
@@ -183,32 +184,18 @@ export default function OnPocketOtpVerify() {
         }, 1000);
     };
 
-    return (
-        <div className="min-h-screen w-full bg-[#EEF0F5] flex items-center justify-center py-10 px-4">
-            <div className="w-[390px] shrink-0 bg-[#F5F6FA] rounded-[2rem] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
-                <div className="max-h-[900px] overflow-y-auto">
-                    {/* Header */}
-                    <div className="bg-white px-6 pt-6 pb-5 border-b border-[#ECEDF3]">
-                        <button
-                            type="button"
-                            aria-label="Go back"
-                            className="text-[#0F1B3D] hover:opacity-70 transition-opacity mb-6"
-                        >
-                            <ArrowLeft size={20} strokeWidth={2.25} />
-                        </button>
+    useEffect(() => {
+    // Scroll to top on route change
+    window.scrollTo(0, 0);
+  }, []);
 
-                        <div className="flex items-center gap-3">
-                            <LoanIcon />
-                            <div>
-                                <p className="text-[#0F1B3D] font-bold text-[19px] leading-none">
-                                    OnPocket
-                                </p>
-                                <p className="text-[#8A8F9E] text-[12px] mt-1 tracking-wide">
-                                    Smart Loans For Business
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+
+    return (
+        <div className="w-full bg-[#EEF0F5] flex items-center justify-center">
+            <div className="max-w-[480px] w-full shrink-0 bg-[#F5F6FA] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
+                <div className="  overflow-y-auto">
+                    {/* Header */}
+                    <OwnPocketHeader />
 
                     {/* Step Tracker — step 1 done, step 2 active */}
                     <div className="bg-[#F0F2F8] px-6 py-6">
@@ -275,32 +262,32 @@ export default function OnPocketOtpVerify() {
                     </div>
 
                     {/* Card */}
-                    <div className="mx-6 bg-white rounded-2xl border border-[#ECEDF3] p-5 shadow-sm">
-                        <div className="flex items-center justify-center gap-3 py-2">
-                            {otp.map((digit, i) => (
-                                <input
-                                    key={i}
-                                    id={`otp-${i}`}
-                                    type="text"
-                                    inputMode="numeric"
-                                    maxLength={1}
-                                    value={digit}
-                                    onChange={(e) => handleOtpChange(i, e.target.value)}
-                                    onKeyDown={(e) => handleKeyDown(i, e)}
-                                    disabled={loading || status === "verifying" || status === "verified" || status === "redirecting"}
-                                    className={`w-11 h-14 rounded-xl border flex items-center justify-center text-[22px] font-semibold text-[#0F1B3D] transition-all text-center outline-none
-                                        ${status === "redirecting" ? "border-[#2F6BFF] bg-[#DCE8FF]" : ""}
-                                        ${digit
-                                            ? "border-[#2F6BFF] bg-[#F5F8FF]"
-                                            : "border-[#E3E5EC] bg-white"
-                                        }
-                                        ${status === "verified" ? "border-[#1F6F5C] bg-[#EAF3EE]" : ""}
-                                        ${status === "verifying" ? "opacity-50 cursor-not-allowed" : ""}
-                                        focus:border-[#2F6BFF] focus:ring-2 focus:ring-[#2F6BFF]/20`}
-                                    autoFocus={i === 0}
-                                />
-                            ))}
-                        </div>
+                    <div className="mx-4 sm:mx-6 bg-white rounded-2xl border border-[#ECEDF3] p-4 sm:p-5 shadow-sm">
+    <div className="flex items-center justify-center gap-2 sm:gap-3 py-2">
+        {otp.map((digit, i) => (
+            <input
+                key={i}
+                id={`otp-${i}`}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={digit}
+                onChange={(e) => handleOtpChange(i, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(i, e)}
+                disabled={loading || status === "verifying" || status === "verified" || status === "redirecting"}
+                className={`w-10 h-12 sm:w-11 sm:h-14 rounded-xl border flex items-center justify-center text-[18px] sm:text-[22px] font-semibold text-[#0F1B3D] transition-all text-center outline-none
+                    ${status === "redirecting" ? "border-[#2F6BFF] bg-[#DCE8FF]" : ""}
+                    ${digit
+                        ? "border-[#2F6BFF] bg-[#F5F8FF]"
+                        : "border-[#E3E5EC] bg-white"
+                    }
+                    ${status === "verified" ? "border-[#1F6F5C] bg-[#EAF3EE]" : ""}
+                    ${status === "verifying" ? "opacity-50 cursor-not-allowed" : ""}
+                    focus:border-[#2F6BFF] focus:ring-2 focus:ring-[#2F6BFF]/20`}
+                autoFocus={i === 0}
+            />
+        ))}
+    </div>
 
                         <div className="text-center mt-4 min-h-[20px]">
                             {status === "waiting" && (

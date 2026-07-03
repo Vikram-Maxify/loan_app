@@ -19,7 +19,7 @@ import {
     RotateCw,
     Loader2,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { createApplication, setApplicationFormDraft } from "../redux/slice/applicationSlice";
 import {
@@ -34,6 +34,7 @@ import {
     validatePAN,
     validatePhone,
 } from "../utils/validation";
+import OwnPocketHeader from "../Components/Header";
 
 const STEPS = [
     { id: "1", label: "Personal Details" },
@@ -103,7 +104,7 @@ const EMPLOYMENT = [
     },
 ];
 
-export default function OnPocketApplicationForm() {
+export default function OwnPocketApplicationForm() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { loading, error, formDraft } = useSelector((state) => state.application);
@@ -286,40 +287,19 @@ export default function OnPocketApplicationForm() {
         submitApplication();
     };
 
+    const location = useLocation();
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [location.pathname]);
+
+
     return (
-        <div className="min-h-screen w-full bg-[#E7E4DA] flex items-center justify-center py-10 px-4">
-            <div className="w-[390px] shrink-0 bg-[#F5F6FA] rounded-[2rem] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
-                <div className="max-h-[900px] overflow-y-auto">
+        <div className=" w-full bg-white flex items-center justify-center">
+            <div className="max-w-[480px] w-full shrink-0 bg-[#F5F6FA] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
+                <div className="  overflow-y-auto">
                     {/* header */}
-                    <div className="flex items-center justify-between px-4 py-3.5 bg-white border-b border-[#EEF0F5]">
-                        <button
-                            type="button"
-                            aria-label="Go back"
-                            className="text-[#0F1B3D] shrink-0"
-                            disabled={isSubmitting}
-                        >
-                            <ArrowLeft size={20} />
-                        </button>
-                        <div className="flex items-center gap-2 flex-1 justify-center">
-                            <div className="w-8 h-8 rounded-full bg-[#2A4BDE] flex items-center justify-center shrink-0">
-                                <RotateCw size={14} className="text-white" strokeWidth={2.25} />
-                            </div>
-                            <div>
-                                <p className="text-[15px] font-bold text-[#0F1B3D] leading-none">
-                                    OnPocket
-                                </p>
-                                <p className="text-[10px] text-[#8A8F9E] mt-0.5">
-                                    Smart Loans For Business
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-1 text-[#2A4BDE] shrink-0">
-                            <ShieldCheck size={14} />
-                            <span className="text-[10.5px] font-semibold whitespace-nowrap">
-                                100% Secure
-                            </span>
-                        </div>
-                    </div>
+                    <OwnPocketHeader />
 
                     {/* step tracker */}
                     <div className="px-6 py-5 border-b border-[#EEF0F5]">
@@ -458,8 +438,8 @@ export default function OnPocketApplicationForm() {
                                         onClick={() => setPurpose(p)}
                                         disabled={isSubmitting}
                                         className={`flex items-start justify-between gap-1 rounded-lg border p-2.5 text-left ${selected
-                                                ? "border-[#2A4BDE] bg-[#EAF0FD]"
-                                                : "border-[#E7E9F0] bg-white"
+                                            ? "border-[#2A4BDE] bg-[#EAF0FD]"
+                                            : "border-[#E7E9F0] bg-white"
                                             } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
                                     >
                                         <span
@@ -502,8 +482,8 @@ export default function OnPocketApplicationForm() {
                                         }}
                                         disabled={isSubmitting}
                                         className={`flex flex-col rounded-lg border p-2 transition-all ${selected
-                                                ? "border-[#2A4BDE] bg-[#EAF0FD] shadow-sm"
-                                                : "border-[#E7E9F0] bg-white hover:border-[#BCC8F0]"
+                                            ? "border-[#2A4BDE] bg-[#EAF0FD] shadow-sm"
+                                            : "border-[#E7E9F0] bg-white hover:border-[#BCC8F0]"
                                             } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
                                     >
                                         <div className="flex items-center justify-between mb-2">
@@ -661,8 +641,8 @@ export default function OnPocketApplicationForm() {
                             onClick={handleContinue}
                             disabled={isSubmitting || loading}
                             className={`w-full h-12 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${isSubmitting || loading
-                                    ? "opacity-70 cursor-not-allowed"
-                                    : "hover:bg-[#1A3BAE] active:scale-[0.99]"
+                                ? "opacity-70 cursor-not-allowed"
+                                : "hover:bg-[#1A3BAE] active:scale-[0.99]"
                                 }`}
                         >
                             {isSubmitting || loading ? (

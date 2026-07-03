@@ -31,6 +31,7 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/loan", require("./routes/loanRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/admin/loans", require("./routes/adminLoanRoutes"));
+app.use("/api/razorpay", require("./routes/razorpayRoutes"));
 
 app.listen(process.env.PORT, () => {
 

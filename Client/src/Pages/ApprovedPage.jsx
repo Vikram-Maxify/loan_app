@@ -43,7 +43,7 @@ const CONFETTI = [
     { top: "48px", left: "76px", size: 4, color: "#EC4899" },
 ];
 
-export default function YourLoanApproved() {
+export default function OnPocketApproved() {
     const [aadhaarFile, setAadhaarFile] = useState(null);
     const [panFile, setPanFile] = useState(null);
     const [aadhaarPreview, setAadhaarPreview] = useState(null);
@@ -197,7 +197,7 @@ export default function YourLoanApproved() {
                             </div>
                             <div>
                                 <p className="text-[17px] font-bold text-[#0F1B3D] leading-none">
-                                    YourLoan
+                                    OnPocket
                                 </p>
                                 <p className="text-[11px] text-[#8A8F9E] mt-1">
                                     Smart Loans For Business

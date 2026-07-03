@@ -48,7 +48,7 @@ const FEATURES_GRID = [
     },
 ];
 
-export default function YourLoanHome() {
+export default function OnPocketHome() {
 
     const navigate = useNavigate();
 
@@ -68,7 +68,7 @@ const handleContinue = () => {
                             </div>
                             <div>
                                 <p className="text-[17px] font-bold text-[#0F1B3D] leading-none">
-                                    YourLoan
+                                    OnPocket
                                 </p>
                                 <p className="text-[11px] text-[#8A8F9E] mt-1">
                                     Smart Loans For Business

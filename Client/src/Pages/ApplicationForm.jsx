@@ -103,7 +103,7 @@ const EMPLOYMENT = [
     },
 ];
 
-export default function YourLoanApplicationForm() {
+export default function OnPocketApplicationForm() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { loading, error, formDraft } = useSelector((state) => state.application);
@@ -306,7 +306,7 @@ export default function YourLoanApplicationForm() {
                             </div>
                             <div>
                                 <p className="text-[15px] font-bold text-[#0F1B3D] leading-none">
-                                    YourLoan
+                                    OnPocket
                                 </p>
                                 <p className="text-[10px] text-[#8A8F9E] mt-0.5">
                                     Smart Loans For Business

@@ -26,7 +26,7 @@ import {
 
 const ACCOUNT_TYPES = ["Savings", "Current"];
 
-export default function YourLoanBankDetails() {
+export default function OnPocketBankDetails() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { loading, error, bankDraft } = useSelector((state) => state.application);
@@ -117,17 +117,8 @@ export default function YourLoanBankDetails() {
 
     return (
         <div className="min-h-screen w-full bg-[#E7E4DA] flex items-center justify-center py-10 px-4">
-            <div className="w-[390px] shrink-0 bg-white rounded-[2.75rem] border-[6px] border-[#0F1B3D] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.35)] overflow-hidden relative">
-                {/* status bar */}
-                <div className="h-9 bg-white flex items-center justify-between px-7">
-                    <span className="text-[11px] font-mono tracking-wide text-[#0F1B3D]">
-                        9:41
-                    </span>
-                    <div className="flex items-center gap-1">
-                        <div className="w-3.5 h-2 rounded-[1px] border border-[#0F1B3D]/70" />
-                        <div className="w-3.5 h-2 rounded-[1px] border border-[#0F1B3D]/70" />
-                    </div>
-                </div>
+            <div className="w-[390px] shrink-0 bg-[#F5F6FA] rounded-[2rem] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
+                                {/* status bar */}
 
                 <div className="max-h-[900px] overflow-y-auto">
                     {/* header */}
@@ -146,7 +137,7 @@ export default function YourLoanBankDetails() {
                             </div>
                             <div>
                                 <p className="text-[15px] font-bold text-[#0F1B3D] leading-none">
-                                    YourLoan
+                                    OnPocket
                                 </p>
                                 <p className="text-[10px] text-[#8A8F9E] mt-0.5">
                                     Smart Loans For Business

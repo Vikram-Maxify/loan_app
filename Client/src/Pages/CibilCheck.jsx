@@ -55,7 +55,7 @@ function calcEmi(principal, annualRatePercent, months) {
     return (principal * r * factor) / (factor - 1);
 }
 
-export default function YourLoanCibilCheck() {
+export default function OnPocketCibilCheck() {
     const dispatch = useDispatch();
     const [phase, setPhase] = useState("checking"); // checking | result
     const [stageIndex, setStageIndex] = useState(0);
@@ -175,7 +175,7 @@ export default function YourLoanCibilCheck() {
                             </div>
                             <div>
                                 <p className="text-[15px] font-bold text-[#0F1B3D] leading-none">
-                                    YourLoan
+                                    OnPocket
                                 </p>
                                 <p className="text-[10px] text-[#8A8F9E] mt-0.5">
                                     Smart Loans For Business

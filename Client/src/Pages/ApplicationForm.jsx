@@ -114,18 +114,29 @@ export default function OwnPocketApplicationForm() {
     const [submitError, setSubmitError] = useState(null);
     const [fieldErrors, setFieldErrors] = useState({});
 
-    // Form data state - Controller ke hisaab se field names
-    const [formData, setFormData] = useState(formDraft?.formData || {
-        fullName: "",
-        mobileNumber: "",
-        email: "",
-        aadhaarNumber: "",
-        panNumber: "",
-        relativesReferenceContact: {
-            relationship: "",
-            relativesName: "",
-            mobileNumber: "",
-        },
+    // ✅ Get pending auth data from localStorage (from Login page)
+    const pendingAuth = JSON.parse(localStorage.getItem("pendingAuth") || "{}");
+
+    // Form data state - Initialize with data from localStorage
+    const [formData, setFormData] = useState(() => {
+        // Priority: formDraft > pendingAuth > empty
+        if (formDraft?.formData) {
+            return formDraft.formData;
+        }
+        
+        // ✅ Pre-fill from pendingAuth (from login page)
+        return {
+            fullName: pendingAuth.fullName || "",
+            mobileNumber: pendingAuth.mobile || "",
+            email: pendingAuth.email || "",
+            aadhaarNumber: "",
+            panNumber: "",
+            relativesReferenceContact: {
+                relationship: "",
+                relativesName: "",
+                mobileNumber: "",
+            },
+        };
     });
 
     const [employmentData, setEmploymentData] = useState(formDraft?.employmentData || {});
@@ -135,21 +146,25 @@ export default function OwnPocketApplicationForm() {
         if (formDraft) {
             setPurpose(formDraft.purpose || "Business Expansion");
             setEmployment(formDraft.employment || "self");
-            setFormData(formDraft.formData || {
-                fullName: "",
-                mobileNumber: "",
-                email: "",
-                aadhaarNumber: "",
-                panNumber: "",
-                relativesReferenceContact: {
-                    relationship: "",
-                    relativesName: "",
-                    mobileNumber: "",
-                },
-            });
+            setFormData(prev => ({
+                ...prev,
+                ...formDraft.formData,
+            }));
             setEmploymentData(formDraft.employmentData || {});
         }
     }, [formDraft]);
+
+    // ✅ Auto-fill from pendingAuth if available and formDraft doesn't exist
+    useEffect(() => {
+        if (!formDraft && pendingAuth.fullName) {
+            setFormData(prev => ({
+                ...prev,
+                fullName: pendingAuth.fullName || prev.fullName,
+                mobileNumber: pendingAuth.mobile || prev.mobileNumber,
+                email: pendingAuth.email || prev.email,
+            }));
+        }
+    }, [pendingAuth]);
 
     const handleInputChange = (field, value) => {
         setFormData(prev => {
@@ -293,11 +308,10 @@ export default function OwnPocketApplicationForm() {
         window.scrollTo(0, 0);
     }, [location.pathname]);
 
-
     return (
-        <div className=" w-full bg-white flex items-center justify-center">
+        <div className="w-full bg-white flex items-center justify-center">
             <div className="max-w-[480px] w-full shrink-0 bg-[#F5F6FA] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
-                <div className="  overflow-y-auto">
+                <div className="overflow-y-auto">
                     {/* header */}
                     <OwnPocketHeader />
 
@@ -330,6 +344,18 @@ export default function OwnPocketApplicationForm() {
                         </div>
                     </div>
 
+                    {/* ✅ Success Banner - Show pre-filled data */}
+                    {pendingAuth.fullName && (
+                        <div className="mx-4 mt-4 bg-emerald-50 border border-emerald-200 rounded-xl px-3.5 py-3 flex items-center gap-2.5">
+                            <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+                                <span className="text-white text-xs font-bold">✓</span>
+                            </div>
+                            <p className="text-[11.5px] text-emerald-700 leading-snug">
+                                Welcome back! Your details from login have been pre-filled.
+                            </p>
+                        </div>
+                    )}
+
                     {/* info banner */}
                     <div className="mx-4 mt-4 bg-[#EAF0FD] rounded-xl px-3.5 py-3 flex items-center gap-2.5">
                         <div className="w-5 h-5 rounded-full bg-[#2A4BDE] flex items-center justify-center shrink-0">
@@ -349,6 +375,12 @@ export default function OwnPocketApplicationForm() {
                             <p className="text-[15px] font-bold text-[#0F1B3D]">
                                 Personal Details
                             </p>
+                            {/* ✅ Show pre-filled badge */}
+                            {pendingAuth.fullName && (
+                                <span className="ml-auto text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                                    Pre-filled
+                                </span>
+                            )}
                         </div>
 
                         <TextField
@@ -358,13 +390,14 @@ export default function OwnPocketApplicationForm() {
                             value={formData.fullName}
                             onChange={(val) => handleInputChange('fullName', onlyLetters(val).slice(0, 60))}
                             error={fieldErrors.fullName}
+                            preFilled={!!pendingAuth.fullName}
                         />
                         <div className="h-3.5" />
 
                         <label className="text-[11.5px] font-semibold text-[#0F1B3D] mb-1.5 block">
                             Mobile Number
                         </label>
-                        <div className="flex items-center rounded-xl border border-[#E7E9F0]">
+                        <div className={`flex items-center rounded-xl border ${fieldErrors.mobileNumber ? "border-red-300" : "border-[#E7E9F0]"}`}>
                             <div className="flex items-center gap-1 pl-3 pr-2.5 py-2.5 border-r border-[#E7E9F0] text-[#0F1B3D] text-[13px]">
                                 <Phone size={14} className="text-[#8A8F9E]" />
                                 +91
@@ -379,6 +412,11 @@ export default function OwnPocketApplicationForm() {
                                 inputMode="numeric"
                                 className={`flex-1 min-w-0 px-3 py-2.5 text-[13px] text-[#0F1B3D] placeholder:text-[#B5B9C4] outline-none bg-transparent ${fieldErrors.mobileNumber ? "border-red-300" : ""}`}
                             />
+                            {pendingAuth.mobile && (
+                                <span className="text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full mr-2">
+                                    ✓ Pre-filled
+                                </span>
+                            )}
                         </div>
                         {fieldErrors.mobileNumber && <p className="text-[10.5px] text-red-600 mt-1">{fieldErrors.mobileNumber}</p>}
                         <div className="h-3.5" />
@@ -390,8 +428,10 @@ export default function OwnPocketApplicationForm() {
                             value={formData.email}
                             onChange={(val) => handleInputChange('email', val.trim())}
                             error={fieldErrors.email}
+                            preFilled={!!pendingAuth.email}
                         />
                         <div className="h-3.5" />
+                        
                         <TextField
                             label="Aadhaar Card Number"
                             icon={<CreditCard size={15} />}
@@ -403,6 +443,7 @@ export default function OwnPocketApplicationForm() {
                             error={fieldErrors.aadhaarNumber}
                         />
                         <div className="h-3.5" />
+                        
                         <TextField
                             label="PAN Card Number"
                             icon={<CreditCard size={15} />}
@@ -669,7 +710,7 @@ export default function OwnPocketApplicationForm() {
     );
 }
 
-function TextField({ label, icon, placeholder, value, onChange, error, inputMode, maxLength }) {
+function TextField({ label, icon, placeholder, value, onChange, error, inputMode, maxLength, preFilled }) {
     return (
         <div>
             <label className="text-[11.5px] font-semibold text-[#0F1B3D] mb-1.5 block">
@@ -685,6 +726,11 @@ function TextField({ label, icon, placeholder, value, onChange, error, inputMode
                     maxLength={maxLength}
                     className="flex-1 min-w-0 text-[13px] text-[#0F1B3D] placeholder:text-[#B5B9C4] bg-transparent outline-none"
                 />
+                {preFilled && value && (
+                    <span className="text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full shrink-0">
+                        ✓ Pre-filled
+                    </span>
+                )}
             </div>
             {error && <p className="text-[10.5px] text-red-600 mt-1">{error}</p>}
         </div>

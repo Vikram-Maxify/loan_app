@@ -42,6 +42,7 @@ export default function YourLoanCibilCheck() {
     const [stageIndex, setStageIndex] = useState(0);
     const targetScore = useRef(600 + Math.floor(Math.random() * 101)); // 600-700
     const [displayScore, setDisplayScore] = useState(300);
+    const [isNavigating, setIsNavigating] = useState(false);
 
     // cycle through checking stages, then reveal result
     useEffect(() => {
@@ -73,6 +74,24 @@ export default function YourLoanCibilCheck() {
         return () => cancelAnimationFrame(frame);
     }, [phase]);
 
+    const handleContinue = () => {
+        setIsNavigating(true);
+        
+        // Store CIBIL data in localStorage for the next step
+        const cibilData = {
+            score: targetScore.current,
+            displayScore: displayScore,
+            rating: scoreMeta(targetScore.current).label,
+            estimatedAmount: targetScore.current >= 670 ? "₹18,00,000" : "₹12,00,000",
+            estimatedRate: (targetScore.current >= 650 ? 13.5 : 16.5).toFixed(1),
+            checkedAt: new Date().toISOString(),
+        };
+        localStorage.setItem("cibilData", JSON.stringify(cibilData));
+        
+        // Navigate to loan review page
+        window.location.href = "/Loanreview";
+    };
+
     const meta = scoreMeta(targetScore.current);
     const angle = -90 + ((displayScore - 300) / (900 - 300)) * 180;
 
@@ -97,7 +116,12 @@ export default function YourLoanCibilCheck() {
                 <div className="max-h-[790px] overflow-y-auto">
                     {/* header */}
                     <div className="flex items-center justify-between px-4 py-3.5 bg-white border-b border-[#EEF0F5]">
-                        <button type="button" aria-label="Go back" className="text-[#0F1B3D] shrink-0">
+                        <button 
+                            type="button" 
+                            aria-label="Go back" 
+                            className="text-[#0F1B3D] shrink-0"
+                            disabled={isNavigating}
+                        >
                             <ArrowLeft size={20} />
                         </button>
                         <div className="flex items-center gap-2 flex-1 justify-center">
@@ -327,10 +351,25 @@ export default function YourLoanCibilCheck() {
 
                             <button
                                 type="button"
-                                className="w-full h-12 mt-5 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[14.5px] flex items-center justify-center gap-2"
+                                onClick={handleContinue}
+                                disabled={isNavigating}
+                                className={`w-full h-12 mt-5 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${
+                                    isNavigating 
+                                        ? "opacity-70 cursor-not-allowed" 
+                                        : "hover:bg-[#1A3BAE] active:scale-[0.99]"
+                                }`}
                             >
-                                Continue to Additional Details
-                                <ArrowRight size={16} />
+                                {isNavigating ? (
+                                    <>
+                                        <Loader2 size={18} className="animate-spin" />
+                                        Redirecting...
+                                    </>
+                                ) : (
+                                    <>
+                                        Continue to Additional Details
+                                        <ArrowRight size={16} />
+                                    </>
+                                )}
                             </button>
 
                             <p className="flex items-center justify-center gap-1.5 text-[10.5px] text-[#8A8F9E] mt-4 pb-2 text-center leading-snug">

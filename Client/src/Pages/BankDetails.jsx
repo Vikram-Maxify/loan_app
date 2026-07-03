@@ -13,6 +13,7 @@ import {
     Lock,
     RotateCw,
     FileImage,
+    Loader2,
 } from "lucide-react";
 
 const ACCOUNT_TYPES = ["Savings", "Current"];
@@ -20,6 +21,117 @@ const ACCOUNT_TYPES = ["Savings", "Current"];
 export default function YourLoanBankDetails() {
     const [accountType, setAccountType] = useState("Savings");
     const [uploaded, setUploaded] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState(null);
+    
+    // Form data state
+    const [formData, setFormData] = useState({
+        accountHolderName: "",
+        bankName: "",
+        accountNumber: "",
+        confirmAccountNumber: "",
+        ifscCode: "",
+    });
+
+    const handleInputChange = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+        setSubmitError(null);
+    };
+
+    const validateForm = () => {
+        // Check all required fields
+        if (!formData.accountHolderName.trim()) {
+            setSubmitError("Please enter account holder name");
+            return false;
+        }
+        if (!formData.bankName.trim()) {
+            setSubmitError("Please enter bank name");
+            return false;
+        }
+        if (!formData.accountNumber.trim()) {
+            setSubmitError("Please enter account number");
+            return false;
+        }
+        if (formData.accountNumber.length < 9 || formData.accountNumber.length > 18) {
+            setSubmitError("Account number should be between 9-18 digits");
+            return false;
+        }
+        if (formData.accountNumber !== formData.confirmAccountNumber) {
+            setSubmitError("Account numbers do not match");
+            return false;
+        }
+        if (!formData.ifscCode.trim()) {
+            setSubmitError("Please enter IFSC code");
+            return false;
+        }
+        if (formData.ifscCode.length !== 11) {
+            setSubmitError("IFSC code should be 11 characters");
+            return false;
+        }
+        if (!uploaded) {
+            setSubmitError("Please upload a cancelled cheque or passbook");
+            return false;
+        }
+        return true;
+    };
+
+    const submitBankDetails = async () => {
+        if (!validateForm()) {
+            return;
+        }
+
+        try {
+            setIsSubmitting(true);
+            setSubmitError(null);
+
+            // Prepare bank details data
+            const bankData = {
+                accountHolderName: formData.accountHolderName,
+                bankName: formData.bankName,
+                accountNumber: formData.accountNumber,
+                ifscCode: formData.ifscCode.toUpperCase(),
+                accountType: accountType,
+                chequeUploaded: uploaded,
+                submittedAt: new Date().toISOString(),
+            };
+
+            // Store bank details in localStorage
+            localStorage.setItem("bankDetails", JSON.stringify(bankData));
+
+            // Real API call - Replace with actual endpoint
+            // const response = await fetch('/api/loan/bank-details', {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //         'Authorization': 'Bearer ' + localStorage.getItem('token')
+            //     },
+            //     body: JSON.stringify({
+            //         ...bankData,
+            //         applicationId: localStorage.getItem('applicationId')
+            //     })
+            // });
+            // 
+            // if (!response.ok) {
+            //     throw new Error('Failed to save bank details');
+            // }
+            // 
+            // const data = await response.json();
+
+            // Simulate network delay
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+
+            // Navigate to processing fee page
+            window.location.href = "/processing-fee";
+        } catch (error) {
+            setSubmitError(error.message || "Failed to save bank details. Please try again.");
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleFileUpload = () => {
+        setUploaded(true);
+        setSubmitError(null);
+    };
 
     return (
         <div className="min-h-screen w-full bg-[#E7E4DA] flex items-center justify-center py-10 px-4">
@@ -38,7 +150,12 @@ export default function YourLoanBankDetails() {
                 <div className="max-h-[790px] overflow-y-auto">
                     {/* header */}
                     <div className="flex items-center justify-between px-4 py-3.5 bg-white border-b border-[#EEF0F5]">
-                        <button type="button" aria-label="Go back" className="text-[#0F1B3D] shrink-0">
+                        <button 
+                            type="button" 
+                            aria-label="Go back" 
+                            className="text-[#0F1B3D] shrink-0"
+                            disabled={isSubmitting}
+                        >
                             <ArrowLeft size={20} />
                         </button>
                         <div className="flex items-center gap-2 flex-1 justify-center">
@@ -95,15 +212,56 @@ export default function YourLoanBankDetails() {
                             </p>
                         </div>
 
-                        <Field label="Account Holder Name" icon={<User size={15} />} placeholder="Enter name as per bank account" />
+                        <Field 
+                            label="Account Holder Name" 
+                            icon={<User size={15} />} 
+                            placeholder="Enter name as per bank account"
+                            value={formData.accountHolderName}
+                            onChange={(val) => handleInputChange('accountHolderName', val)}
+                            disabled={isSubmitting}
+                        />
                         <div className="h-3.5" />
-                        <Field label="Bank Name" icon={<Landmark size={15} />} placeholder="e.g. State Bank of India" />
+                        
+                        <Field 
+                            label="Bank Name" 
+                            icon={<Landmark size={15} />} 
+                            placeholder="e.g. State Bank of India"
+                            value={formData.bankName}
+                            onChange={(val) => handleInputChange('bankName', val)}
+                            disabled={isSubmitting}
+                        />
                         <div className="h-3.5" />
-                        <Field label="Account Number" icon={<Hash size={15} />} placeholder="Enter account number" type="tel" />
+                        
+                        <Field 
+                            label="Account Number" 
+                            icon={<Hash size={15} />} 
+                            placeholder="Enter account number" 
+                            type="tel"
+                            value={formData.accountNumber}
+                            onChange={(val) => handleInputChange('accountNumber', val.replace(/\D/g, ''))}
+                            disabled={isSubmitting}
+                        />
                         <div className="h-3.5" />
-                        <Field label="Confirm Account Number" icon={<Hash size={15} />} placeholder="Re-enter account number" type="tel" />
+                        
+                        <Field 
+                            label="Confirm Account Number" 
+                            icon={<Hash size={15} />} 
+                            placeholder="Re-enter account number" 
+                            type="tel"
+                            value={formData.confirmAccountNumber}
+                            onChange={(val) => handleInputChange('confirmAccountNumber', val.replace(/\D/g, ''))}
+                            disabled={isSubmitting}
+                        />
                         <div className="h-3.5" />
-                        <Field label="IFSC Code" icon={<KeyRound size={15} />} placeholder="e.g. SBIN0001234" />
+                        
+                        <Field 
+                            label="IFSC Code" 
+                            icon={<KeyRound size={15} />} 
+                            placeholder="e.g. SBIN0001234"
+                            value={formData.ifscCode}
+                            onChange={(val) => handleInputChange('ifscCode', val.toUpperCase())}
+                            disabled={isSubmitting}
+                        />
 
                         <div className="h-4" />
                         <label className="text-[11.5px] font-semibold text-[#0F1B3D] mb-1.5 block">
@@ -116,11 +274,13 @@ export default function YourLoanBankDetails() {
                                     <button
                                         type="button"
                                         key={type}
-                                        onClick={() => setAccountType(type)}
-                                        className={`flex items-center justify-between rounded-lg border px-3.5 py-3 ${selected
+                                        onClick={() => !isSubmitting && setAccountType(type)}
+                                        disabled={isSubmitting}
+                                        className={`flex items-center justify-between rounded-lg border px-3.5 py-3 ${
+                                            selected
                                                 ? "border-[#2A4BDE] bg-[#EAF0FD]"
                                                 : "border-[#E7E9F0] bg-white"
-                                            }`}
+                                        } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
                                     >
                                         <span
                                             className={`text-[13px] font-semibold ${selected ? "text-[#2A4BDE]" : "text-[#0F1B3D]"
@@ -151,16 +311,19 @@ export default function YourLoanBankDetails() {
 
                         <button
                             type="button"
-                            onClick={() => setUploaded((v) => !v)}
-                            className={`w-full flex items-center justify-between rounded-xl border px-3.5 py-3 ${uploaded
+                            onClick={handleFileUpload}
+                            disabled={isSubmitting || uploaded}
+                            className={`w-full flex items-center justify-between rounded-xl border px-3.5 py-3 transition-colors ${
+                                uploaded
                                     ? "border-[#1FA24C] bg-[#EAF6EC]"
-                                    : "border-dashed border-[#D6DCEA] bg-[#F8F9FB]"
-                                }`}
+                                    : "border-dashed border-[#D6DCEA] bg-[#F8F9FB] hover:border-[#2A4BDE]"
+                            } ${(isSubmitting || uploaded) ? "cursor-default" : "cursor-pointer"}`}
                         >
                             <div className="flex items-center gap-3">
                                 <div
-                                    className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${uploaded ? "bg-[#1FA24C]" : "bg-white border border-[#E7E9F0]"
-                                        }`}
+                                    className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                                        uploaded ? "bg-[#1FA24C]" : "bg-white border border-[#E7E9F0]"
+                                    }`}
                                 >
                                     {uploaded ? (
                                         <Check size={16} className="text-white" />
@@ -185,6 +348,16 @@ export default function YourLoanBankDetails() {
                         </button>
                     </div>
 
+                    {/* Error message */}
+                    {submitError && (
+                        <div className="mx-4 mt-3 bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5">
+                            <p className="text-[11.5px] text-red-600 flex items-center gap-2">
+                                <span className="text-red-500">⚠</span>
+                                {submitError}
+                            </p>
+                        </div>
+                    )}
+
                     {/* trust strip */}
                     <div className="mx-4 mt-4 flex items-center gap-3 bg-[#EEF3F0] rounded-xl p-3.5">
                         <div className="w-8 h-8 rounded-full bg-[#DCEBE3] flex items-center justify-center shrink-0">
@@ -200,10 +373,25 @@ export default function YourLoanBankDetails() {
                     <div className="px-4 mt-5">
                         <button
                             type="button"
-                            className="w-full h-12 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[14.5px] flex items-center justify-center gap-2"
+                            onClick={submitBankDetails}
+                            disabled={isSubmitting}
+                            className={`w-full h-12 rounded-xl font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${
+                                isSubmitting
+                                    ? "bg-[#2A4BDE] text-white opacity-70 cursor-not-allowed"
+                                    : "bg-[#2A4BDE] text-white hover:bg-[#1A3BAE] active:scale-[0.99]"
+                            }`}
                         >
-                            Save &amp; Continue
-                            <ArrowRight size={16} />
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 size={18} className="animate-spin" />
+                                    Saving Details...
+                                </>
+                            ) : (
+                                <>
+                                    Save &amp; Continue
+                                    <ArrowRight size={16} />
+                                </>
+                            )}
                         </button>
                     </div>
 
@@ -217,18 +405,25 @@ export default function YourLoanBankDetails() {
     );
 }
 
-function Field({ label, icon, placeholder, type = "text" }) {
+function Field({ label, icon, placeholder, type = "text", value, onChange, disabled }) {
     return (
         <div>
             <label className="text-[11.5px] font-semibold text-[#0F1B3D] mb-1.5 block">
                 {label}
             </label>
-            <div className="flex items-center gap-2.5 rounded-xl border border-[#E7E9F0] px-3 py-2.5">
+            <div className={`flex items-center gap-2.5 rounded-xl border border-[#E7E9F0] px-3 py-2.5 ${
+                disabled ? "bg-[#F8F9FB]" : "bg-white"
+            }`}>
                 <span className="text-[#8A8F9E] shrink-0">{icon}</span>
                 <input
                     type={type}
                     placeholder={placeholder}
-                    className="flex-1 min-w-0 text-[13px] text-[#0F1B3D] placeholder:text-[#B5B9C4] outline-none bg-transparent"
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    disabled={disabled}
+                    className={`flex-1 min-w-0 text-[13px] text-[#0F1B3D] placeholder:text-[#B5B9C4] outline-none bg-transparent ${
+                        disabled ? "cursor-not-allowed" : ""
+                    }`}
                 />
             </div>
         </div>

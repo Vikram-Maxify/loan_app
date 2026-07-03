@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
     ArrowLeft,
     ShieldCheck,
@@ -13,6 +13,7 @@ import {
     Percent,
     CalendarClock,
     Lock,
+    Calculator,
 } from "lucide-react";
 
 const STEPS = [
@@ -27,6 +28,8 @@ const CHECK_STAGES = [
     { icon: BadgeCheck, text: "Fetching your CIBIL score" },
 ];
 
+const TENURE_OPTIONS = [3, 6, 12];
+
 function scoreMeta(score) {
     if (score >= 750)
         return { label: "Excellent", color: "#1F6F5C", bg: "#EEF3F0" };
@@ -37,12 +40,31 @@ function scoreMeta(score) {
     return { label: "Needs improvement", color: "#B8790A", bg: "#FCF1DE" };
 }
 
+function formatINR(n) {
+    return "₹" + Math.round(n).toLocaleString("en-IN");
+}
+
+// Standard reducing-balance EMI formula
+function calcEmi(principal, annualRatePercent, months) {
+    const r = annualRatePercent / 12 / 100;
+    if (r === 0) return principal / months;
+    const factor = Math.pow(1 + r, months);
+    return (principal * r * factor) / (factor - 1);
+}
+
 export default function YourLoanCibilCheck() {
     const [phase, setPhase] = useState("checking"); // checking | result
     const [stageIndex, setStageIndex] = useState(0);
     const targetScore = useRef(600 + Math.floor(Math.random() * 101)); // 600-700
     const [displayScore, setDisplayScore] = useState(300);
     const [isNavigating, setIsNavigating] = useState(false);
+
+    // max eligible loan amount — random between ₹5,000 and ₹6,000
+    const maxLoanAmount = useRef(5000 + Math.floor(Math.random() * 1001));
+    const minLoanAmount = 1000;
+
+    const [loanAmount, setLoanAmount] = useState(null);
+    const [tenure, setTenure] = useState(6);
 
     // cycle through checking stages, then reveal result
     useEffect(() => {
@@ -71,54 +93,65 @@ export default function YourLoanCibilCheck() {
             if (progress < 1) frame = requestAnimationFrame(tick);
         };
         frame = requestAnimationFrame(tick);
+
+        // default the slider to the midpoint of the eligible range
+        setLoanAmount(
+            Math.round((minLoanAmount + maxLoanAmount.current) / 2 / 100) * 100
+        );
+
         return () => cancelAnimationFrame(frame);
     }, [phase]);
-
-    const handleContinue = () => {
-        setIsNavigating(true);
-        
-        // Store CIBIL data in localStorage for the next step
-        const cibilData = {
-            score: targetScore.current,
-            displayScore: displayScore,
-            rating: scoreMeta(targetScore.current).label,
-            estimatedAmount: targetScore.current >= 670 ? "₹18,00,000" : "₹12,00,000",
-            estimatedRate: (targetScore.current >= 650 ? 13.5 : 16.5).toFixed(1),
-            checkedAt: new Date().toISOString(),
-        };
-        localStorage.setItem("cibilData", JSON.stringify(cibilData));
-        
-        // Navigate to loan review page
-        window.location.href = "/Loanreview";
-    };
 
     const meta = scoreMeta(targetScore.current);
     const angle = -90 + ((displayScore - 300) / (900 - 300)) * 180;
 
     const estimatedRate = (targetScore.current >= 650 ? 13.5 : 16.5).toFixed(1);
-    const estimatedAmount =
-        targetScore.current >= 670 ? "₹18,00,000" : "₹12,00,000";
+
+    const emi = useMemo(() => {
+        if (!loanAmount) return 0;
+        return calcEmi(loanAmount, parseFloat(estimatedRate), tenure);
+    }, [loanAmount, tenure, estimatedRate]);
+
+    const totalPayable = emi * tenure;
+    const totalInterest = totalPayable - (loanAmount || 0);
+
+    const sliderPercent = loanAmount
+        ? ((loanAmount - minLoanAmount) / (maxLoanAmount.current - minLoanAmount)) * 100
+        : 0;
+
+    const handleContinue = () => {
+        setIsNavigating(true);
+
+        // Store CIBIL + EMI data in localStorage for the next step
+        const cibilData = {
+            score: targetScore.current,
+            displayScore: displayScore,
+            rating: scoreMeta(targetScore.current).label,
+            maxLoanAmount: maxLoanAmount.current,
+            selectedAmount: loanAmount,
+            tenureMonths: tenure,
+            estimatedRate: estimatedRate,
+            estimatedEmi: Math.round(emi),
+            totalPayable: Math.round(totalPayable),
+            totalInterest: Math.round(totalInterest),
+            checkedAt: new Date().toISOString(),
+        };
+        localStorage.setItem("cibilData", JSON.stringify(cibilData));
+
+        // Navigate to loan review page
+        window.location.href = "/Loanreview";
+    };
 
     return (
         <div className="min-h-screen w-full bg-[#E7E4DA] flex items-center justify-center py-10 px-4">
-            <div className="w-[390px] shrink-0 bg-white rounded-[2.75rem] border-[6px] border-[#0F1B3D] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.35)] overflow-hidden relative">
-                {/* status bar */}
-                <div className="h-9 bg-white flex items-center justify-between px-7">
-                    <span className="text-[11px] font-mono tracking-wide text-[#0F1B3D]">
-                        9:41
-                    </span>
-                    <div className="flex items-center gap-1">
-                        <div className="w-3.5 h-2 rounded-[1px] border border-[#0F1B3D]/70" />
-                        <div className="w-3.5 h-2 rounded-[1px] border border-[#0F1B3D]/70" />
-                    </div>
-                </div>
+            <div className="w-[390px] shrink-0 bg-[#F5F6FA] rounded-[2rem] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
 
-                <div className="max-h-[790px] overflow-y-auto">
+                <div className="max-h-[900px] overflow-y-auto">
                     {/* header */}
                     <div className="flex items-center justify-between px-4 py-3.5 bg-white border-b border-[#EEF0F5]">
-                        <button 
-                            type="button" 
-                            aria-label="Go back" 
+                        <button
+                            type="button"
+                            aria-label="Go back"
                             className="text-[#0F1B3D] shrink-0"
                             disabled={isNavigating}
                         >
@@ -247,7 +280,7 @@ export default function YourLoanCibilCheck() {
                     )}
 
                     {/* result phase */}
-                    {phase === "result" && (
+                    {phase === "result" && loanAmount !== null && (
                         <div className="px-5 pt-6 pb-4">
                             <div className="bg-white border border-[#EEF0F5] rounded-2xl p-5 flex flex-col items-center">
                                 <p className="text-[12.5px] font-semibold text-[#5B6072] mb-1">
@@ -327,7 +360,7 @@ export default function YourLoanCibilCheck() {
                                     <div className="bg-[#EAF0FD] rounded-xl p-3">
                                         <IndianRupee size={15} className="text-[#2A4BDE] mb-1.5" />
                                         <p className="text-[15px] font-extrabold text-[#0F1B3D] leading-none">
-                                            {estimatedAmount}
+                                            {formatINR(maxLoanAmount.current)}
                                         </p>
                                         <p className="text-[10.5px] text-[#5B6072] mt-1">
                                             Max loan amount
@@ -345,7 +378,103 @@ export default function YourLoanCibilCheck() {
                                 </div>
                                 <div className="flex items-center gap-2 mt-3 text-[11px] text-[#5B6072]">
                                     <CalendarClock size={13} className="text-[#8A8F9E]" />
-                                    Tenure options from 12 to 60 months
+                                    Tenure options from 3 to 12 months
+                                </div>
+                            </div>
+
+                            {/* EMI Calculator */}
+                            <div className="mt-4 bg-white border border-[#EEF0F5] rounded-2xl p-4">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <div className="w-7 h-7 rounded-full bg-[#EAF0FD] flex items-center justify-center shrink-0">
+                                        <Calculator size={14} className="text-[#2A4BDE]" />
+                                    </div>
+                                    <p className="text-[13.5px] font-bold text-[#0F1B3D]">
+                                        EMI Calculator
+                                    </p>
+                                </div>
+
+                                {/* Loan amount slider */}
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-[11.5px] font-medium text-[#5B6072]">
+                                        Loan Amount
+                                    </span>
+                                    <span className="text-[16px] font-extrabold text-[#0F1B3D]">
+                                        {formatINR(loanAmount)}
+                                    </span>
+                                </div>
+
+                                <input
+                                    type="range"
+                                    min={minLoanAmount}
+                                    max={maxLoanAmount.current}
+                                    step={100}
+                                    value={loanAmount}
+                                    onChange={(e) => setLoanAmount(Number(e.target.value))}
+                                    className="w-full h-2 rounded-full appearance-none cursor-pointer accent-[#2A4BDE]"
+                                    style={{
+                                        background: `linear-gradient(to right, #2A4BDE 0%, #2A4BDE ${sliderPercent}%, #EEF0F5 ${sliderPercent}%, #EEF0F5 100%)`,
+                                    }}
+                                />
+                                <div className="flex items-center justify-between mt-1.5 mb-5">
+                                    <span className="text-[10.5px] text-[#8A8F9E]">
+                                        {formatINR(minLoanAmount)}
+                                    </span>
+                                    <span className="text-[10.5px] text-[#8A8F9E]">
+                                        {formatINR(maxLoanAmount.current)}
+                                    </span>
+                                </div>
+
+                                {/* Tenure selector */}
+                                <p className="text-[11.5px] font-medium text-[#5B6072] mb-2">
+                                    Select Tenure
+                                </p>
+                                <div className="grid grid-cols-3 gap-2 mb-5">
+                                    {TENURE_OPTIONS.map((months) => (
+                                        <button
+                                            key={months}
+                                            type="button"
+                                            onClick={() => setTenure(months)}
+                                            className={`h-10 rounded-xl text-[13px] font-semibold border transition-colors ${
+                                                tenure === months
+                                                    ? "bg-[#2A4BDE] border-[#2A4BDE] text-white"
+                                                    : "bg-white border-[#E3E5EC] text-[#5B6072]"
+                                            }`}
+                                        >
+                                            {months} {months === 1 ? "Month" : "Months"}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* EMI result */}
+                                <div className="bg-[#EAF0FD] rounded-xl p-4 flex flex-col items-center">
+                                    <p className="text-[11px] font-medium text-[#5B6072] mb-1">
+                                        Estimated Monthly EMI
+                                    </p>
+                                    <p className="text-[26px] font-extrabold text-[#2A4BDE] leading-none">
+                                        {formatINR(emi)}
+                                        <span className="text-[13px] font-semibold text-[#5B6072]">
+                                            {" "}/mo
+                                        </span>
+                                    </p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3 mt-3">
+                                    <div className="rounded-xl border border-[#EEF0F5] p-3">
+                                        <p className="text-[13px] font-extrabold text-[#0F1B3D] leading-none">
+                                            {formatINR(totalInterest)}
+                                        </p>
+                                        <p className="text-[10.5px] text-[#5B6072] mt-1">
+                                            Total interest
+                                        </p>
+                                    </div>
+                                    <div className="rounded-xl border border-[#EEF0F5] p-3">
+                                        <p className="text-[13px] font-extrabold text-[#0F1B3D] leading-none">
+                                            {formatINR(totalPayable)}
+                                        </p>
+                                        <p className="text-[10.5px] text-[#5B6072] mt-1">
+                                            Total payable
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
 
@@ -354,8 +483,8 @@ export default function YourLoanCibilCheck() {
                                 onClick={handleContinue}
                                 disabled={isNavigating}
                                 className={`w-full h-12 mt-5 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${
-                                    isNavigating 
-                                        ? "opacity-70 cursor-not-allowed" 
+                                    isNavigating
+                                        ? "opacity-70 cursor-not-allowed"
                                         : "hover:bg-[#1A3BAE] active:scale-[0.99]"
                                 }`}
                             >

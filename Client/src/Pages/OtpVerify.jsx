@@ -135,7 +135,7 @@ export default function YourLoanOtpVerify() {
                 setTimeout(() => {
                     setStatus("redirecting");
                     // Navigate to home page
-                    window.location.href = "/home";
+                    window.location.href = "/apply-form";
                 }, 1200);
             } else {
                 setError("Invalid OTP. Please try again.");

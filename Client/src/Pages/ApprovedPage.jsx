@@ -199,7 +199,7 @@ export default function YourLoanApproved() {
                     </div>
                 </div>
 
-                <div className="max-h-[790px] overflow-y-auto">
+                <div className="max-h-[900px] overflow-y-auto">
                     {/* header */}
                     <div className="flex items-center justify-between px-5 py-4 bg-white border-b border-[#EEF0F5]">
                         <button type="button" aria-label="Go back" className="text-[#0F1B3D]">

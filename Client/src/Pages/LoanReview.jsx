@@ -39,11 +39,6 @@ const LOAN_ROWS = [
     { icon: Briefcase, label: "Employment Type", value: "Self Employed" },
 ];
 
-const KYC_ROWS = [
-    { label: "Aadhaar Card", file: "aadhaar_front.jpg" },
-    { label: "PAN Card", file: "pan_card.jpg" },
-];
-
 export default function YourLoanReviewSubmit() {
     const [agreed, setAgreed] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -112,7 +107,7 @@ export default function YourLoanReviewSubmit() {
                 localStorage.setItem("applicationId", applicationData.applicationId);
 
                 // Navigate to approved page
-                window.location.href = "/approvedpage";
+                window.location.href = "/bank-detail";
             } else {
                 throw new Error("Application submission failed. Please try again.");
             }
@@ -142,7 +137,7 @@ export default function YourLoanReviewSubmit() {
                     </div>
                 </div>
 
-                <div className="max-h-[790px] overflow-y-auto">
+                <div className="max-h-[900px] overflow-y-auto">
                     {/* header */}
                     <div className="flex items-center justify-between px-4 py-3.5 bg-white border-b border-[#EEF0F5]">
                         <button 
@@ -284,40 +279,6 @@ export default function YourLoanReviewSubmit() {
                                     <span className="text-[12.5px] font-semibold text-[#0F1B3D] text-right flex-1">
                                         {row.value}
                                     </span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* KYC summary */}
-                    <div className="mx-4 mt-4 bg-white border border-[#EEF0F5] rounded-2xl p-4">
-                        <div className="flex items-center gap-2.5 mb-3.5">
-                            <div className="w-8 h-8 rounded-lg bg-[#EAF6EC] flex items-center justify-center">
-                                <FileCheck2 size={16} className="text-[#1FA24C]" />
-                            </div>
-                            <p className="text-[15px] font-bold text-[#0F1B3D]">
-                                KYC Documents
-                            </p>
-                        </div>
-
-                        <div className="flex flex-col gap-2.5">
-                            {KYC_ROWS.map((row) => (
-                                <div
-                                    key={row.label}
-                                    className="flex items-center justify-between bg-[#F8F9FB] rounded-xl px-3 py-2.5"
-                                >
-                                    <div>
-                                        <p className="text-[12.5px] font-semibold text-[#0F1B3D]">
-                                            {row.label}
-                                        </p>
-                                        <p className="text-[10.5px] text-[#8A8F9E] mt-0.5">
-                                            {row.file}
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-1 text-[#1FA24C] text-[11px] font-semibold">
-                                        <Check size={13} />
-                                        Uploaded
-                                    </div>
                                 </div>
                             ))}
                         </div>

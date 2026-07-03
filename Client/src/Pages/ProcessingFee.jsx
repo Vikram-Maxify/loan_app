@@ -46,7 +46,7 @@ export default function YourLoanProcessingFee() {
                     </div>
                 </div>
 
-                <div className="max-h-[790px] overflow-y-auto">
+                <div className="max-h-[900px] overflow-y-auto">
                     {/* header */}
                     <div className="flex items-center justify-between px-4 py-3.5 bg-white border-b border-[#EEF0F5]">
                         <button type="button" aria-label="Go back" className="text-[#0F1B3D] shrink-0">

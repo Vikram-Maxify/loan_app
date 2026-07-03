@@ -7,6 +7,7 @@ const getErrorMessage = (err) =>
     err.message ||
     "Something went wrong";
 
+// ================= CREATE APPLICATION =================
 export const createApplication = createAsyncThunk(
     "application/createApplication",
     async (body, thunkAPI) => {
@@ -19,6 +20,7 @@ export const createApplication = createAsyncThunk(
     }
 );
 
+// ================= ACCEPT TERMS =================
 export const acceptApplicationTerms = createAsyncThunk(
     "application/acceptApplicationTerms",
     async ({ applicationId, termsAccepted }, thunkAPI) => {
@@ -34,6 +36,7 @@ export const acceptApplicationTerms = createAsyncThunk(
     }
 );
 
+// ================= UPDATE ACCOUNT DETAILS =================
 export const updateAccountDetails = createAsyncThunk(
     "application/updateAccountDetails",
     async ({ applicationId, accountDetails }, thunkAPI) => {
@@ -49,6 +52,7 @@ export const updateAccountDetails = createAsyncThunk(
     }
 );
 
+// ================= GET ALL APPLICATIONS =================
 export const getAllApplications = createAsyncThunk(
     "application/getAllApplications",
     async (_, thunkAPI) => {
@@ -61,6 +65,7 @@ export const getAllApplications = createAsyncThunk(
     }
 );
 
+// ================= GET MY APPLICATIONS =================
 export const getMyApplications = createAsyncThunk(
     "application/getMyApplications",
     async (_, thunkAPI) => {
@@ -73,6 +78,7 @@ export const getMyApplications = createAsyncThunk(
     }
 );
 
+// ================= GET APPLICATION BY ID =================
 export const getApplicationById = createAsyncThunk(
     "application/getApplicationById",
     async (id, thunkAPI) => {
@@ -85,6 +91,7 @@ export const getApplicationById = createAsyncThunk(
     }
 );
 
+// ================= INITIAL STATE =================
 const initialState = {
     loading: false,
     success: false,
@@ -93,11 +100,14 @@ const initialState = {
     count: 0,
     application: null,
     applications: [],
+    
+    // Drafts for multi-step form
     formDraft: JSON.parse(localStorage.getItem("applicationFormDraft") || "null"),
     cibilData: JSON.parse(localStorage.getItem("cibilData") || "null"),
     bankDraft: JSON.parse(localStorage.getItem("bankDetails") || "null"),
 };
 
+// ================= SLICE =================
 const applicationSlice = createSlice({
     name: "application",
     initialState,
@@ -127,6 +137,16 @@ const applicationSlice = createSlice({
             state.bankDraft = action.payload;
             localStorage.setItem("bankDetails", JSON.stringify(action.payload));
         },
+        // Helper to update application in list
+        updateApplicationInList(state, action) {
+            const updatedApp = action.payload;
+            state.applications = state.applications.map((item) =>
+                item._id === updatedApp._id ? updatedApp : item
+            );
+            if (state.application?._id === updatedApp._id) {
+                state.application = updatedApp;
+            }
+        },
     },
     extraReducers: (builder) => {
         const pending = (state) => {
@@ -140,6 +160,7 @@ const applicationSlice = createSlice({
         };
 
         builder
+            // ================= CREATE APPLICATION =================
             .addCase(createApplication.pending, pending)
             .addCase(createApplication.fulfilled, (state, action) => {
                 state.loading = false;
@@ -158,6 +179,7 @@ const applicationSlice = createSlice({
             })
             .addCase(createApplication.rejected, rejected)
 
+            // ================= ACCEPT TERMS =================
             .addCase(acceptApplicationTerms.pending, pending)
             .addCase(acceptApplicationTerms.fulfilled, (state, action) => {
                 state.loading = false;
@@ -170,6 +192,7 @@ const applicationSlice = createSlice({
             })
             .addCase(acceptApplicationTerms.rejected, rejected)
 
+            // ================= UPDATE ACCOUNT DETAILS =================
             .addCase(updateAccountDetails.pending, pending)
             .addCase(updateAccountDetails.fulfilled, (state, action) => {
                 state.loading = false;
@@ -182,6 +205,7 @@ const applicationSlice = createSlice({
             })
             .addCase(updateAccountDetails.rejected, rejected)
 
+            // ================= GET ALL APPLICATIONS =================
             .addCase(getAllApplications.pending, pending)
             .addCase(getAllApplications.fulfilled, (state, action) => {
                 state.loading = false;
@@ -191,6 +215,7 @@ const applicationSlice = createSlice({
             })
             .addCase(getAllApplications.rejected, rejected)
 
+            // ================= GET MY APPLICATIONS =================
             .addCase(getMyApplications.pending, pending)
             .addCase(getMyApplications.fulfilled, (state, action) => {
                 state.loading = false;
@@ -200,6 +225,7 @@ const applicationSlice = createSlice({
             })
             .addCase(getMyApplications.rejected, rejected)
 
+            // ================= GET APPLICATION BY ID =================
             .addCase(getApplicationById.pending, pending)
             .addCase(getApplicationById.fulfilled, (state, action) => {
                 state.loading = false;
@@ -210,6 +236,7 @@ const applicationSlice = createSlice({
     },
 });
 
+// ================= EXPORT ACTIONS =================
 export const {
     clearApplicationError,
     clearApplicationSuccess,
@@ -218,6 +245,7 @@ export const {
     setApplicationFormDraft,
     setCibilDraft,
     setBankDraft,
+    updateApplicationInList,
 } = applicationSlice.actions;
 
 export default applicationSlice.reducer;

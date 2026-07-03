@@ -59,6 +59,7 @@ exports.createPayment = async (req, res) => {
 
         res.status(201).json({
             success: true,
+            key: process.env.RAZORPAY_KEY_ID,
             order,
             payment,
         });

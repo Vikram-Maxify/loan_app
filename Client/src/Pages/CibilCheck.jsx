@@ -67,8 +67,8 @@ export default function OwnPocketCibilCheck() {
     const [isNavigating, setIsNavigating] = useState(false);
 
     // max eligible loan amount — random between ₹5,000 and ₹6,000
-    const maxLoanAmount = useRef(5000 + Math.floor(Math.random() * 1001));
-    const minLoanAmount = 1000;
+    const maxLoanAmount = useRef(60000 + Math.floor(Math.random() * 1001));
+    const minLoanAmount = 5000;
 
     const [loanAmount, setLoanAmount] = useState(null);
     const [tenure, setTenure] = useState(6);

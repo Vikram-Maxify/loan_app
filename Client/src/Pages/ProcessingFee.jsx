@@ -34,29 +34,39 @@ export default function YourLoanProcessingFee() {
     const { loading: loanLoading, error: loanError } = useSelector((state) => state.loanApplication);
     const [selectedMethod, setSelectedMethod] = useState("upi");
 
-    const handlePayNow = async () => {
-        let loanApplication = JSON.parse(localStorage.getItem("loanApplication") || "{}");
-        let applicationId = loanApplication.applicationId;
+const handlePayNow = async () => {
+    let loanApplication = JSON.parse(
+        localStorage.getItem("loanApplication") || "{}"
+    );
 
-        try {
-            if (!applicationId) {
-                const response = await dispatch(createLoanApplication()).unwrap();
-                loanApplication = response.application;
-                applicationId = loanApplication.applicationId;
-                localStorage.setItem("loanApplication", JSON.stringify(loanApplication));
-            }
+    let applicationId = loanApplication._id;
 
-            await dispatch(
-                createPayment({
-                    applicationId,
-                    amount: 259,
-                    paymentMethod: selectedMethod,
-                })
-            ).unwrap();
-        } catch {
-            // The slices own the displayed error state.
+    try {
+        if (!applicationId) {
+            const response = await dispatch(createLoanApplication()).unwrap();
+
+            loanApplication = response.data;
+
+            applicationId = loanApplication._id;
+
+            localStorage.setItem(
+                "loanApplication",
+                JSON.stringify(loanApplication)
+            );
         }
-    };
+
+        await dispatch(
+            createPayment({
+                applicationId,
+                amount: 259,
+                paymentMethod: selectedMethod,
+            })
+        ).unwrap();
+
+    } catch (err) {
+        console.error(err);
+    }
+};
 
     return (
         <div className="min-h-screen w-full bg-[#E7E4DA] flex items-center justify-center py-10 px-4">

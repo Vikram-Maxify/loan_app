@@ -13,13 +13,25 @@ const razorpay = new Razorpay({
 // Create Payment
 // =========================
 exports.createPayment = async (req, res) => {
+    console.log("Create Payment Hit");
     try {
         const { applicationId, amount } = req.body;
 
-        const application = await Application.findOne({
-            _id: applicationId,
-            user: req.user.id,
-        });
+       console.log("Request Body:", req.body);
+console.log("User ID:", req.user.id);
+
+const application = await Application.findOne({
+  applicationId: applicationId,
+  user: req.user.id,
+});
+
+console.log("Application Found:", application);
+
+const allApplications = await Application.find().select(
+  "_id applicationId user"
+);
+
+console.log("All Applications:", allApplications);
 
         if (!application) {
             return res.status(404).json({

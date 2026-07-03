@@ -13,6 +13,7 @@ import YourLoanApproved from './Pages/ApprovedPage'
 import YourLoanReviewSubmit from './Pages/LoanReview'
 import YourLoanBankDetails from './Pages/BankDetails'
 import YourLoanProcessingFee from './Pages/ProcessingFee'
+import AdminLayout from './Admin/AdminPage/AdminCOmponent/AdminLayout'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -22,9 +23,11 @@ function App() {
       
 
       <Routes>
-        <Route path='/' element={<Homepage />} />
+
+        <Route path='/admin/dashboard' element={<AdminLayout />} />
+        <Route path='/home' element={<Homepage />} />
         <Route path='/verify-otp' element={<YourLoanOtpVerify />} />
-        <Route path='/home' element={<YourLoanHome />} />
+        <Route path='/' element={<YourLoanHome />} />
         <Route path='/apply-form' element={<YourLoanApplicationForm />} />
         <Route path='/cibilcheck' element={<YourLoanCibilCheck />} />
         <Route path='/Loanreview' element={<YourLoanReviewSubmit />} />

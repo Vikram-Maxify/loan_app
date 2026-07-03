@@ -19,6 +19,10 @@ import {
     Check,
     RotateCw,
     Loader2,
+    Store,
+    Factory,
+    Building,
+    UserCircle,
 } from "lucide-react";
 
 const STEPS = [
@@ -37,40 +41,102 @@ const PURPOSES = [
 ];
 
 const EMPLOYMENT = [
-    { icon: User, label: ["Self", "Employed"] },
-    { icon: Building2, label: ["Employed", "(Private)"] },
-    { icon: Landmark, label: ["Government", "Employed"] },
-    { icon: UserX, label: ["Not", "Employed"] },
+    { 
+        id: "self", 
+        icon: User, 
+        label: ["Self", "Employed"],
+        fields: [
+            { label: "Type of Business/Profession", placeholder: "e.g. Retail, Consultancy, etc.", type: "text" },
+            { label: "Business/Profession Name", placeholder: "Enter your business name", type: "text" },
+            { label: "Years in Business", placeholder: "Number of years", type: "number" },
+            { label: "Annual Turnover", placeholder: "e.g. ₹10,00,000", type: "text" },
+        ]
+    },
+    { 
+        id: "private", 
+        icon: Building2, 
+        label: ["Employed", "(Private)"],
+        fields: [
+            { label: "Company Name", placeholder: "Enter your company name", type: "text" },
+            { label: "Designation/Role", placeholder: "Your job title", type: "text" },
+            { label: "Department", placeholder: "e.g. IT, Sales, Finance", type: "text" },
+            { label: "Years of Experience", placeholder: "Number of years", type: "number" },
+            { label: "Monthly Salary", placeholder: "e.g. ₹50,000", type: "text" },
+        ]
+    },
+    { 
+        id: "government", 
+        icon: Landmark, 
+        label: ["Government", "Employed"],
+        fields: [
+            { label: "Organization Name", placeholder: "Government organization name", type: "text" },
+            { label: "Designation/Role", placeholder: "Your job title", type: "text" },
+            { label: "Department/Division", placeholder: "Department name", type: "text" },
+            { label: "Years of Service", placeholder: "Number of years", type: "number" },
+            { label: "Pay Scale/Grade", placeholder: "e.g. Level 7, PB-3", type: "text" },
+        ]
+    },
+    { 
+        id: "not_employed", 
+        icon: UserX, 
+        label: ["Not", "Employed"],
+        fields: [
+            { label: "Current Status", placeholder: "Student, Homemaker, etc.", type: "text" },
+            { label: "Source of Income", placeholder: "If any, please specify", type: "text" },
+            { label: "Monthly Income", placeholder: "e.g. ₹20,000", type: "text" },
+            { label: "Future Employment Plans", placeholder: "Any plans for employment", type: "text" },
+        ]
+    },
 ];
 
 export default function YourLoanApplicationForm() {
     const [purpose, setPurpose] = useState("Business Expansion");
-    const [employment, setEmployment] = useState("Self");
+    const [employment, setEmployment] = useState("self");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState(null);
 
     // Form data state
     const [formData, setFormData] = useState({
-        fullName: "Prince Kumar",
-        mobile: "9876543210",
-        email: "princekumar@gmail.com",
-        aadhaar: "1234 5678 9012",
-        pan: "ABCDE1234F",
+        fullName: "",
+        mobile: "",
+        email: "",
+        aadhaar: "",
+        pan: "",
         relativeName: "",
         relativeMobile: "",
         relationship: "",
     });
+
+    const [employmentData, setEmploymentData] = useState({});
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
         setSubmitError(null);
     };
 
+    const handleEmploymentFieldChange = (field, value) => {
+        setEmploymentData(prev => ({ ...prev, [field]: value }));
+        setSubmitError(null);
+    };
+
+    const selectedEmployment = EMPLOYMENT.find(e => e.id === employment);
+
     // Realistic API call simulation
     const submitApplication = async () => {
         try {
             setIsSubmitting(true);
             setSubmitError(null);
+
+            // Validate employment fields
+            const allFieldsFilled = selectedEmployment.fields.every(field => {
+                return employmentData[field.label] && employmentData[field.label].trim();
+            });
+
+            if (!allFieldsFilled) {
+                setSubmitError("Please fill all the employment details");
+                setIsSubmitting(false);
+                return;
+            }
 
             // Prepare data for API
             const payload = {
@@ -82,7 +148,10 @@ export default function YourLoanApplicationForm() {
                     pan: formData.pan,
                 },
                 loanPurpose: purpose,
-                employmentType: employment,
+                employmentDetails: {
+                    type: selectedEmployment.label[0] + " " + selectedEmployment.label[1],
+                    details: employmentData,
+                },
                 reference: {
                     name: formData.relativeName,
                     mobile: formData.relativeMobile,
@@ -90,17 +159,6 @@ export default function YourLoanApplicationForm() {
                 },
                 timestamp: new Date().toISOString(),
             };
-
-            // Simulate API call - Replace this with actual API endpoint
-            // const response = await fetch('/api/loan-application', {
-            //     method: 'POST',
-            //     headers: { 
-            //         'Content-Type': 'application/json',
-            //         'Authorization': 'Bearer ' + localStorage.getItem('token')
-            //     },
-            //     body: JSON.stringify(payload)
-            // });
-            // const data = await response.json();
 
             // Simulate network delay
             await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -131,7 +189,27 @@ export default function YourLoanApplicationForm() {
     };
 
     const handleContinue = () => {
-        // Validate required fields before submission
+        // Validate required fields
+        if (!formData.fullName.trim()) {
+            setSubmitError("Please enter your full name");
+            return;
+        }
+        if (!formData.mobile.trim() || formData.mobile.replace(/\D/g, "").length < 10) {
+            setSubmitError("Please enter a valid mobile number");
+            return;
+        }
+        if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) {
+            setSubmitError("Please enter a valid email address");
+            return;
+        }
+        if (!formData.aadhaar.trim() || formData.aadhaar.replace(/\D/g, "").length < 12) {
+            setSubmitError("Please enter a valid Aadhaar number");
+            return;
+        }
+        if (!formData.pan.trim() || formData.pan.length < 10) {
+            setSubmitError("Please enter a valid PAN number");
+            return;
+        }
         if (!formData.relativeName.trim()) {
             setSubmitError("Please enter relative's name");
             return;
@@ -150,19 +228,10 @@ export default function YourLoanApplicationForm() {
 
     return (
         <div className="min-h-screen w-full bg-[#E7E4DA] flex items-center justify-center py-10 px-4">
-            <div className="w-[390px] shrink-0 bg-white rounded-[2.75rem] border-[6px] border-[#0F1B3D] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.35)] overflow-hidden relative">
+                        <div className="w-[390px] shrink-0 bg-[#F5F6FA] rounded-[2rem] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
                 {/* status bar */}
-                <div className="h-9 bg-white flex items-center justify-between px-7">
-                    <span className="text-[11px] font-mono tracking-wide text-[#0F1B3D]">
-                        9:41
-                    </span>
-                    <div className="flex items-center gap-1">
-                        <div className="w-3.5 h-2 rounded-[1px] border border-[#0F1B3D]/70" />
-                        <div className="w-3.5 h-2 rounded-[1px] border border-[#0F1B3D]/70" />
-                    </div>
-                </div>
 
-                <div className="max-h-[790px] overflow-y-auto">
+                <div className="max-h-[900px] overflow-y-auto">
                     {/* header */}
                     <div className="flex items-center justify-between px-4 py-3.5 bg-white border-b border-[#EEF0F5]">
                         <button 
@@ -247,6 +316,7 @@ export default function YourLoanApplicationForm() {
                         <TextField 
                             label="Full Name" 
                             icon={<User size={15} />} 
+                            placeholder="Enter your full name"
                             value={formData.fullName}
                             onChange={(val) => handleInputChange('fullName', val)}
                         />
@@ -263,6 +333,7 @@ export default function YourLoanApplicationForm() {
                             </div>
                             <input
                                 type="tel"
+                                placeholder="Enter your mobile number"
                                 value={formData.mobile}
                                 onChange={(e) => handleInputChange('mobile', e.target.value)}
                                 className="flex-1 min-w-0 px-3 py-2.5 text-[13px] text-[#0F1B3D] placeholder:text-[#B5B9C4] outline-none bg-transparent"
@@ -273,6 +344,7 @@ export default function YourLoanApplicationForm() {
                         <TextField 
                             label="Email ID" 
                             icon={<Mail size={15} />} 
+                            placeholder="Enter your email address"
                             value={formData.email}
                             onChange={(val) => handleInputChange('email', val)}
                         />
@@ -280,6 +352,7 @@ export default function YourLoanApplicationForm() {
                         <TextField
                             label="Aadhaar Card Number"
                             icon={<CreditCard size={15} />}
+                            placeholder="Enter 12-digit Aadhaar number"
                             value={formData.aadhaar}
                             onChange={(val) => handleInputChange('aadhaar', val)}
                         />
@@ -287,6 +360,7 @@ export default function YourLoanApplicationForm() {
                         <TextField
                             label="PAN Card Number"
                             icon={<CreditCard size={15} />}
+                            placeholder="Enter 10-character PAN number"
                             value={formData.pan}
                             onChange={(val) => handleInputChange('pan', val)}
                         />
@@ -315,14 +389,16 @@ export default function YourLoanApplicationForm() {
                                         key={p}
                                         onClick={() => setPurpose(p)}
                                         disabled={isSubmitting}
-                                        className={`flex items-start justify-between gap-1 rounded-lg border p-2.5 text-left ${selected
+                                        className={`flex items-start justify-between gap-1 rounded-lg border p-2.5 text-left ${
+                                            selected
                                                 ? "border-[#2A4BDE] bg-[#EAF0FD]"
                                                 : "border-[#E7E9F0] bg-white"
-                                            } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
+                                        } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
                                     >
                                         <span
-                                            className={`text-[10.5px] leading-tight font-semibold ${selected ? "text-[#2A4BDE]" : "text-[#0F1B3D]"
-                                                }`}
+                                            className={`text-[10.5px] leading-tight font-semibold ${
+                                                selected ? "text-[#2A4BDE]" : "text-[#0F1B3D]"
+                                            }`}
                                         >
                                             {p}
                                         </span>
@@ -331,6 +407,86 @@ export default function YourLoanApplicationForm() {
                                 );
                             })}
                         </div>
+                    </div>
+
+                    {/* employment card with dynamic fields */}
+                    <div className="mx-4 mt-4 bg-white border border-[#EEF0F5] rounded-2xl p-4">
+                        <div className="flex items-center gap-2.5 mb-1">
+                            <div className="w-8 h-8 rounded-lg bg-[#DCE6FB] flex items-center justify-center shrink-0">
+                                <Briefcase size={16} className="text-[#2A4BDE]" />
+                            </div>
+                            <p className="text-[15px] font-bold text-[#0F1B3D]">
+                                What Do You Do?
+                            </p>
+                        </div>
+                        <p className="text-[11px] text-[#8A8F9E] mb-3.5 ml-[42px]">
+                            Select your employment type
+                        </p>
+
+                        <div className="grid grid-cols-4 gap-2">
+                            {EMPLOYMENT.map((e) => {
+                                const selected = employment === e.id;
+                                return (
+                                    <button
+                                        type="button"
+                                        key={e.id}
+                                        onClick={() => {
+                                            setEmployment(e.id);
+                                            setEmploymentData({});
+                                        }}
+                                        disabled={isSubmitting}
+                                        className={`flex flex-col rounded-lg border p-2 transition-all ${
+                                            selected
+                                                ? "border-[#2A4BDE] bg-[#EAF0FD] shadow-sm"
+                                                : "border-[#E7E9F0] bg-white hover:border-[#BCC8F0]"
+                                        } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
+                                    >
+                                        <div className="flex items-center justify-between mb-2">
+                                            <e.icon
+                                                size={16}
+                                                className={selected ? "text-[#2A4BDE]" : "text-[#0F1B3D]"}
+                                            />
+                                            <Radio selected={selected} small />
+                                        </div>
+                                        <span
+                                            className={`text-[9.5px] leading-tight font-semibold text-left ${
+                                                selected ? "text-[#2A4BDE]" : "text-[#0F1B3D]"
+                                            }`}
+                                        >
+                                            {e.label[0]}
+                                            <br />
+                                            {e.label[1]}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Dynamic employment fields */}
+                        {selectedEmployment && (
+                            <div className="mt-4 pt-4 border-t border-[#E7E9F0]">
+                                <p className="text-[12px] font-semibold text-[#0F1B3D] mb-3">
+                                    {selectedEmployment.label[0] + " " + selectedEmployment.label[1]} Details
+                                </p>
+                                <div className="space-y-3.5">
+                                    {selectedEmployment.fields.map((field, index) => (
+                                        <div key={index}>
+                                            <label className="text-[11px] font-medium text-[#0F1B3D] mb-1 block">
+                                                {field.label}
+                                            </label>
+                                            <input
+                                                type={field.type}
+                                                placeholder={field.placeholder}
+                                                value={employmentData[field.label] || ""}
+                                                onChange={(e) => handleEmploymentFieldChange(field.label, e.target.value)}
+                                                disabled={isSubmitting}
+                                                className="w-full rounded-xl border border-[#E7E9F0] px-3 py-2.5 text-[13px] text-[#0F1B3D] placeholder:text-[#B5B9C4] outline-none bg-white disabled:opacity-50 focus:border-[#2A4BDE] focus:ring-1 focus:ring-[#2A4BDE]/20"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* relatives card */}
@@ -351,7 +507,7 @@ export default function YourLoanApplicationForm() {
                             value={formData.relationship}
                             onChange={(e) => handleInputChange('relationship', e.target.value)}
                             disabled={isSubmitting}
-                            className="w-full rounded-xl border border-[#E7E9F0] px-3 py-2.5 text-[13px] text-[#0F1B3D] outline-none appearance-none bg-white"
+                            className="w-full rounded-xl border border-[#E7E9F0] px-3 py-2.5 text-[13px] text-[#0F1B3D] outline-none appearance-none bg-white disabled:opacity-50"
                         >
                             <option value="">Select Relationship</option>
                             <option value="Spouse">Spouse</option>
@@ -391,55 +547,6 @@ export default function YourLoanApplicationForm() {
                                 disabled={isSubmitting}
                                 className="flex-1 min-w-0 px-3 py-2.5 text-[13px] text-[#0F1B3D] placeholder:text-[#B5B9C4] outline-none bg-transparent disabled:opacity-50"
                             />
-                        </div>
-                    </div>
-
-                    {/* employment card */}
-                    <div className="mx-4 mt-4 mb-4 bg-white border border-[#EEF0F5] rounded-2xl p-4">
-                        <div className="flex items-center gap-2.5 mb-1">
-                            <div className="w-8 h-8 rounded-lg bg-[#DCE6FB] flex items-center justify-center shrink-0">
-                                <Briefcase size={16} className="text-[#2A4BDE]" />
-                            </div>
-                            <p className="text-[15px] font-bold text-[#0F1B3D]">
-                                What Do You Do?
-                            </p>
-                        </div>
-                        <p className="text-[11px] text-[#8A8F9E] mb-3.5 ml-[42px]">
-                            Select your employment type
-                        </p>
-
-                        <div className="grid grid-cols-4 gap-2">
-                            {EMPLOYMENT.map((e) => {
-                                const selected = employment === e.label[0];
-                                return (
-                                    <button
-                                        type="button"
-                                        key={e.label[0]}
-                                        onClick={() => setEmployment(e.label[0])}
-                                        disabled={isSubmitting}
-                                        className={`flex flex-col rounded-lg border p-2 ${selected
-                                                ? "border-[#2A4BDE] bg-[#EAF0FD]"
-                                                : "border-[#E7E9F0] bg-white"
-                                            } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
-                                    >
-                                        <div className="flex items-center justify-between mb-2">
-                                            <e.icon
-                                                size={16}
-                                                className={selected ? "text-[#2A4BDE]" : "text-[#0F1B3D]"}
-                                            />
-                                            <Radio selected={selected} small />
-                                        </div>
-                                        <span
-                                            className={`text-[9.5px] leading-tight font-semibold text-left ${selected ? "text-[#2A4BDE]" : "text-[#0F1B3D]"
-                                                }`}
-                                        >
-                                            {e.label[0]}
-                                            <br />
-                                            {e.label[1]}
-                                        </span>
-                                    </button>
-                                );
-                            })}
                         </div>
                     </div>
 
@@ -489,7 +596,7 @@ export default function YourLoanApplicationForm() {
     );
 }
 
-function TextField({ label, icon, value, onChange }) {
+function TextField({ label, icon, placeholder, value, onChange }) {
     return (
         <div>
             <label className="text-[11.5px] font-semibold text-[#0F1B3D] mb-1.5 block">
@@ -498,6 +605,7 @@ function TextField({ label, icon, value, onChange }) {
             <div className="flex items-center gap-2.5 rounded-xl border border-[#E7E9F0] px-3 py-2.5">
                 <span className="text-[#8A8F9E] shrink-0">{icon}</span>
                 <input
+                    placeholder={placeholder}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     className="flex-1 min-w-0 text-[13px] text-[#0F1B3D] placeholder:text-[#B5B9C4] bg-transparent outline-none"

@@ -112,7 +112,7 @@ export default function YourLoanReviewSubmit() {
                 localStorage.setItem("applicationId", applicationData.applicationId);
 
                 // Navigate to approved page
-                window.location.href = "/approvedpage";
+                window.location.href = "/bank-detail";
             } else {
                 throw new Error("Application submission failed. Please try again.");
             }
@@ -142,7 +142,7 @@ export default function YourLoanReviewSubmit() {
                     </div>
                 </div>
 
-                <div className="max-h-[790px] overflow-y-auto">
+                <div className="max-h-[900px] overflow-y-auto">
                     {/* header */}
                     <div className="flex items-center justify-between px-4 py-3.5 bg-white border-b border-[#EEF0F5]">
                         <button 

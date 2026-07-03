@@ -17,21 +17,16 @@ exports.createPayment = async (req, res) => {
     try {
         const { applicationId, amount } = req.body;
 
-       console.log("Request Body:", req.body);
-console.log("User ID:", req.user.id);
+        console.log("Request Body:", req.body);
+        console.log("User ID:", req.user.id);
 
-const application = await Application.findOne({
-  applicationId: applicationId,
-  user: req.user.id,
-});
+        // Search by _id instead of applicationId
+        const application = await Application.findOne({
+            _id: applicationId,  // Changed from applicationId to _id
+            user: req.user.id,
+        });
 
-console.log("Application Found:", application);
-
-const allApplications = await Application.find().select(
-  "_id applicationId user"
-);
-
-console.log("All Applications:", allApplications);
+        console.log("Application Found:", application);
 
         if (!application) {
             return res.status(404).json({
@@ -63,6 +58,7 @@ console.log("All Applications:", allApplications);
             payment,
         });
     } catch (err) {
+        console.error("Create Payment Error:", err);
         res.status(500).json({
             success: false,
             message: err.message,

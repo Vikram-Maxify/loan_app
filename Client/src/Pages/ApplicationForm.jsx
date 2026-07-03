@@ -51,9 +51,9 @@ const PURPOSES = [
 ];
 
 const EMPLOYMENT = [
-    { 
-        id: "self", 
-        icon: User, 
+    {
+        id: "self",
+        icon: User,
         label: ["Self", "Employed"],
         controllerKey: "selfEmployed",
         fields: [
@@ -63,9 +63,9 @@ const EMPLOYMENT = [
             { key: "annualTurnover", label: "Annual Turnover", placeholder: "e.g. ₹10,00,000", type: "text" },
         ]
     },
-    { 
-        id: "private", 
-        icon: Building2, 
+    {
+        id: "private",
+        icon: Building2,
         label: ["Employed", "(Private)"],
         controllerKey: "privateEmployee",
         fields: [
@@ -76,9 +76,9 @@ const EMPLOYMENT = [
             { key: "monthlySalary", label: "Monthly Salary", placeholder: "e.g. ₹50,000", type: "text" },
         ]
     },
-    { 
-        id: "government", 
-        icon: Landmark, 
+    {
+        id: "government",
+        icon: Landmark,
         label: ["Government", "Employed"],
         controllerKey: "governmentEmployee",
         fields: [
@@ -89,9 +89,9 @@ const EMPLOYMENT = [
             { key: "payScale", label: "Pay Scale/Grade", placeholder: "e.g. Level 7, PB-3", type: "text" },
         ]
     },
-    { 
-        id: "not_employed", 
-        icon: UserX, 
+    {
+        id: "not_employed",
+        icon: UserX,
         label: ["Not", "Employed"],
         controllerKey: "notEmployed",
         fields: [
@@ -190,15 +190,15 @@ export default function YourLoanApplicationForm() {
                 aadhaarNumber: validateAadhaar(formData.aadhaarNumber),
                 panNumber: validatePAN(formData.panNumber),
                 'relativesReferenceContact.relativesName': validateName(
-                    formData.relativesReferenceContact?.relativesName, 
+                    formData.relativesReferenceContact?.relativesName,
                     "Relative name"
                 ),
                 'relativesReferenceContact.mobileNumber': validatePhone(
-                    formData.relativesReferenceContact?.mobileNumber, 
+                    formData.relativesReferenceContact?.mobileNumber,
                     "Relative mobile number"
                 ),
-                'relativesReferenceContact.relationship': formData.relativesReferenceContact?.relationship 
-                    ? "" 
+                'relativesReferenceContact.relationship': formData.relativesReferenceContact?.relationship
+                    ? ""
                     : "Please select relationship with relative",
             };
 
@@ -292,9 +292,9 @@ export default function YourLoanApplicationForm() {
                 <div className="max-h-[900px] overflow-y-auto">
                     {/* header */}
                     <div className="flex items-center justify-between px-4 py-3.5 bg-white border-b border-[#EEF0F5]">
-                        <button 
-                            type="button" 
-                            aria-label="Go back" 
+                        <button
+                            type="button"
+                            aria-label="Go back"
                             className="text-[#0F1B3D] shrink-0"
                             disabled={isSubmitting}
                         >
@@ -329,8 +329,8 @@ export default function YourLoanApplicationForm() {
                                     <div className="flex flex-col items-center gap-1.5 w-[76px]">
                                         <div
                                             className={`w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold ${i === 0
-                                                    ? "bg-[#2A4BDE] text-white"
-                                                    : "border border-[#D6DCEA] text-[#8A8F9E]"
+                                                ? "bg-[#2A4BDE] text-white"
+                                                : "border border-[#D6DCEA] text-[#8A8F9E]"
                                                 }`}
                                         >
                                             {step.id}
@@ -371,9 +371,9 @@ export default function YourLoanApplicationForm() {
                             </p>
                         </div>
 
-                        <TextField 
-                            label="Full Name" 
-                            icon={<User size={15} />} 
+                        <TextField
+                            label="Full Name"
+                            icon={<User size={15} />}
                             placeholder="Enter your full name"
                             value={formData.fullName}
                             onChange={(val) => handleInputChange('fullName', onlyLetters(val).slice(0, 60))}
@@ -403,9 +403,9 @@ export default function YourLoanApplicationForm() {
                         {fieldErrors.mobileNumber && <p className="text-[10.5px] text-red-600 mt-1">{fieldErrors.mobileNumber}</p>}
                         <div className="h-3.5" />
 
-                        <TextField 
-                            label="Email ID" 
-                            icon={<Mail size={15} />} 
+                        <TextField
+                            label="Email ID"
+                            icon={<Mail size={15} />}
                             placeholder="Enter your email address"
                             value={formData.email}
                             onChange={(val) => handleInputChange('email', val.trim())}
@@ -457,16 +457,14 @@ export default function YourLoanApplicationForm() {
                                         key={p}
                                         onClick={() => setPurpose(p)}
                                         disabled={isSubmitting}
-                                        className={`flex items-start justify-between gap-1 rounded-lg border p-2.5 text-left ${
-                                            selected
+                                        className={`flex items-start justify-between gap-1 rounded-lg border p-2.5 text-left ${selected
                                                 ? "border-[#2A4BDE] bg-[#EAF0FD]"
                                                 : "border-[#E7E9F0] bg-white"
-                                        } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
+                                            } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
                                     >
                                         <span
-                                            className={`text-[10.5px] leading-tight font-semibold ${
-                                                selected ? "text-[#2A4BDE]" : "text-[#0F1B3D]"
-                                            }`}
+                                            className={`text-[10.5px] leading-tight font-semibold ${selected ? "text-[#2A4BDE]" : "text-[#0F1B3D]"
+                                                }`}
                                         >
                                             {p}
                                         </span>
@@ -503,11 +501,10 @@ export default function YourLoanApplicationForm() {
                                             setEmploymentData({});
                                         }}
                                         disabled={isSubmitting}
-                                        className={`flex flex-col rounded-lg border p-2 transition-all ${
-                                            selected
+                                        className={`flex flex-col rounded-lg border p-2 transition-all ${selected
                                                 ? "border-[#2A4BDE] bg-[#EAF0FD] shadow-sm"
                                                 : "border-[#E7E9F0] bg-white hover:border-[#BCC8F0]"
-                                        } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
+                                            } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
                                     >
                                         <div className="flex items-center justify-between mb-2">
                                             <e.icon
@@ -517,9 +514,8 @@ export default function YourLoanApplicationForm() {
                                             <Radio selected={selected} small />
                                         </div>
                                         <span
-                                            className={`text-[9.5px] leading-tight font-semibold text-left ${
-                                                selected ? "text-[#2A4BDE]" : "text-[#0F1B3D]"
-                                            }`}
+                                            className={`text-[9.5px] leading-tight font-semibold text-left ${selected ? "text-[#2A4BDE]" : "text-[#0F1B3D]"
+                                                }`}
                                         >
                                             {e.label[0]}
                                             <br />
@@ -649,7 +645,11 @@ export default function YourLoanApplicationForm() {
                         <div className="mx-4 mt-2 bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5">
                             <p className="text-[12px] text-red-600 flex items-center gap-2">
                                 <span className="text-red-500">⚠</span>
-                                {submitError || error}
+                                {typeof (submitError || error) === "string"
+                                    ? (submitError || error)
+                                    : (submitError || error)?.message ||
+                                    (submitError || error)?.response?.data?.message ||
+                                    "Something went wrong"}
                             </p>
                         </div>
                     )}
@@ -660,11 +660,10 @@ export default function YourLoanApplicationForm() {
                             type="button"
                             onClick={handleContinue}
                             disabled={isSubmitting || loading}
-                            className={`w-full h-12 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${
-                                isSubmitting || loading
-                                    ? "opacity-70 cursor-not-allowed" 
+                            className={`w-full h-12 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${isSubmitting || loading
+                                    ? "opacity-70 cursor-not-allowed"
                                     : "hover:bg-[#1A3BAE] active:scale-[0.99]"
-                            }`}
+                                }`}
                         >
                             {isSubmitting || loading ? (
                                 <>

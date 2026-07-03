@@ -1,21 +1,24 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import API from "./API";
 
+const getErrorMessage = (err) =>
+  err.response?.data?.message ||
+  err.response?.data?.error ||
+  err.message ||
+  "Something went wrong";
+
 // ================= SEND OTP =================
 
 export const sendOTP = createAsyncThunk(
   "auth/sendOTP",
-  async (mobile, thunkAPI) => {
+  async (body, thunkAPI) => {
     try {
-      const { data } = await API.post("/auth/send-otp", {
-        mobile,
-      });
+      const payload = typeof body === "string" ? { mobile: body } : body;
+      const { data } = await API.post("/auth/send-otp", payload);
 
       return data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
-      );
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
@@ -33,26 +36,7 @@ export const verifyOTP = createAsyncThunk(
 
       return data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
-      );
-    }
-  }
-);
-
-// ================= COMPLETE PROFILE =================
-
-export const completeProfile = createAsyncThunk(
-  "auth/completeProfile",
-  async (body, thunkAPI) => {
-    try {
-      const { data } = await API.put("/auth/complete-profile", body);
-
-      return data;
-    } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
-      );
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
@@ -67,9 +51,7 @@ export const acceptTerms = createAsyncThunk(
 
       return data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
-      );
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
@@ -84,9 +66,7 @@ export const getProfile = createAsyncThunk(
 
       return data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
-      );
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
@@ -101,9 +81,7 @@ export const logout = createAsyncThunk(
 
       return data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
-      );
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
@@ -131,6 +109,18 @@ const authSlice = createSlice({
       state.loading = false;
       state.error = null;
       state.success = false;
+    },
+
+    clearAuthError(state) {
+      state.error = null;
+    },
+
+    clearAuthSuccess(state) {
+      state.success = false;
+    },
+
+    resetAuthState() {
+      return initialState;
     },
   },
 
@@ -168,23 +158,6 @@ const authSlice = createSlice({
       })
 
       .addCase(verifyOTP.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-
-      // ================= COMPLETE PROFILE =================
-
-      .addCase(completeProfile.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-
-      .addCase(completeProfile.fulfilled, (state, action) => {
-        state.loading = false;
-        state.user = action.payload.user;
-      })
-
-      .addCase(completeProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
@@ -243,6 +216,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearAuth } = authSlice.actions;
+export const { clearAuth, clearAuthError, clearAuthSuccess, resetAuthState } = authSlice.actions;
 
 export default authSlice.reducer;

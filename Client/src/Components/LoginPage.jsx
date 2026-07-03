@@ -8,9 +8,17 @@ import {
     ShieldCheck,
     Lock,
     ChevronDown,
-    Check,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { sendOTP } from "../redux/slice/authSlice";
+import {
+    onlyDigits,
+    onlyLetters,
+    validateEmail,
+    validateName,
+    validatePhone,
+} from "../utils/validation";
 
 const STEPS = [
     { id: "1", label: "Enter Details" },
@@ -103,16 +111,52 @@ function ClipboardIllustration() {
 }
 
 export default function YourLoanLogin() {
+    const dispatch = useDispatch();
+    const { loading, error } = useSelector((state) => state.auth);
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
     const [focused, setFocused] = useState(null);
+    const [formError, setFormError] = useState(null);
 
     const navigate = useNavigate();
 
-    const handleContinue = () => {
+    const handleContinue = async () => {
         if (isValid) {
-            navigate("/verify-otp");
+            try {
+                const mobile = formattedPhone.replace(/\D/g, "");
+                const validationError =
+                    validateName(name, "Full name") ||
+                    validatePhone(mobile) ||
+                    validateEmail(email);
+
+                if (validationError) {
+                    setFormError(validationError);
+                    return;
+                }
+
+                const result = await dispatch(
+                    sendOTP({
+                        mobile,
+                        fullName: name.trim(),
+                        email: email.trim(),
+                    })
+                ).unwrap();
+
+                localStorage.setItem(
+                    "pendingAuth",
+                    JSON.stringify({
+                        mobile,
+                        fullName: name.trim(),
+                        email: email.trim(),
+                        otp: result.otp,
+                    })
+                );
+
+                navigate("/verify-otp");
+            } catch {
+                // The slice owns the error message shown below the button.
+            }
         }
     };
 
@@ -123,9 +167,10 @@ export default function YourLoanLogin() {
     }, [phone]);
 
     const isValid =
-        name.trim().length > 1 &&
+        !validateName(name, "Full name") &&
         formattedPhone.replace(/\D/g, "").length === 10 &&
-        /\S+@\S+\.\S+/.test(email);
+        !validatePhone(formattedPhone) &&
+        !validateEmail(email);
 
     return (
         <div className="min-h-screen w-full bg-[#EEF0F5] flex items-center justify-center py-10 px-4">
@@ -232,7 +277,10 @@ export default function YourLoanLogin() {
                                     type="text"
                                     placeholder="Enter your full name"
                                     value={name}
-                                    onChange={(e) => setName(e.target.value)}
+                                    onChange={(e) => {
+                                        setName(onlyLetters(e.target.value).slice(0, 60));
+                                        setFormError(null);
+                                    }}
                                     onFocus={() => setFocused("name")}
                                     onBlur={() => setFocused(null)}
                                     className="flex-1 min-w-0 text-[14px] text-[#0F1B3D] placeholder:text-[#B5B9C4] bg-transparent outline-none"
@@ -262,7 +310,10 @@ export default function YourLoanLogin() {
                                     inputMode="numeric"
                                     placeholder="Enter your mobile number"
                                     value={formattedPhone}
-                                    onChange={(e) => setPhone(e.target.value)}
+                                    onChange={(e) => {
+                                        setPhone(onlyDigits(e.target.value, 10));
+                                        setFormError(null);
+                                    }}
                                     onFocus={() => setFocused("phone")}
                                     onBlur={() => setFocused(null)}
                                     className="flex-1 min-w-0 px-3.5 py-3 text-[14px] text-[#0F1B3D] placeholder:text-[#B5B9C4] bg-transparent outline-none"
@@ -287,7 +338,10 @@ export default function YourLoanLogin() {
                                     type="email"
                                     placeholder="Enter your email address"
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    onChange={(e) => {
+                                        setEmail(e.target.value.trim());
+                                        setFormError(null);
+                                    }}
                                     onFocus={() => setFocused("email")}
                                     onBlur={() => setFocused(null)}
                                     className="flex-1 min-w-0 text-[14px] text-[#0F1B3D] placeholder:text-[#B5B9C4] bg-transparent outline-none"
@@ -298,7 +352,7 @@ export default function YourLoanLogin() {
                         {/* Continue Button */}
                         <button
                             type="button"
-                            disabled={!isValid}
+                            disabled={!isValid || loading}
                             onClick={handleContinue}
                             className={`w-full h-12 rounded-xl flex items-center justify-center gap-2 text-[15px] font-semibold transition-all ${
                                 isValid
@@ -306,9 +360,15 @@ export default function YourLoanLogin() {
                                     : "bg-[#2F6BFF] text-white opacity-90"
                             }`}
                         >
-                            Continue
+                            {loading ? "Sending OTP..." : "Continue"}
                             <ArrowRight size={16} />
                         </button>
+
+                        {(formError || error) && (
+                            <p className="text-[11.5px] text-red-600 mt-3 text-center">
+                                {formError || error}
+                            </p>
+                        )}
 
                         {/* Security Text */}
                         <p className="flex items-center justify-center gap-1.5 text-[11.5px] text-[#9AA0AE] mt-3.5">

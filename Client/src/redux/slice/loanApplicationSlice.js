@@ -1,6 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import API from "./API";
 
+const getErrorMessage = (err) =>
+    err.response?.data?.message ||
+    err.response?.data?.error ||
+    err.message ||
+    "Something went wrong";
+
 // ======================================================
 // CREATE LOAN APPLICATION
 // ======================================================
@@ -14,7 +20,7 @@ export const createLoanApplication = createAsyncThunk(
             return data;
         } catch (err) {
             return thunkAPI.rejectWithValue(
-                err.response?.data?.message || err.message
+                getErrorMessage(err)
             );
         }
     }
@@ -28,12 +34,12 @@ export const saveStep1 = createAsyncThunk(
     "loanApplication/saveStep1",
     async (body, thunkAPI) => {
         try {
-            const { data } = await API.put("/loan/step-1", body);
+            const { data } = await API.put("/loan/step1", body);
 
             return data;
         } catch (err) {
             return thunkAPI.rejectWithValue(
-                err.response?.data?.message || err.message
+                getErrorMessage(err)
             );
         }
     }
@@ -47,12 +53,12 @@ export const saveStep2 = createAsyncThunk(
     "loanApplication/saveStep2",
     async (body, thunkAPI) => {
         try {
-            const { data } = await API.put("/loan/step-2", body);
+            const { data } = await API.put("/loan/step2", body);
 
             return data;
         } catch (err) {
             return thunkAPI.rejectWithValue(
-                err.response?.data?.message || err.message
+                getErrorMessage(err)
             );
         }
     }
@@ -66,12 +72,12 @@ export const saveStep3 = createAsyncThunk(
     "loanApplication/saveStep3",
     async (body, thunkAPI) => {
         try {
-            const { data } = await API.put("/loan/step-3", body);
+            const { data } = await API.put("/loan/step3", body);
 
             return data;
         } catch (err) {
             return thunkAPI.rejectWithValue(
-                err.response?.data?.message || err.message
+                getErrorMessage(err)
             );
         }
     }
@@ -85,12 +91,12 @@ export const saveStep4 = createAsyncThunk(
     "loanApplication/saveStep4",
     async (body, thunkAPI) => {
         try {
-            const { data } = await API.put("/loan/step-4", body);
+            const { data } = await API.put("/loan/step4", body);
 
             return data;
         } catch (err) {
             return thunkAPI.rejectWithValue(
-                err.response?.data?.message || err.message
+                getErrorMessage(err)
             );
         }
     }
@@ -104,12 +110,12 @@ export const saveStep5 = createAsyncThunk(
     "loanApplication/saveStep5",
     async (body, thunkAPI) => {
         try {
-            const { data } = await API.put("/loan/step-5", body);
+            const { data } = await API.put("/loan/step5", body);
 
             return data;
         } catch (err) {
             return thunkAPI.rejectWithValue(
-                err.response?.data?.message || err.message
+                getErrorMessage(err)
             );
         }
     }
@@ -128,7 +134,7 @@ export const submitApplication = createAsyncThunk(
             return data;
         } catch (err) {
             return thunkAPI.rejectWithValue(
-                err.response?.data?.message || err.message
+                getErrorMessage(err)
             );
         }
     }
@@ -142,12 +148,12 @@ export const getMyApplications = createAsyncThunk(
     "loanApplication/getMyApplications",
     async (_, thunkAPI) => {
         try {
-            const { data } = await API.get("/loan");
+            const { data } = await API.get("/loan/my-applications");
 
             return data;
         } catch (err) {
             return thunkAPI.rejectWithValue(
-                err.response?.data?.message || err.message
+                getErrorMessage(err)
             );
         }
     }
@@ -166,7 +172,7 @@ export const getApplicationById = createAsyncThunk(
             return data;
         } catch (err) {
             return thunkAPI.rejectWithValue(
-                err.response?.data?.message || err.message
+                getErrorMessage(err)
             );
         }
     }
@@ -185,7 +191,7 @@ export const deleteApplication = createAsyncThunk(
             return id;
         } catch (err) {
             return thunkAPI.rejectWithValue(
-                err.response?.data?.message || err.message
+                getErrorMessage(err)
             );
         }
     }
@@ -224,6 +230,10 @@ const loanApplicationSlice = createSlice({
 
         resetLoanSuccess(state) {
             state.success = false;
+        },
+
+        resetLoanApplicationState() {
+            return initialState;
         },
     },
 
@@ -424,6 +434,7 @@ export const {
     clearApplications,
     clearLoanError,
     resetLoanSuccess,
+    resetLoanApplicationState,
 } = loanApplicationSlice.actions;
 
 export default loanApplicationSlice.reducer;

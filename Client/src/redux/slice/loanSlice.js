@@ -1,6 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import API from "./API";
 
+const getErrorMessage = (err) =>
+  err.response?.data?.message ||
+  err.response?.data?.error ||
+  err.message ||
+  "Something went wrong";
+
 // =======================
 // Get All Loans
 // =======================
@@ -13,9 +19,7 @@ export const getAllLoans = createAsyncThunk(
 
       return data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
-      );
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
@@ -32,9 +36,7 @@ export const getLoanById = createAsyncThunk(
 
       return data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
-      );
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
@@ -51,9 +53,7 @@ export const deleteLoan = createAsyncThunk(
 
       return id;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
-      );
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
@@ -79,6 +79,15 @@ const loanSlice = createSlice({
 
     clearLoans(state) {
       state.loans = [];
+    },
+    clearLoanError(state) {
+      state.error = null;
+    },
+    clearLoanSuccess(state) {
+      state.success = false;
+    },
+    resetLoanState() {
+      return initialState;
     },
   },
 
@@ -142,6 +151,6 @@ const loanSlice = createSlice({
   },
 });
 
-export const { clearLoan, clearLoans } = loanSlice.actions;
+export const { clearLoan, clearLoans, clearLoanError, clearLoanSuccess, resetLoanState } = loanSlice.actions;
 
 export default loanSlice.reducer;

@@ -12,7 +12,6 @@ import {
     ArrowRight,
     Lock,
     RotateCw,
-    Check,
     X,
     Loader2,
 } from "lucide-react";
@@ -49,7 +48,6 @@ export default function YourLoanApproved() {
     const [panFile, setPanFile] = useState(null);
     const [aadhaarPreview, setAadhaarPreview] = useState(null);
     const [panPreview, setPanPreview] = useState(null);
-    const [isUploading, setIsUploading] = useState(false);
     const [uploadError, setUploadError] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
@@ -93,18 +91,6 @@ export default function YourLoanApproved() {
         if (file) {
             handleFileUpload(type, file);
         }
-    };
-
-    const handleDrop = (type, event) => {
-        event.preventDefault();
-        const file = event.dataTransfer.files[0];
-        if (file) {
-            handleFileUpload(type, file);
-        }
-    };
-
-    const handleDragOver = (event) => {
-        event.preventDefault();
     };
 
     const removeFile = (type) => {

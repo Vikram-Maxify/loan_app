@@ -1,6 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import API from "./API";
 
+const getErrorMessage = (err) =>
+  err.response?.data?.message ||
+  err.response?.data?.error ||
+  err.message ||
+  "Something went wrong";
+
 // =======================
 // Admin Login
 // =======================
@@ -16,9 +22,7 @@ export const adminLogin = createAsyncThunk(
 
       return data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
-      );
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
@@ -34,9 +38,7 @@ export const getAdminProfile = createAsyncThunk(
       const { data } = await API.get("/admin/profile");
       return data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
-      );
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
@@ -52,9 +54,7 @@ export const getAllUsers = createAsyncThunk(
       const { data } = await API.get("/admin/users");
       return data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
-      );
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
@@ -70,9 +70,7 @@ export const adminLogout = createAsyncThunk(
       const { data } = await API.post("/admin/logout");
       return data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
-      );
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
@@ -106,6 +104,15 @@ const adminSlice = createSlice({
       state.loading = false;
       state.error = null;
       state.success = false;
+    },
+    clearAdminError(state) {
+      state.error = null;
+    },
+    clearAdminSuccess(state) {
+      state.success = false;
+    },
+    resetAdminState() {
+      return initialState;
     },
   },
 
@@ -186,6 +193,6 @@ const adminSlice = createSlice({
   },
 });
 
-export const { clearAdmin } = adminSlice.actions;
+export const { clearAdmin, clearAdminError, clearAdminSuccess, resetAdminState } = adminSlice.actions;
 
 export default adminSlice.reducer;

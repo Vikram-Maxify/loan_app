@@ -5,8 +5,11 @@ import {
     ChevronDown, Bell, Search, UserCircle
 } from 'lucide-react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { adminLogout } from '../../redux/slice/adminSlice';
 
 const AdminLayout = () => {
+    const dispatch = useDispatch();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const location = useLocation();
 
@@ -64,7 +67,11 @@ const AdminLayout = () => {
 
                 {/* Sidebar footer */}
                 <div className="p-4 border-t border-gray-200">
-                    <button className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors">
+                    <button
+                        type="button"
+                        onClick={() => dispatch(adminLogout())}
+                        className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
+                    >
                         <LogOut className="w-5 h-5" />
                         <span className="font-medium">Logout</span>
                     </button>

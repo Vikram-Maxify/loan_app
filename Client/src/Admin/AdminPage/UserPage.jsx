@@ -1,88 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import {
     Search, Filter, CheckCircle, XCircle, Clock,
-    UserCircle, Mail, Phone, Calendar, Shield
+    UserCircle, Phone, Calendar
 } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
+import { getAllUsers } from '../../redux/slice/adminSlice';
 
 const UsersPage = () => {
-    // Sample user data with verification steps
-    const [users] = useState([
-        {
-            id: 1,
-            name: 'Rahul Sharma',
-            email: 'rahul.sharma@email.com',
-            phone: '+91 98765 43210',
-            joinedDate: '2026-01-15',
-            verificationSteps: {
-                emailVerified: true,
-                phoneVerified: true,
-                identityVerified: false,
-                addressVerified: false,
-                kycVerified: false,
-            },
-            status: 'active'
-        },
-        {
-            id: 2,
-            name: 'Priya Patel',
-            email: 'priya.patel@email.com',
-            phone: '+91 87654 32109',
-            joinedDate: '2026-02-20',
-            verificationSteps: {
-                emailVerified: true,
-                phoneVerified: true,
-                identityVerified: true,
-                addressVerified: true,
-                kycVerified: false,
-            },
-            status: 'pending'
-        },
-        {
-            id: 3,
-            name: 'Amit Kumar',
-            email: 'amit.kumar@email.com',
-            phone: '+91 76543 21098',
-            joinedDate: '2026-03-10',
-            verificationSteps: {
-                emailVerified: true,
-                phoneVerified: false,
-                identityVerified: false,
-                addressVerified: false,
-                kycVerified: false,
-            },
-            status: 'inactive'
-        },
-        {
-            id: 4,
-            name: 'Sneha Reddy',
-            email: 'sneha.reddy@email.com',
-            phone: '+91 65432 10987',
-            joinedDate: '2026-03-25',
-            verificationSteps: {
-                emailVerified: true,
-                phoneVerified: true,
-                identityVerified: true,
-                addressVerified: true,
-                kycVerified: true,
-            },
-            status: 'verified'
-        },
-        {
-            id: 5,
-            name: 'Vikram Singh',
-            email: 'vikram.singh@email.com',
-            phone: '+91 54321 09876',
-            joinedDate: '2026-04-01',
-            verificationSteps: {
-                emailVerified: false,
-                phoneVerified: false,
-                identityVerified: false,
-                addressVerified: false,
-                kycVerified: false,
-            },
-            status: 'new'
-        },
-    ]);
+    const dispatch = useDispatch();
+    const { users, loading, error } = useSelector((state) => state.admin);
+
+    useEffect(() => {
+        dispatch(getAllUsers());
+    }, [dispatch]);
 
     // Calculate verification progress
     const getVerificationProgress = (steps) => {
@@ -156,13 +86,40 @@ const UsersPage = () => {
 
             {/* Users Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
-                {users.map((user) => {
-                    const progress = getVerificationProgress(user.verificationSteps);
-                    const statusBadge = getStatusBadge(user.status);
+                {loading && (
+                    <div className="col-span-full bg-white rounded-xl border border-gray-200 p-6 text-sm text-gray-500">
+                        Loading users...
+                    </div>
+                )}
+
+                {error && (
+                    <div className="col-span-full bg-red-50 rounded-xl border border-red-200 p-6 text-sm text-red-600">
+                        {error}
+                    </div>
+                )}
+
+                {!loading && !error && users.map((user) => {
+                    const userView = {
+                        ...user,
+                        id: user._id,
+                        name: user.fullName || user.mobile || 'Unnamed User',
+                        phone: user.mobile ? `+91 ${user.mobile}` : 'Not provided',
+                        joinedDate: user.createdAt,
+                        status: user.isVerified ? 'verified' : 'pending',
+                        verificationSteps: {
+                            emailVerified: Boolean(user.email),
+                            phoneVerified: Boolean(user.mobile && user.isVerified),
+                            identityVerified: false,
+                            addressVerified: false,
+                            kycVerified: false,
+                        },
+                    };
+                    const progress = getVerificationProgress(userView.verificationSteps);
+                    const statusBadge = getStatusBadge(userView.status);
                     const StatusIcon = statusBadge.icon;
 
                     return (
-                        <div key={user.id} className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow p-5">
+                        <div key={userView.id} className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow p-5">
                             {/* User Header */}
                             <div className="flex items-start justify-between mb-4">
                                 <div className="flex items-center gap-3">
@@ -170,13 +127,13 @@ const UsersPage = () => {
                                         <UserCircle className="w-8 h-8 text-indigo-600" />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-gray-800">{user.name}</h3>
-                                        <p className="text-sm text-gray-500">{user.email}</p>
+                                        <h3 className="font-semibold text-gray-800">{userView.name}</h3>
+                                        <p className="text-sm text-gray-500">{user.email || 'No email provided'}</p>
                                     </div>
                                 </div>
                                 <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusBadge.color}`}>
                                     <StatusIcon className="w-3.5 h-3.5" />
-                                    {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                                    {userView.status.charAt(0).toUpperCase() + userView.status.slice(1)}
                                 </span>
                             </div>
 
@@ -184,11 +141,11 @@ const UsersPage = () => {
                             <div className="space-y-2 text-sm mb-4">
                                 <div className="flex items-center gap-2 text-gray-600">
                                     <Phone className="w-4 h-4 text-gray-400" />
-                                    <span>{user.phone}</span>
+                                    <span>{userView.phone}</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-gray-600">
                                     <Calendar className="w-4 h-4 text-gray-400" />
-                                    <span>Joined: {new Date(user.joinedDate).toLocaleDateString('en-IN', {
+                                    <span>Joined: {new Date(userView.joinedDate).toLocaleDateString('en-IN', {
                                         day: '2-digit',
                                         month: 'short',
                                         year: 'numeric'
@@ -215,7 +172,7 @@ const UsersPage = () => {
 
                                 {/* Verification Steps */}
                                 <div className="grid grid-cols-5 gap-1 mt-3">
-                                    {Object.entries(user.verificationSteps).map(([step, completed]) => {
+                                    {Object.entries(userView.verificationSteps).map(([step, completed]) => {
                                         const { icon: Icon, color } = getStepStatus(completed);
                                         return (
                                             <div key={step} className="flex flex-col items-center">

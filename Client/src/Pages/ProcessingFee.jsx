@@ -4,11 +4,7 @@ import {
     ArrowRight,
     ShieldCheck,
     Info,
-    IndianRupee,
-    Percent,
     ReceiptText,
-    CircleCheckBig,
-    BadgeCheck,
     Lock,
     RotateCw,
     Wallet,
@@ -16,6 +12,9 @@ import {
     Building2,
     QrCode,
 } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { createPayment } from "../redux/slice/paymentSlice";
+import { createLoanApplication } from "../redux/slice/loanApplicationSlice";
 
 const PAYMENT_METHODS = [
     { id: "upi", label: "UPI", icon: QrCode },
@@ -30,7 +29,34 @@ const BREAKDOWN = [
 ];
 
 export default function YourLoanProcessingFee() {
+    const dispatch = useDispatch();
+    const { loading, error } = useSelector((state) => state.payment);
+    const { loading: loanLoading, error: loanError } = useSelector((state) => state.loanApplication);
     const [selectedMethod, setSelectedMethod] = useState("upi");
+
+    const handlePayNow = async () => {
+        let loanApplication = JSON.parse(localStorage.getItem("loanApplication") || "{}");
+        let applicationId = loanApplication.applicationId;
+
+        try {
+            if (!applicationId) {
+                const response = await dispatch(createLoanApplication()).unwrap();
+                loanApplication = response.application;
+                applicationId = loanApplication.applicationId;
+                localStorage.setItem("loanApplication", JSON.stringify(loanApplication));
+            }
+
+            await dispatch(
+                createPayment({
+                    applicationId,
+                    amount: 259,
+                    paymentMethod: selectedMethod,
+                })
+            ).unwrap();
+        } catch {
+            // The slices own the displayed error state.
+        }
+    };
 
     return (
         <div className="min-h-screen w-full bg-[#E7E4DA] flex items-center justify-center py-10 px-4">
@@ -176,12 +202,20 @@ export default function YourLoanProcessingFee() {
                     <div className="px-4 mt-5">
                         <button
                             type="button"
-                            className="w-full h-12 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[14.5px] flex items-center justify-center gap-2 hover:bg-[#1A3BAE] transition-colors"
+                            onClick={handlePayNow}
+                            disabled={loading || loanLoading}
+                            className="w-full h-12 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[14.5px] flex items-center justify-center gap-2 hover:bg-[#1A3BAE] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            Pay ₹ 259 Now
+                            {loading || loanLoading ? "Creating Payment..." : "Pay ₹ 259 Now"}
                             <ArrowRight size={16} />
                         </button>
                     </div>
+
+                    {(error || loanError) && (
+                        <p className="text-[11px] text-red-600 text-center mt-3 px-4">
+                            {error || loanError}
+                        </p>
+                    )}
 
                     <p className="flex items-center justify-center gap-1.5 text-[11px] text-[#8A8F9E] py-4">
                         <Lock size={11} />

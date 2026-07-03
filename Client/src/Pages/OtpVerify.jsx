@@ -6,6 +6,10 @@ import {
     Check,
     Loader2,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { verifyOTP } from "../redux/slice/authSlice";
+import { onlyDigits, validateOTP } from "../utils/validation";
 
 const STEPS = [
     { id: "1", label: "Enter Details" },
@@ -49,15 +53,19 @@ function LoanIcon() {
 }
 
 export default function YourLoanOtpVerify() {
-    const [otp, setOtp] = useState(["", "", "", ""]);
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const { loading, error: authError } = useSelector((state) => state.auth);
+    const pendingAuth = JSON.parse(localStorage.getItem("pendingAuth") || "{}");
+    const [otp, setOtp] = useState(["", "", "", "", "", ""]);
     const [status, setStatus] = useState("waiting"); // waiting | filling | verifying | verified | redirecting
     const [timer, setTimer] = useState(30);
     const generatedOtp = useRef(
-        String(Math.floor(1000 + Math.random() * 9000)).split("")
+        String(pendingAuth.otp || Math.floor(100000 + Math.random() * 900000)).split("")
     );
     const [error, setError] = useState(null);
 
-    const phoneNumber = "98765 43210";
+    const phoneNumber = pendingAuth.mobile || "";
 
     // simulate OTP arriving and auto-filling digit by digit
     useEffect(() => {
@@ -76,7 +84,7 @@ export default function YourLoanOtpVerify() {
         return () => clearTimeout(startDelay);
     }, []);
 
-    // auto-submit once all 4 digits are filled
+    // auto-submit once all digits are filled
     useEffect(() => {
         if (otp.every((d) => d !== "") && status === "filling") {
             const submitDelay = setTimeout(() => {
@@ -85,6 +93,7 @@ export default function YourLoanOtpVerify() {
             }, 400);
             return () => clearTimeout(submitDelay);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [otp, status]);
 
     // resend countdown
@@ -94,67 +103,43 @@ export default function YourLoanOtpVerify() {
         return () => clearTimeout(t);
     }, [timer]);
 
-    // Realistic API call simulation
     const verifyOtp = async (enteredOtp) => {
         try {
-            // Simulate API request
             setError(null);
-
-            // This is where you would make your actual API call
-            // For example:
-            // const response = await fetch('/api/verify-otp', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({ otp: enteredOtp, phone: phoneNumber })
-            // });
-            // const data = await response.json();
-
-            // Simulating API delay
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-
-            // Simulate API response
-            const success = true; // In real scenario, this would come from the API
-
-            if (success) {
-                setStatus("verified");
-
-                // Store user session data (simulating API response)
-                const userData = {
-                    id: "user_" + Date.now(),
-                    name: "John Doe",
-                    phone: phoneNumber,
-                    email: "john@example.com",
-                    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." // Simulated JWT
-                };
-
-                // Store in localStorage/sessionStorage
-                localStorage.setItem("user", JSON.stringify(userData));
-                localStorage.setItem("isAuthenticated", "true");
-
-                // Wait a moment to show the verified state before redirecting
-                setTimeout(() => {
-                    setStatus("redirecting");
-                    // Navigate to home page
-                    window.location.href = "/apply-form";
-                }, 1200);
-            } else {
-                setError("Invalid OTP. Please try again.");
+            const otpError = validateOTP(enteredOtp, 6);
+            if (otpError) {
+                setError(otpError);
                 setStatus("filling");
-                setOtp(["", "", "", ""]);
+                return;
             }
+            const data = await dispatch(
+                verifyOTP({
+                    mobile: phoneNumber,
+                    otp: enteredOtp,
+                })
+            ).unwrap();
+
+            setStatus("verified");
+            localStorage.setItem("user", JSON.stringify(data.user));
+            localStorage.setItem("isAuthenticated", "true");
+
+            setTimeout(() => {
+                setStatus("redirecting");
+                navigate("/apply-form");
+            }, 1200);
         } catch (err) {
-            setError("Something went wrong. Please try again.");
+            setError(err || "Something went wrong. Please try again.");
             setStatus("filling");
-            setOtp(["", "", "", ""]);
+            setOtp(["", "", "", "", "", ""]);
         }
     };
 
     // Manual OTP input handler (for users who want to type manually)
     const handleOtpChange = (index, value) => {
-        if (status === "verifying" || status === "verified" || status === "redirecting") return;
+        if (loading || status === "verifying" || status === "verified" || status === "redirecting") return;
 
         const newOtp = [...otp];
-        newOtp[index] = value.slice(0, 1);
+        newOtp[index] = onlyDigits(value, 1);
         setOtp(newOtp);
         setError(null);
 
@@ -178,10 +163,10 @@ export default function YourLoanOtpVerify() {
         setTimer(30);
         setError(null);
         setStatus("waiting");
-        setOtp(["", "", "", ""]);
+        setOtp(["", "", "", "", "", ""]);
 
         // Generate new OTP
-        generatedOtp.current = String(Math.floor(1000 + Math.random() * 9000)).split("");
+        generatedOtp.current = String(pendingAuth.otp || Math.floor(100000 + Math.random() * 900000)).split("");
 
         // Resend simulation
         setTimeout(() => {
@@ -282,7 +267,7 @@ export default function YourLoanOtpVerify() {
                             Enter the OTP
                         </h1>
                         <p className="text-[13.5px] text-[#6B7080] leading-relaxed">
-                            We&apos;ve sent a 4-digit code to{" "}
+                            We&apos;ve sent a 6-digit code to{" "}
                             <span className="font-semibold text-[#0F1B3D]">
                                 +91 {phoneNumber}
                             </span>
@@ -302,8 +287,8 @@ export default function YourLoanOtpVerify() {
                                     value={digit}
                                     onChange={(e) => handleOtpChange(i, e.target.value)}
                                     onKeyDown={(e) => handleKeyDown(i, e)}
-                                    disabled={status === "verifying" || status === "verified" || status === "redirecting"}
-                                    className={`w-14 h-14 rounded-xl border flex items-center justify-center text-[22px] font-semibold text-[#0F1B3D] transition-all text-center outline-none
+                                    disabled={loading || status === "verifying" || status === "verified" || status === "redirecting"}
+                                    className={`w-11 h-14 rounded-xl border flex items-center justify-center text-[22px] font-semibold text-[#0F1B3D] transition-all text-center outline-none
                                         ${status === "redirecting" ? "border-[#2F6BFF] bg-[#DCE8FF]" : ""}
                                         ${digit
                                             ? "border-[#2F6BFF] bg-[#F5F8FF]"
@@ -340,9 +325,9 @@ export default function YourLoanOtpVerify() {
                                     Redirecting to dashboard&hellip;
                                 </p>
                             )}
-                            {error && (
+                            {(error || authError) && (
                                 <p className="text-[12px] text-red-500 font-medium">
-                                    {error}
+                                    {error || authError}
                                 </p>
                             )}
                         </div>

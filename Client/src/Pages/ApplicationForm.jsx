@@ -16,14 +16,24 @@ import {
     Landmark,
     UserX,
     Lock,
-    Check,
     RotateCw,
     Loader2,
-    Store,
-    Factory,
-    Building,
-    UserCircle,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { createApplication, setApplicationFormDraft } from "../redux/slice/applicationSlice";
+import {
+    onlyDigits,
+    onlyLetters,
+    trimSpaces,
+    uppercaseAlnum,
+    validateAadhaar,
+    validateEmail,
+    validateIncome,
+    validateName,
+    validatePAN,
+    validatePhone,
+} from "../utils/validation";
 
 const STEPS = [
     { id: "1", label: "Personal Details" },
@@ -90,13 +100,17 @@ const EMPLOYMENT = [
 ];
 
 export default function YourLoanApplicationForm() {
-    const [purpose, setPurpose] = useState("Business Expansion");
-    const [employment, setEmployment] = useState("self");
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const { loading, error, formDraft } = useSelector((state) => state.application);
+    const [purpose, setPurpose] = useState(formDraft?.purpose || "Business Expansion");
+    const [employment, setEmployment] = useState(formDraft?.employment || "self");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState(null);
+    const [fieldErrors, setFieldErrors] = useState({});
 
     // Form data state
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState(formDraft?.formData || {
         fullName: "",
         mobile: "",
         email: "",
@@ -107,15 +121,17 @@ export default function YourLoanApplicationForm() {
         relationship: "",
     });
 
-    const [employmentData, setEmploymentData] = useState({});
+    const [employmentData, setEmploymentData] = useState(formDraft?.employmentData || {});
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+        setFieldErrors((prev) => ({ ...prev, [field]: "" }));
         setSubmitError(null);
     };
 
     const handleEmploymentFieldChange = (field, value) => {
         setEmploymentData(prev => ({ ...prev, [field]: value }));
+        setFieldErrors((prev) => ({ ...prev, [field]: "" }));
         setSubmitError(null);
     };
 
@@ -127,102 +143,88 @@ export default function YourLoanApplicationForm() {
             setIsSubmitting(true);
             setSubmitError(null);
 
-            // Validate employment fields
-            const allFieldsFilled = selectedEmployment.fields.every(field => {
-                return employmentData[field.label] && employmentData[field.label].trim();
+            const nextErrors = {
+                fullName: validateName(formData.fullName, "Full name"),
+                mobile: validatePhone(formData.mobile),
+                email: validateEmail(formData.email),
+                aadhaar: validateAadhaar(formData.aadhaar),
+                pan: validatePAN(formData.pan),
+                relativeName: validateName(formData.relativeName, "Relative name"),
+                relativeMobile: validatePhone(formData.relativeMobile, "Relative mobile number"),
+                relationship: formData.relationship ? "" : "Please select relationship with relative",
+            };
+
+            selectedEmployment.fields.forEach((field) => {
+                const value = employmentData[field.label] || "";
+                if (!String(value).trim()) {
+                    nextErrors[field.label] = `${field.label} is required`;
+                } else if (/income|salary|turnover|revenue|earnings/i.test(field.label)) {
+                    nextErrors[field.label] = validateIncome(value);
+                } else if (/years/i.test(field.label) && Number(value) < 0) {
+                    nextErrors[field.label] = `${field.label} cannot be negative`;
+                } else {
+                    nextErrors[field.label] = "";
+                }
             });
 
-            if (!allFieldsFilled) {
-                setSubmitError("Please fill all the employment details");
+            const firstError = Object.values(nextErrors).find(Boolean);
+            setFieldErrors(nextErrors);
+            if (firstError) {
+                setSubmitError(firstError);
                 setIsSubmitting(false);
                 return;
             }
 
-            // Prepare data for API
+            const employmentLabel = `${selectedEmployment.label[0]} ${selectedEmployment.label[1]}`;
             const payload = {
-                personalDetails: {
-                    fullName: formData.fullName,
-                    mobile: formData.mobile,
-                    email: formData.email,
-                    aadhaar: formData.aadhaar,
-                    pan: formData.pan,
-                },
-                loanPurpose: purpose,
-                employmentDetails: {
-                    type: selectedEmployment.label[0] + " " + selectedEmployment.label[1],
-                    details: employmentData,
-                },
-                reference: {
-                    name: formData.relativeName,
-                    mobile: formData.relativeMobile,
+                fullName: formData.fullName.trim(),
+                mobileNumber: formData.mobile.replace(/\D/g, ""),
+                email: formData.email.trim(),
+                aadhaarNumber: formData.aadhaar.replace(/\D/g, ""),
+                panNumber: formData.pan.trim().toUpperCase(),
+                purpose,
+                forPurposeOfLoan: purpose,
+                relativesReferenceContact: {
                     relationship: formData.relationship,
+                    relativesName: formData.relativeName.trim(),
+                    mobileNumber: formData.relativeMobile.replace(/\D/g, ""),
                 },
-                timestamp: new Date().toISOString(),
+                whatDoYouDo: employmentLabel,
             };
 
-            // Simulate network delay
-            await new Promise((resolve) => setTimeout(resolve, 2000));
+            dispatch(
+                setApplicationFormDraft({
+                    formData: {
+                        fullName: trimSpaces(formData.fullName),
+                        mobile: formData.mobile.replace(/\D/g, ""),
+                        email: formData.email.trim().toLowerCase(),
+                        aadhaar: formData.aadhaar.replace(/\D/g, ""),
+                        pan: formData.pan.trim().toUpperCase(),
+                        relativeName: trimSpaces(formData.relativeName),
+                        relativeMobile: formData.relativeMobile.replace(/\D/g, ""),
+                        relationship: formData.relationship,
+                    },
+                    purpose,
+                    employment,
+                    employmentLabel,
+                    employmentData,
+                })
+            );
 
-            // Simulate API response
-            const success = true;
-            const applicationId = "APP_" + Date.now();
+            const response = await dispatch(createApplication(payload)).unwrap();
+            const application = response.data;
 
-            if (success) {
-                // Store application data locally
-                localStorage.setItem("loanApplication", JSON.stringify({
-                    ...payload,
-                    applicationId,
-                    status: "pending",
-                    submittedAt: new Date().toISOString(),
-                }));
-
-                // Navigate to CIBIL check page
-                window.location.href = "/cibilcheck";
-            } else {
-                setSubmitError("Failed to submit application. Please try again.");
-            }
+            localStorage.setItem("application", JSON.stringify(application));
+            localStorage.setItem("applicationId", application._id);
+            navigate("/cibilcheck");
         } catch (error) {
-            setSubmitError("Network error. Please check your connection and try again.");
+            setSubmitError(error || "Network error. Please check your connection and try again.");
         } finally {
             setIsSubmitting(false);
         }
     };
 
     const handleContinue = () => {
-        // Validate required fields
-        if (!formData.fullName.trim()) {
-            setSubmitError("Please enter your full name");
-            return;
-        }
-        if (!formData.mobile.trim() || formData.mobile.replace(/\D/g, "").length < 10) {
-            setSubmitError("Please enter a valid mobile number");
-            return;
-        }
-        if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) {
-            setSubmitError("Please enter a valid email address");
-            return;
-        }
-        if (!formData.aadhaar.trim() || formData.aadhaar.replace(/\D/g, "").length < 12) {
-            setSubmitError("Please enter a valid Aadhaar number");
-            return;
-        }
-        if (!formData.pan.trim() || formData.pan.length < 10) {
-            setSubmitError("Please enter a valid PAN number");
-            return;
-        }
-        if (!formData.relativeName.trim()) {
-            setSubmitError("Please enter relative's name");
-            return;
-        }
-        if (!formData.relativeMobile.trim() || formData.relativeMobile.replace(/\D/g, "").length < 10) {
-            setSubmitError("Please enter a valid relative's mobile number");
-            return;
-        }
-        if (!formData.relationship) {
-            setSubmitError("Please select relationship with relative");
-            return;
-        }
-
         submitApplication();
     };
 
@@ -318,7 +320,8 @@ export default function YourLoanApplicationForm() {
                             icon={<User size={15} />} 
                             placeholder="Enter your full name"
                             value={formData.fullName}
-                            onChange={(val) => handleInputChange('fullName', val)}
+                            onChange={(val) => handleInputChange('fullName', onlyLetters(val).slice(0, 60))}
+                            error={fieldErrors.fullName}
                         />
                         <div className="h-3.5" />
 
@@ -335,10 +338,13 @@ export default function YourLoanApplicationForm() {
                                 type="tel"
                                 placeholder="Enter your mobile number"
                                 value={formData.mobile}
-                                onChange={(e) => handleInputChange('mobile', e.target.value)}
-                                className="flex-1 min-w-0 px-3 py-2.5 text-[13px] text-[#0F1B3D] placeholder:text-[#B5B9C4] outline-none bg-transparent"
+                                onChange={(e) => handleInputChange('mobile', onlyDigits(e.target.value, 10))}
+                                maxLength={10}
+                                inputMode="numeric"
+                                className={`flex-1 min-w-0 px-3 py-2.5 text-[13px] text-[#0F1B3D] placeholder:text-[#B5B9C4] outline-none bg-transparent ${fieldErrors.mobile ? "border-red-300" : ""}`}
                             />
                         </div>
+                        {fieldErrors.mobile && <p className="text-[10.5px] text-red-600 mt-1">{fieldErrors.mobile}</p>}
                         <div className="h-3.5" />
 
                         <TextField 
@@ -346,7 +352,8 @@ export default function YourLoanApplicationForm() {
                             icon={<Mail size={15} />} 
                             placeholder="Enter your email address"
                             value={formData.email}
-                            onChange={(val) => handleInputChange('email', val)}
+                            onChange={(val) => handleInputChange('email', val.trim())}
+                            error={fieldErrors.email}
                         />
                         <div className="h-3.5" />
                         <TextField
@@ -354,7 +361,10 @@ export default function YourLoanApplicationForm() {
                             icon={<CreditCard size={15} />}
                             placeholder="Enter 12-digit Aadhaar number"
                             value={formData.aadhaar}
-                            onChange={(val) => handleInputChange('aadhaar', val)}
+                            onChange={(val) => handleInputChange('aadhaar', onlyDigits(val, 12))}
+                            inputMode="numeric"
+                            maxLength={12}
+                            error={fieldErrors.aadhaar}
                         />
                         <div className="h-3.5" />
                         <TextField
@@ -362,7 +372,9 @@ export default function YourLoanApplicationForm() {
                             icon={<CreditCard size={15} />}
                             placeholder="Enter 10-character PAN number"
                             value={formData.pan}
-                            onChange={(val) => handleInputChange('pan', val)}
+                            onChange={(val) => handleInputChange('pan', uppercaseAlnum(val, 10))}
+                            maxLength={10}
+                            error={fieldErrors.pan}
                         />
                     </div>
 
@@ -478,10 +490,19 @@ export default function YourLoanApplicationForm() {
                                                 type={field.type}
                                                 placeholder={field.placeholder}
                                                 value={employmentData[field.label] || ""}
-                                                onChange={(e) => handleEmploymentFieldChange(field.label, e.target.value)}
+                                                onChange={(e) => {
+                                                    const value = /income|salary|turnover|revenue|earnings|years/i.test(field.label)
+                                                        ? onlyDigits(e.target.value, 10)
+                                                        : e.target.value;
+                                                    handleEmploymentFieldChange(field.label, value);
+                                                }}
                                                 disabled={isSubmitting}
-                                                className="w-full rounded-xl border border-[#E7E9F0] px-3 py-2.5 text-[13px] text-[#0F1B3D] placeholder:text-[#B5B9C4] outline-none bg-white disabled:opacity-50 focus:border-[#2A4BDE] focus:ring-1 focus:ring-[#2A4BDE]/20"
+                                                inputMode={/income|salary|turnover|revenue|earnings|years/i.test(field.label) ? "numeric" : undefined}
+                                                className={`w-full rounded-xl border px-3 py-2.5 text-[13px] text-[#0F1B3D] placeholder:text-[#B5B9C4] outline-none bg-white disabled:opacity-50 focus:border-[#2A4BDE] focus:ring-1 focus:ring-[#2A4BDE]/20 ${fieldErrors[field.label] ? "border-red-300" : "border-[#E7E9F0]"}`}
                                             />
+                                            {fieldErrors[field.label] && (
+                                                <p className="text-[10.5px] text-red-600 mt-1">{fieldErrors[field.label]}</p>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
@@ -517,6 +538,7 @@ export default function YourLoanApplicationForm() {
                             <option value="Friend">Friend</option>
                             <option value="Colleague">Colleague</option>
                         </select>
+                        {fieldErrors.relationship && <p className="text-[10.5px] text-red-600 mt-1">{fieldErrors.relationship}</p>}
                         <div className="h-3.5" />
 
                         <label className="text-[11.5px] font-semibold text-[#0F1B3D] mb-1.5 block">
@@ -525,10 +547,11 @@ export default function YourLoanApplicationForm() {
                         <input
                             placeholder="Enter full name"
                             value={formData.relativeName}
-                            onChange={(e) => handleInputChange('relativeName', e.target.value)}
+                            onChange={(e) => handleInputChange('relativeName', onlyLetters(e.target.value).slice(0, 60))}
                             disabled={isSubmitting}
-                            className="w-full rounded-xl border border-[#E7E9F0] px-3 py-2.5 text-[13px] text-[#0F1B3D] placeholder:text-[#B5B9C4] outline-none bg-white disabled:opacity-50"
+                            className={`w-full rounded-xl border px-3 py-2.5 text-[13px] text-[#0F1B3D] placeholder:text-[#B5B9C4] outline-none bg-white disabled:opacity-50 ${fieldErrors.relativeName ? "border-red-300" : "border-[#E7E9F0]"}`}
                         />
+                        {fieldErrors.relativeName && <p className="text-[10.5px] text-red-600 mt-1">{fieldErrors.relativeName}</p>}
                         <div className="h-3.5" />
 
                         <label className="text-[11.5px] font-semibold text-[#0F1B3D] mb-1.5 block">
@@ -543,19 +566,22 @@ export default function YourLoanApplicationForm() {
                             <input
                                 placeholder="Enter mobile number"
                                 value={formData.relativeMobile}
-                                onChange={(e) => handleInputChange('relativeMobile', e.target.value)}
+                                onChange={(e) => handleInputChange('relativeMobile', onlyDigits(e.target.value, 10))}
                                 disabled={isSubmitting}
+                                maxLength={10}
+                                inputMode="numeric"
                                 className="flex-1 min-w-0 px-3 py-2.5 text-[13px] text-[#0F1B3D] placeholder:text-[#B5B9C4] outline-none bg-transparent disabled:opacity-50"
                             />
                         </div>
+                        {fieldErrors.relativeMobile && <p className="text-[10.5px] text-red-600 mt-1">{fieldErrors.relativeMobile}</p>}
                     </div>
 
                     {/* Error message */}
-                    {submitError && (
+                    {(submitError || error) && (
                         <div className="mx-4 mt-2 bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5">
                             <p className="text-[12px] text-red-600 flex items-center gap-2">
                                 <span className="text-red-500">⚠</span>
-                                {submitError}
+                                {submitError || error}
                             </p>
                         </div>
                     )}
@@ -565,14 +591,14 @@ export default function YourLoanApplicationForm() {
                         <button
                             type="button"
                             onClick={handleContinue}
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || loading}
                             className={`w-full h-12 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${
-                                isSubmitting 
+                                isSubmitting || loading
                                     ? "opacity-70 cursor-not-allowed" 
                                     : "hover:bg-[#1A3BAE] active:scale-[0.99]"
                             }`}
                         >
-                            {isSubmitting ? (
+                            {isSubmitting || loading ? (
                                 <>
                                     <Loader2 size={18} className="animate-spin" />
                                     Submitting Application...
@@ -596,21 +622,24 @@ export default function YourLoanApplicationForm() {
     );
 }
 
-function TextField({ label, icon, placeholder, value, onChange }) {
+function TextField({ label, icon, placeholder, value, onChange, error, inputMode, maxLength }) {
     return (
         <div>
             <label className="text-[11.5px] font-semibold text-[#0F1B3D] mb-1.5 block">
                 {label}
             </label>
-            <div className="flex items-center gap-2.5 rounded-xl border border-[#E7E9F0] px-3 py-2.5">
+            <div className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 ${error ? "border-red-300" : "border-[#E7E9F0]"}`}>
                 <span className="text-[#8A8F9E] shrink-0">{icon}</span>
                 <input
                     placeholder={placeholder}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
+                    inputMode={inputMode}
+                    maxLength={maxLength}
                     className="flex-1 min-w-0 text-[13px] text-[#0F1B3D] placeholder:text-[#B5B9C4] bg-transparent outline-none"
                 />
             </div>
+            {error && <p className="text-[10.5px] text-red-600 mt-1">{error}</p>}
         </div>
     );
 }

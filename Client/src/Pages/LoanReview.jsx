@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
     ArrowLeft,
     ArrowRight,
@@ -15,9 +15,11 @@ import {
     Pencil,
     Lock,
     RotateCw,
-    FileCheck2,
     Loader2,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { acceptApplicationTerms } from "../redux/slice/applicationSlice";
 
 const STEPS = [
     { id: "1", label: "Personal Details" },
@@ -25,100 +27,87 @@ const STEPS = [
     { id: "3", label: "Review & Submit" },
 ];
 
-const PERSONAL_ROWS = [
-    { icon: User, label: "Full Name", value: "Prince Kumar" },
-    { icon: Phone, label: "Mobile Number", value: "+91 9876543210" },
-    { icon: Mail, label: "Email ID", value: "princekumar@gmail.com" },
-    { icon: CreditCard, label: "Aadhaar Number", value: "1234 5678 9012" },
-    { icon: CreditCard, label: "PAN Number", value: "ABCDE1234F" },
-];
-
-const LOAN_ROWS = [
-    { icon: Target, label: "Purpose of Loan", value: "Business Expansion" },
-    { icon: Users, label: "Reference Contact", value: "Ramesh Kumar (Brother)" },
-    { icon: Briefcase, label: "Employment Type", value: "Self Employed" },
-];
-
 export default function YourLoanReviewSubmit() {
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const { loading, error, application, formDraft, cibilData, bankDraft } = useSelector((state) => state.application);
     const [agreed, setAgreed] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState(null);
+    const persistedApplication = useMemo(() => JSON.parse(localStorage.getItem("application") || "null"), []);
+    const persistedDraft = useMemo(() => JSON.parse(localStorage.getItem("applicationFormDraft") || "null"), []);
+    const persistedCibil = useMemo(() => JSON.parse(localStorage.getItem("cibilData") || "null"), []);
+    const persistedBank = useMemo(() => JSON.parse(localStorage.getItem("bankDetails") || "null"), []);
 
-    // Function to simulate API call
+    const sourceApplication = application || persistedApplication || {};
+    const sourceDraft = formDraft || persistedDraft || {};
+    const sourceForm = sourceDraft.formData || {};
+    const sourceCibil = cibilData || persistedCibil || {};
+    const sourceBank = bankDraft || persistedBank || {};
+    const reference = sourceApplication.relativesReferenceContact || {};
+    const accountDetails = sourceApplication.accountDetails || sourceBank || {};
+    const valueOrMissing = (value) => value || "Not provided";
+
+    const personalRows = [
+        { icon: User, label: "Full Name", value: valueOrMissing(sourceApplication.fullName || sourceForm.fullName) },
+        { icon: Phone, label: "Mobile Number", value: valueOrMissing(sourceApplication.mobileNumber || sourceForm.mobile) },
+        { icon: Mail, label: "Email ID", value: valueOrMissing(sourceApplication.email || sourceForm.email) },
+        { icon: CreditCard, label: "Aadhaar Number", value: valueOrMissing(sourceApplication.aadhaarNumber || sourceForm.aadhaar) },
+        { icon: CreditCard, label: "PAN Number", value: valueOrMissing(sourceApplication.panNumber || sourceForm.pan) },
+    ];
+
+    const loanRows = [
+        { icon: Target, label: "Purpose of Loan", value: valueOrMissing(sourceApplication.forPurposeOfLoan || sourceDraft.purpose) },
+        {
+            icon: Users,
+            label: "Reference Contact",
+            value: reference.relativesName || sourceForm.relativeName
+                ? `${reference.relativesName || sourceForm.relativeName} (${reference.relationship || sourceForm.relationship || "Relationship not provided"})`
+                : "Not provided",
+        },
+        { icon: Briefcase, label: "Employment Type", value: valueOrMissing(sourceApplication.whatDoYouDo || sourceDraft.employmentLabel) },
+        {
+            icon: Target,
+            label: "Loan Amount",
+            value: sourceCibil.selectedAmount ? `₹ ${Number(sourceCibil.selectedAmount).toLocaleString("en-IN")}` : "Not provided",
+        },
+    ];
+
+    const bankRows = [
+        { icon: User, label: "Account Holder", value: valueOrMissing(accountDetails.accountHolderName) },
+        { icon: Briefcase, label: "Bank Name", value: valueOrMissing(accountDetails.bankName) },
+        { icon: CreditCard, label: "Account Number", value: valueOrMissing(accountDetails.accountNumber) },
+        { icon: CreditCard, label: "IFSC Code", value: valueOrMissing(accountDetails.ifscCode) },
+    ];
+
     const submitApplication = async () => {
         try {
             setIsSubmitting(true);
             setSubmitError(null);
 
-            // Prepare all application data
-            const applicationData = {
-                personalDetails: {
-                    fullName: "Prince Kumar",
-                    mobile: "9876543210",
-                    email: "princekumar@gmail.com",
-                    aadhaar: "1234 5678 9012",
-                    pan: "ABCDE1234F",
-                },
-                loanDetails: {
-                    purpose: "Business Expansion",
-                    referenceContact: "Ramesh Kumar (Brother)",
-                    employmentType: "Self Employed",
-                },
-                kycDocuments: [
-                    { type: "Aadhaar Card", file: "aadhaar_front.jpg" },
-                    { type: "PAN Card", file: "pan_card.jpg" },
-                ],
-                cibilData: JSON.parse(localStorage.getItem("cibilData") || "{}"),
-                applicationId: "APP_" + Date.now(),
-                submittedAt: new Date().toISOString(),
-                status: "pending",
-            };
-
-            // Real API call - Replace with actual endpoint
-            // const response = await fetch('/api/loan-application/submit', {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/json',
-            //         'Authorization': 'Bearer ' + localStorage.getItem('token')
-            //     },
-            //     body: JSON.stringify(applicationData)
-            // });
-            // 
-            // if (!response.ok) {
-            //     throw new Error('Failed to submit application');
-            // }
-            // 
-            // const data = await response.json();
-            // 
-            // if (!data.success) {
-            //     throw new Error(data.message || 'Submission failed');
-            // }
-
-            // Simulate network delay
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-
-            // Simulate successful response
-            const success = true;
-            
-            if (success) {
-                // Store the application data
-                localStorage.setItem("loanApplication", JSON.stringify(applicationData));
-                localStorage.setItem("applicationStatus", "approved");
-                localStorage.setItem("applicationId", applicationData.applicationId);
-
-                // Navigate to approved page
-                window.location.href = "/bank-detail";
-            } else {
-                throw new Error("Application submission failed. Please try again.");
+            const applicationId = localStorage.getItem("applicationId");
+            if (!applicationId) {
+                throw new Error("Application data is missing. Please complete the application form first.");
             }
+
+            const response = await dispatch(
+                acceptApplicationTerms({
+                    applicationId,
+                    termsAccepted: true,
+                })
+            ).unwrap();
+            localStorage.setItem("application", JSON.stringify(response.data));
+
+            localStorage.setItem("applicationStatus", "approved");
+            navigate("/bank-detail");
         } catch (error) {
-            setSubmitError(error.message || "Network error. Please check your connection and try again.");
+            setSubmitError(error?.message || error || "Network error. Please check your connection and try again.");
             setIsSubmitting(false);
         }
     };
 
     const handleSubmit = () => {
-        if (agreed && !isSubmitting) {
+        if (agreed && !isSubmitting && !loading) {
             submitApplication();
         }
     };
@@ -234,7 +223,7 @@ export default function YourLoanReviewSubmit() {
                         </div>
 
                         <div className="flex flex-col gap-3">
-                            {PERSONAL_ROWS.map((row) => (
+                            {personalRows.map((row) => (
                                 <div key={row.label} className="flex items-center gap-3">
                                     <row.icon size={14} className="text-[#8A8F9E] shrink-0" />
                                     <span className="text-[11.5px] text-[#8A8F9E] w-[108px] shrink-0">
@@ -270,7 +259,35 @@ export default function YourLoanReviewSubmit() {
                         </div>
 
                         <div className="flex flex-col gap-3">
-                            {LOAN_ROWS.map((row) => (
+                            {loanRows.map((row) => (
+                                <div key={row.label} className="flex items-center gap-3">
+                                    <row.icon size={14} className="text-[#8A8F9E] shrink-0" />
+                                    <span className="text-[11.5px] text-[#8A8F9E] w-[108px] shrink-0">
+                                        {row.label}
+                                    </span>
+                                    <span className="text-[12.5px] font-semibold text-[#0F1B3D] text-right flex-1">
+                                        {row.value}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* bank details summary */}
+                    <div className="mx-4 mt-4 bg-white border border-[#EEF0F5] rounded-2xl p-4">
+                        <div className="flex items-center justify-between mb-3.5">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-[#DCE6FB] flex items-center justify-center">
+                                    <CreditCard size={16} className="text-[#2A4BDE]" />
+                                </div>
+                                <p className="text-[15px] font-bold text-[#0F1B3D]">
+                                    Bank Details
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col gap-3">
+                            {bankRows.map((row) => (
                                 <div key={row.label} className="flex items-center gap-3">
                                     <row.icon size={14} className="text-[#8A8F9E] shrink-0" />
                                     <span className="text-[11.5px] text-[#8A8F9E] w-[108px] shrink-0">
@@ -318,11 +335,11 @@ export default function YourLoanReviewSubmit() {
                     </div>
 
                     {/* Error message */}
-                    {submitError && (
+                    {(submitError || error) && (
                         <div className="mx-4 mt-3 bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5">
                             <p className="text-[12px] text-red-600 flex items-center gap-2">
                                 <span className="text-red-500">⚠</span>
-                                {submitError}
+                                {submitError || error}
                             </p>
                         </div>
                     )}
@@ -332,14 +349,14 @@ export default function YourLoanReviewSubmit() {
                         <button
                             type="button"
                             onClick={handleSubmit}
-                            disabled={!agreed || isSubmitting}
+                            disabled={!agreed || isSubmitting || loading}
                             className={`w-full h-12 rounded-xl font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${
-                                agreed && !isSubmitting
+                                agreed && !isSubmitting && !loading
                                     ? "bg-[#2A4BDE] text-white hover:bg-[#1A3BAE] active:scale-[0.99]"
                                     : "bg-[#EDEBE3] text-[#A9ACB6] cursor-not-allowed"
                             }`}
                         >
-                            {isSubmitting ? (
+                            {isSubmitting || loading ? (
                                 <>
                                     <Loader2 size={18} className="animate-spin" />
                                     Submitting Application...

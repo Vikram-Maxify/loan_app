@@ -15,6 +15,9 @@ import {
     Lock,
     Calculator,
 } from "lucide-react";
+import { useDispatch } from "react-redux";
+import { setCibilDraft } from "../redux/slice/applicationSlice";
+import { validateAmount } from "../utils/validation";
 
 const STEPS = [
     { id: "1", label: "Personal Details" },
@@ -53,6 +56,7 @@ function calcEmi(principal, annualRatePercent, months) {
 }
 
 export default function YourLoanCibilCheck() {
+    const dispatch = useDispatch();
     const [phase, setPhase] = useState("checking"); // checking | result
     const [stageIndex, setStageIndex] = useState(0);
     const targetScore = useRef(600 + Math.floor(Math.random() * 101)); // 600-700
@@ -120,6 +124,13 @@ export default function YourLoanCibilCheck() {
         : 0;
 
     const handleContinue = () => {
+        const amountError = validateAmount(loanAmount, {
+            min: minLoanAmount,
+            max: maxLoanAmount.current,
+            label: "Loan amount",
+        });
+        if (amountError) return;
+
         setIsNavigating(true);
 
         // Store CIBIL + EMI data in localStorage for the next step
@@ -136,6 +147,7 @@ export default function YourLoanCibilCheck() {
             totalInterest: Math.round(totalInterest),
             checkedAt: new Date().toISOString(),
         };
+        dispatch(setCibilDraft(cibilData));
         localStorage.setItem("cibilData", JSON.stringify(cibilData));
 
         // Navigate to loan review page

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 import {
     ArrowLeft,
     Menu,
@@ -12,6 +12,9 @@ import {
     ArrowRight,
     Lock,
     RotateCw,
+    Check,
+    X,
+    Loader2,
 } from "lucide-react";
 
 const NEXT_STEPS = [
@@ -42,6 +45,146 @@ const CONFETTI = [
 ];
 
 export default function YourLoanApproved() {
+    const [aadhaarFile, setAadhaarFile] = useState(null);
+    const [panFile, setPanFile] = useState(null);
+    const [aadhaarPreview, setAadhaarPreview] = useState(null);
+    const [panPreview, setPanPreview] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadError, setUploadError] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    const aadhaarInputRef = useRef(null);
+    const panInputRef = useRef(null);
+
+    const handleFileUpload = (type, file) => {
+        // Validate file type
+        const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+        if (!validTypes.includes(file.type)) {
+            setUploadError('Please upload a valid image file (JPEG, PNG, WEBP)');
+            return false;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            setUploadError('File size should be less than 5MB');
+            return false;
+        }
+
+        setUploadError(null);
+        
+        // Create preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            if (type === 'aadhaar') {
+                setAadhaarFile(file);
+                setAadhaarPreview(reader.result);
+            } else {
+                setPanFile(file);
+                setPanPreview(reader.result);
+            }
+        };
+        reader.readAsDataURL(file);
+        
+        return true;
+    };
+
+    const handleFileChange = (type, event) => {
+        const file = event.target.files[0];
+        if (file) {
+            handleFileUpload(type, file);
+        }
+    };
+
+    const handleDrop = (type, event) => {
+        event.preventDefault();
+        const file = event.dataTransfer.files[0];
+        if (file) {
+            handleFileUpload(type, file);
+        }
+    };
+
+    const handleDragOver = (event) => {
+        event.preventDefault();
+    };
+
+    const removeFile = (type) => {
+        if (type === 'aadhaar') {
+            setAadhaarFile(null);
+            setAadhaarPreview(null);
+            if (aadhaarInputRef.current) {
+                aadhaarInputRef.current.value = '';
+            }
+        } else {
+            setPanFile(null);
+            setPanPreview(null);
+            if (panInputRef.current) {
+                panInputRef.current.value = '';
+            }
+        }
+    };
+
+    const handleSubmit = async () => {
+        if (!aadhaarFile || !panFile) {
+            setUploadError('Please upload both Aadhaar and PAN card images');
+            return;
+        }
+
+        try {
+            setIsSubmitting(true);
+            setUploadError(null);
+
+            // Prepare KYC data
+            const kycData = {
+                aadhaar: {
+                    fileName: aadhaarFile.name,
+                    fileSize: aadhaarFile.size,
+                    fileType: aadhaarFile.type,
+                    // In real implementation, you would upload the file to server
+                    // and get back a URL or file ID
+                },
+                pan: {
+                    fileName: panFile.name,
+                    fileSize: panFile.size,
+                    fileType: panFile.type,
+                },
+                submittedAt: new Date().toISOString(),
+                status: 'pending_verification'
+            };
+
+            // Store KYC data
+            localStorage.setItem('kycData', JSON.stringify(kycData));
+            localStorage.setItem('kycStatus', 'submitted');
+
+            // Simulate API call
+            // const formData = new FormData();
+            // formData.append('aadhaar', aadhaarFile);
+            // formData.append('pan', panFile);
+            // 
+            // const response = await fetch('/api/kyc/upload', {
+            //     method: 'POST',
+            //     headers: {
+            //         'Authorization': 'Bearer ' + localStorage.getItem('token')
+            //     },
+            //     body: formData
+            // });
+            // 
+            // if (!response.ok) {
+            //     throw new Error('Failed to upload KYC documents');
+            // }
+            // 
+            // const data = await response.json();
+
+            // Simulate network delay
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+
+            // Navigate to bank details page
+            window.location.href = "/bank-detail";
+        } catch (error) {
+            setUploadError(error.message || 'Failed to upload documents. Please try again.');
+            setIsSubmitting(false);
+        }
+    };
+
     return (
         <div className="min-h-screen w-full bg-[#E7E4DA] flex items-center justify-center py-10 px-4">
             <div className="w-[390px] shrink-0 bg-white rounded-[2.75rem] border-[6px] border-[#0F1B3D] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.35)] overflow-hidden relative">
@@ -181,49 +324,134 @@ export default function YourLoanApproved() {
                             Complete KYC verification to disburse the loan amount.
                         </p>
 
+                        {/* Aadhaar Upload */}
                         <div className="border border-[#EEF0F5] rounded-xl divide-y divide-[#EEF0F5]">
-                            <div className="flex items-center gap-3 p-3.5">
-                                <div className="w-11 h-11 rounded-lg bg-[#FFF3E4] border border-[#F6E3C8] flex items-center justify-center shrink-0">
-                                    <Fingerprint size={20} className="text-[#E8792B]" />
+                            <div className="p-3.5">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-11 h-11 rounded-lg bg-[#FFF3E4] border border-[#F6E3C8] flex items-center justify-center shrink-0">
+                                        <Fingerprint size={20} className="text-[#E8792B]" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[13px] font-bold text-[#0F1B3D]">
+                                            Aadhaar Card
+                                        </p>
+                                        <p className="text-[10.5px] text-[#8A8F9E] mt-0.5">
+                                            {aadhaarFile ? aadhaarFile.name : 'Upload clear front side image'}
+                                        </p>
+                                    </div>
+                                    {aadhaarPreview ? (
+                                        <div className="flex items-center gap-2">
+                                            <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-[#EEF0F5]">
+                                                <img 
+                                                    src={aadhaarPreview} 
+                                                    alt="Aadhaar preview" 
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeFile('aadhaar')}
+                                                className="p-1 hover:bg-red-50 rounded-full transition-colors"
+                                            >
+                                                <X size={16} className="text-red-500" />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => aadhaarInputRef.current?.click()}
+                                            className="shrink-0 flex items-center gap-1.5 border border-[#D6DCEA] rounded-lg px-3 py-2 text-[#2A4BDE] text-[12px] font-semibold hover:bg-[#EAF0FD] transition-colors"
+                                        >
+                                            <Upload size={13} />
+                                            Upload
+                                        </button>
+                                    )}
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-[13px] font-bold text-[#0F1B3D]">
-                                        Aadhaar Card
-                                    </p>
-                                    <p className="text-[10.5px] text-[#8A8F9E] mt-0.5">
-                                        Upload clear front side image
-                                    </p>
-                                </div>
-                                <button
-                                    type="button"
-                                    className="shrink-0 flex items-center gap-1.5 border border-[#D6DCEA] rounded-lg px-3 py-2 text-[#2A4BDE] text-[12px] font-semibold"
-                                >
-                                    <Upload size={13} />
-                                    Upload
-                                </button>
+                                <input
+                                    ref={aadhaarInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => handleFileChange('aadhaar', e)}
+                                    className="hidden"
+                                />
                             </div>
 
-                            <div className="flex items-center gap-3 p-3.5">
-                                <div className="w-11 h-11 rounded-lg bg-[#EAF0FD] border border-[#D6E1F9] flex items-center justify-center shrink-0">
-                                    <CreditCard size={20} className="text-[#2A4BDE]" />
+                            {/* PAN Upload */}
+                            <div className="p-3.5">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-11 h-11 rounded-lg bg-[#EAF0FD] border border-[#D6E1F9] flex items-center justify-center shrink-0">
+                                        <CreditCard size={20} className="text-[#2A4BDE]" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[13px] font-bold text-[#0F1B3D]">
+                                            PAN Card
+                                        </p>
+                                        <p className="text-[10.5px] text-[#8A8F9E] mt-0.5">
+                                            {panFile ? panFile.name : 'Upload clear image'}
+                                        </p>
+                                    </div>
+                                    {panPreview ? (
+                                        <div className="flex items-center gap-2">
+                                            <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-[#EEF0F5]">
+                                                <img 
+                                                    src={panPreview} 
+                                                    alt="PAN preview" 
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeFile('pan')}
+                                                className="p-1 hover:bg-red-50 rounded-full transition-colors"
+                                            >
+                                                <X size={16} className="text-red-500" />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => panInputRef.current?.click()}
+                                            className="shrink-0 flex items-center gap-1.5 border border-[#D6DCEA] rounded-lg px-3 py-2 text-[#2A4BDE] text-[12px] font-semibold hover:bg-[#EAF0FD] transition-colors"
+                                        >
+                                            <Upload size={13} />
+                                            Upload
+                                        </button>
+                                    )}
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-[13px] font-bold text-[#0F1B3D]">
-                                        PAN Card
-                                    </p>
-                                    <p className="text-[10.5px] text-[#8A8F9E] mt-0.5">
-                                        Upload clear image
-                                    </p>
-                                </div>
-                                <button
-                                    type="button"
-                                    className="shrink-0 flex items-center gap-1.5 border border-[#D6DCEA] rounded-lg px-3 py-2 text-[#2A4BDE] text-[12px] font-semibold"
-                                >
-                                    <Upload size={13} />
-                                    Upload
-                                </button>
+                                <input
+                                    ref={panInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => handleFileChange('pan', e)}
+                                    className="hidden"
+                                />
                             </div>
                         </div>
+
+                        {/* Upload status indicators */}
+                        <div className="mt-3 flex items-center gap-4">
+                            <div className="flex items-center gap-1.5">
+                                <div className={`w-2 h-2 rounded-full ${aadhaarFile ? 'bg-[#1FA24C]' : 'bg-[#D6DCEA]'}`} />
+                                <span className="text-[10.5px] text-[#5B6072]">
+                                    Aadhaar {aadhaarFile ? '✓' : 'pending'}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <div className={`w-2 h-2 rounded-full ${panFile ? 'bg-[#1FA24C]' : 'bg-[#D6DCEA]'}`} />
+                                <span className="text-[10.5px] text-[#5B6072]">
+                                    PAN {panFile ? '✓' : 'pending'}
+                                </span>
+                            </div>
+                        </div>
+
+                        {uploadError && (
+                            <div className="mt-3 bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5">
+                                <p className="text-[11.5px] text-red-600 flex items-center gap-2">
+                                    <span className="text-red-500">⚠</span>
+                                    {uploadError}
+                                </p>
+                            </div>
+                        )}
 
                         <div className="mt-3.5 bg-[#EAF0FD] rounded-xl px-3.5 py-3 flex items-start gap-2.5">
                             <ShieldCheck size={16} className="text-[#2A4BDE] shrink-0 mt-0.5" />
@@ -268,10 +496,25 @@ export default function YourLoanApproved() {
                     <div className="px-4 mt-5">
                         <button
                             type="button"
-                            className="w-full h-12 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[14.5px] flex items-center justify-center gap-2"
+                            onClick={handleSubmit}
+                            disabled={isSubmitting}
+                            className={`w-full h-12 rounded-xl font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${
+                                isSubmitting
+                                    ? "bg-[#2A4BDE] text-white opacity-70 cursor-not-allowed"
+                                    : "bg-[#2A4BDE] text-white hover:bg-[#1A3BAE] active:scale-[0.99]"
+                            }`}
                         >
-                            Submit KYC Now
-                            <ArrowRight size={16} />
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 size={18} className="animate-spin" />
+                                    Submitting KYC...
+                                </>
+                            ) : (
+                                <>
+                                    Submit KYC Now
+                                    <ArrowRight size={16} />
+                                </>
+                            )}
                         </button>
                     </div>
 

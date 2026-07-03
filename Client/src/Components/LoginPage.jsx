@@ -7,15 +7,100 @@ import {
     Mail,
     ShieldCheck,
     Lock,
-    BadgeIndianRupee,
+    ChevronDown,
+    Check,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const STEPS = [
-    { id: "01", label: "Enter details" },
-    { id: "02", label: "Verify" },
-    { id: "03", label: "Get started" },
+    { id: "1", label: "Enter Details" },
+    { id: "2", label: "Verify" },
+    { id: "3", label: "Get Started" },
 ];
+
+function LoanIcon() {
+    return (
+        <svg viewBox="0 0 40 40" className="w-9 h-9">
+            <circle cx="20" cy="20" r="20" fill="#2F6BFF" />
+            <path
+                d="M12 14a9 9 0 0 1 15.5-4.2"
+                stroke="#FFFFFF"
+                strokeWidth="2"
+                fill="none"
+                strokeLinecap="round"
+            />
+            <path d="M27 6.5 L28.5 11 L24 10.2 Z" fill="#FFFFFF" />
+            <path
+                d="M28 26a9 9 0 0 1-15.5 4.2"
+                stroke="#FFFFFF"
+                strokeWidth="2"
+                fill="none"
+                strokeLinecap="round"
+            />
+            <path d="M13 33.5 L11.5 29 L16 29.8 Z" fill="#FFFFFF" />
+            <text
+                x="20"
+                y="25"
+                textAnchor="middle"
+                fontSize="14"
+                fontWeight="700"
+                fill="#FFFFFF"
+                fontFamily="sans-serif"
+            >
+                ₹
+            </text>
+        </svg>
+    );
+}
+
+function ClipboardIllustration() {
+    return (
+        <div className="relative w-[110px] h-[110px] shrink-0">
+            <div className="absolute -inset-2 rounded-full bg-[#DCE8FF]" />
+            <svg viewBox="0 0 120 120" className="relative w-full h-full">
+                <rect
+                    x="28"
+                    y="18"
+                    width="60"
+                    height="80"
+                    rx="8"
+                    fill="#FFFFFF"
+                    stroke="#0F1B3D"
+                    strokeWidth="3"
+                />
+                <rect x="44" y="14" width="28" height="12" rx="4" fill="#0F1B3D" />
+                <circle cx="46" cy="38" r="6" fill="#C7D6F5" />
+                <circle cx="46" cy="38" r="6" fill="#2F6BFF" fillOpacity="0.25" />
+                <circle cx="46" cy="35.5" r="3" fill="#2F6BFF" />
+                <path
+                    d="M40 44c1-3 4-4 6-4s5 1 6 4"
+                    fill="#2F6BFF"
+                />
+                <rect x="58" y="34" width="20" height="4" rx="2" fill="#DCE1EE" />
+                <rect x="58" y="42" width="20" height="4" rx="2" fill="#DCE1EE" />
+                <rect x="38" y="56" width="40" height="4" rx="2" fill="#DCE1EE" />
+                <rect x="38" y="64" width="40" height="4" rx="2" fill="#DCE1EE" />
+                <rect x="38" y="72" width="26" height="4" rx="2" fill="#DCE1EE" />
+                <g transform="translate(66,66)">
+                    <path
+                        d="M18 0 L34 6 V18 C34 30 26 37 18 40 C10 37 2 30 2 18 V6 Z"
+                        fill="#2F6BFF"
+                        stroke="#0F1B3D"
+                        strokeWidth="2.5"
+                    />
+                    <path
+                        d="M10 20 L16 26 L27 13"
+                        fill="none"
+                        stroke="#FFFFFF"
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
+                </g>
+            </svg>
+        </div>
+    );
+}
 
 export default function YourLoanLogin() {
     const [name, setName] = useState("");
@@ -25,11 +110,11 @@ export default function YourLoanLogin() {
 
     const navigate = useNavigate();
 
-const handleContinue = () => {
-    if (isValid) {
-        navigate('/verify-otp');
-    }
-};
+    const handleContinue = () => {
+        if (isValid) {
+            navigate("/verify-otp");
+        }
+    };
 
     const formattedPhone = useMemo(() => {
         const digits = phone.replace(/\D/g, "").slice(0, 10);
@@ -43,219 +128,255 @@ const handleContinue = () => {
         /\S+@\S+\.\S+/.test(email);
 
     return (
-        <div className="min-h-screen w-full bg-[#E7E4DA] flex items-center justify-center py-10 px-4">
-            {/* Fixed phone-width frame — stays this width on desktop too */}
-            <div className="w-[390px] shrink-0 bg-[#FBFAF6] rounded-[2.75rem] border-[6px] border-[#14203D] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.35)] overflow-hidden relative">
-                {/* status bar */}
-                <div className="h-9 bg-[#14203D] flex items-center justify-between px-7 text-[#FBFAF6]">
-                    <span className="text-[11px] font-mono tracking-wide">9:41</span>
-                    <div className="flex items-center gap-1">
-                        <div className="w-3.5 h-2 rounded-[1px] border border-[#FBFAF6]/70" />
-                        <div className="w-3.5 h-2 rounded-[1px] border border-[#FBFAF6]/70" />
-                    </div>
-                </div>
-
-                <div className="max-h-[790px] overflow-y-auto">
-                    {/* header */}
-                    <div className="bg-[#14203D] px-6 pt-5 pb-8">
+        <div className="min-h-screen w-full bg-[#EEF0F5] flex items-center justify-center py-10 px-4">
+            {/* Phone frame */}
+            <div className="w-[390px] shrink-0 bg-[#F5F6FA] rounded-[2rem] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
+                <div className="max-h-[900px] overflow-y-auto">
+                    {/* Header */}
+                    <div className="bg-white px-6 pt-6 pb-5 border-b border-[#ECEDF3]">
                         <button
                             type="button"
                             aria-label="Go back"
-                            className="text-[#FBFAF6]/70 hover:text-[#FBFAF6] transition-colors mb-6"
+                            className="text-[#0F1B3D] hover:opacity-70 transition-opacity mb-6"
                         >
-                            <ArrowLeft size={20} />
+                            <ArrowLeft size={20} strokeWidth={2.25} />
                         </button>
 
-                        <div className="flex items-center gap-2.5 mb-8">
-                            <div className="w-9 h-9 rounded-full bg-[#C89B3C] flex items-center justify-center shrink-0">
-                                <BadgeIndianRupee size={18} className="text-[#14203D]" strokeWidth={2.25} />
-                            </div>
+                        <div className="flex items-center gap-3">
+                            <LoanIcon />
                             <div>
-                                <p className="text-[#FBFAF6] font-serif text-[17px] leading-none">YourLoan</p>
-                                <p className="text-[#FBFAF6]/55 text-[11px] mt-1 tracking-wide">
-                                    Smart loans for business
+                                <p className="text-[#0F1B3D] font-bold text-[19px] leading-none">
+                                    YourLoan
+                                </p>
+                                <p className="text-[#8A8F9E] text-[12px] mt-1 tracking-wide">
+                                    Smart Loans For Business
                                 </p>
                             </div>
                         </div>
+                    </div>
 
-                        {/* signature step tracker — passbook ledger style */}
-                        <div className="flex items-center">
+                    {/* Step Tracker */}
+                    <div className="bg-[#F0F2F8] px-6 py-6">
+                        <div className="flex items-start">
                             {STEPS.map((step, i) => (
                                 <React.Fragment key={step.id}>
-                                    <div className="flex flex-col items-center gap-2">
+                                    <div className="flex flex-col items-center gap-2 w-16">
                                         <div
-                                            className={`w-8 h-8 rounded-full flex items-center justify-center font-mono text-[11px] border ${i === 0
-                                                    ? "bg-[#C89B3C] border-[#C89B3C] text-[#14203D]"
-                                                    : "border-[#FBFAF6]/30 text-[#FBFAF6]/50"
-                                                }`}
+                                            className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-semibold ${
+                                                i === 0
+                                                    ? "bg-[#2F6BFF] text-white"
+                                                    : "bg-white border border-[#D6D9E3] text-[#A6ABB8]"
+                                            }`}
                                         >
                                             {step.id}
                                         </div>
                                         <span
-                                            className={`text-[10px] tracking-wide ${i === 0 ? "text-[#FBFAF6]" : "text-[#FBFAF6]/45"
-                                                }`}
+                                            className={`text-[11px] text-center leading-tight ${
+                                                i === 0
+                                                    ? "text-[#2F6BFF] font-semibold"
+                                                    : "text-[#9CA1AF]"
+                                            }`}
                                         >
                                             {step.label}
                                         </span>
                                     </div>
                                     {i < STEPS.length - 1 && (
-                                        <div className="flex-1 h-px bg-[#FBFAF6]/20 mx-2 -mt-4" />
+                                        <div className="flex-1 border-t-2 border-dotted border-[#C7CBD8] mt-4 mx-[-8px]" />
                                     )}
                                 </React.Fragment>
                             ))}
                         </div>
                     </div>
 
-                    {/* headline */}
-                    <div className="px-6 pt-7 pb-5">
-                        <p className="inline-block text-[11px] font-mono tracking-wider text-[#8A6B22] bg-[#F2E4C2] px-2.5 py-1 rounded-full mb-4">
-                            APPLY FOR A BUSINESS LOAN
-                        </p>
-                        <h1 className="font-serif text-[28px] leading-[1.15] text-[#14203D] mb-2">
-                            Let's get you started
-                        </h1>
-                        <p className="text-[13.5px] text-[#5B6072] leading-relaxed">
-                            Share a few details and we'll check your eligibility in under
-                            two minutes.
-                        </p>
+                    {/* Content Area */}
+                    <div className="px-6 pt-7 pb-6 flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                            <p className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#2F6BFF] bg-[#DCE8FF] px-3 py-1.5 rounded-full mb-4">
+                                <User size={13} strokeWidth={2.5} />
+                                Apply for Personal Loan
+                            </p>
+                            <h1 className="font-extrabold text-[30px] leading-[1.15] text-[#0F1B3D] mb-3">
+                                Let&apos;s Get Started!
+                            </h1>
+                            <p className="text-[13.5px] text-[#6B7080] leading-relaxed">
+                                Enter your basic details to check your eligibility and
+                                proceed further.
+                            </p>
+                        </div>
+                        <ClipboardIllustration />
                     </div>
 
-                    {/* form card */}
-                    <div className="mx-6 bg-white rounded-2xl border border-[#E7E4DA] p-5">
-                        <Field
-                            label="Full name"
-                            icon={<User size={16} />}
-                            placeholder="Enter your full name"
-                            value={name}
-                            onChange={setName}
-                            focused={focused === "name"}
-                            onFocus={() => setFocused("name")}
-                            onBlur={() => setFocused(null)}
-                        />
+                    {/* Form Card */}
+                    <div className="mx-6 bg-white rounded-2xl border border-[#ECEDF3] p-5 shadow-sm">
+                        <h2 className="text-[16px] font-bold text-[#0F1B3D] mb-1">
+                            Please enter your details
+                        </h2>
+                        <p className="text-[12.5px] text-[#8A8F9E] mb-5">
+                            We&apos;ll use this information to assist you better.
+                        </p>
 
-                        <div className="h-4" />
-
-                        <label className="text-[12px] font-medium text-[#14203D] mb-1.5 block">
-                            Mobile number
-                        </label>
-                        <div
-                            className={`flex items-center rounded-xl border transition-colors ${focused === "phone"
-                                    ? "border-[#14203D]"
-                                    : "border-[#E7E4DA]"
+                        {/* Full Name */}
+                        <div className="mb-4">
+                            <label className="text-[12.5px] font-semibold text-[#0F1B3D] mb-1.5 block">
+                                Full Name
+                            </label>
+                            <div
+                                className={`flex items-center gap-2.5 rounded-xl border px-3.5 py-3 transition-colors ${
+                                    focused === "name"
+                                        ? "border-[#2F6BFF]"
+                                        : "border-[#E3E5EC]"
                                 }`}
-                        >
-                            <div className="flex items-center gap-1.5 pl-3 pr-3 py-3 border-r border-[#E7E4DA] text-[#14203D] text-[14px]">
-                                <Phone size={15} className="text-[#8A8F9E]" />
-                                <span className="font-mono">+91</span>
+                            >
+                                <User size={16} className="text-[#9AA0AE] shrink-0" />
+                                <input
+                                    type="text"
+                                    placeholder="Enter your full name"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    onFocus={() => setFocused("name")}
+                                    onBlur={() => setFocused(null)}
+                                    className="flex-1 min-w-0 text-[14px] text-[#0F1B3D] placeholder:text-[#B5B9C4] bg-transparent outline-none"
+                                />
                             </div>
-                            <input
-                                type="tel"
-                                inputMode="numeric"
-                                placeholder="98765 43210"
-                                value={formattedPhone}
-                                onChange={(e) => setPhone(e.target.value)}
-                                onFocus={() => setFocused("phone")}
-                                onBlur={() => setFocused(null)}
-                                className="flex-1 min-w-0 px-3 py-3 text-[14px] font-mono text-[#14203D] placeholder:text-[#B5B9C4] bg-transparent outline-none"
-                            />
                         </div>
 
-                        <div className="h-4" />
+                        {/* Mobile Number */}
+                        <div className="mb-4">
+                            <label className="text-[12.5px] font-semibold text-[#0F1B3D] mb-1.5 block">
+                                Mobile Number
+                            </label>
+                            <div
+                                className={`flex items-center rounded-xl border transition-colors ${
+                                    focused === "phone"
+                                        ? "border-[#2F6BFF]"
+                                        : "border-[#E3E5EC]"
+                                }`}
+                            >
+                                <div className="flex items-center gap-1 pl-3.5 pr-3 py-3 border-r border-[#E3E5EC] text-[#0F1B3D] text-[14px]">
+                                    <Phone size={15} className="text-[#9AA0AE]" />
+                                    <span className="ml-1">+91</span>
+                                    <ChevronDown size={14} className="text-[#9AA0AE] ml-1" />
+                                </div>
+                                <input
+                                    type="tel"
+                                    inputMode="numeric"
+                                    placeholder="Enter your mobile number"
+                                    value={formattedPhone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    onFocus={() => setFocused("phone")}
+                                    onBlur={() => setFocused(null)}
+                                    className="flex-1 min-w-0 px-3.5 py-3 text-[14px] text-[#0F1B3D] placeholder:text-[#B5B9C4] bg-transparent outline-none"
+                                />
+                            </div>
+                        </div>
 
-                        <Field
-                            label="Email ID"
-                            icon={<Mail size={16} />}
-                            placeholder="Enter your email address"
-                            value={email}
-                            onChange={setEmail}
-                            type="email"
-                            focused={focused === "email"}
-                            onFocus={() => setFocused("email")}
-                            onBlur={() => setFocused(null)}
-                        />
+                        {/* Email ID */}
+                        <div className="mb-5">
+                            <label className="text-[12.5px] font-semibold text-[#0F1B3D] mb-1.5 block">
+                                Email ID
+                            </label>
+                            <div
+                                className={`flex items-center gap-2.5 rounded-xl border px-3.5 py-3 transition-colors ${
+                                    focused === "email"
+                                        ? "border-[#2F6BFF]"
+                                        : "border-[#E3E5EC]"
+                                }`}
+                            >
+                                <Mail size={16} className="text-[#9AA0AE] shrink-0" />
+                                <input
+                                    type="email"
+                                    placeholder="Enter your email address"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    onFocus={() => setFocused("email")}
+                                    onBlur={() => setFocused(null)}
+                                    className="flex-1 min-w-0 text-[14px] text-[#0F1B3D] placeholder:text-[#B5B9C4] bg-transparent outline-none"
+                                />
+                            </div>
+                        </div>
 
+                        {/* Continue Button */}
                         <button
                             type="button"
                             disabled={!isValid}
                             onClick={handleContinue}
-                            className={`w-full mt-6 h-12 rounded-xl flex items-center justify-center gap-2 text-[14px] font-medium transition-all ${isValid
-                                    ? "bg-[#14203D] text-[#FBFAF6] hover:bg-[#1B2A4D] active:scale-[0.99]"
-                                    : "bg-[#EDEBE3] text-[#A9ACB6] cursor-not-allowed"
-                                }`}
+                            className={`w-full h-12 rounded-xl flex items-center justify-center gap-2 text-[15px] font-semibold transition-all ${
+                                isValid
+                                    ? "bg-[#2F6BFF] text-white hover:bg-[#2558D6] active:scale-[0.99]"
+                                    : "bg-[#2F6BFF] text-white opacity-90"
+                            }`}
                         >
                             Continue
                             <ArrowRight size={16} />
                         </button>
 
-                        <p className="flex items-center justify-center gap-1.5 text-[11px] text-[#8A8F9E] mt-3.5">
+                        {/* Security Text */}
+                        <p className="flex items-center justify-center gap-1.5 text-[11.5px] text-[#9AA0AE] mt-3.5">
                             <Lock size={11} />
-                            Your information is safe and secure with us
+                            Your information is safe and secure with us.
                         </p>
                     </div>
 
-                    {/* trust strip */}
-                    <div className="mx-6 mt-4 mb-3 flex items-center gap-3 bg-[#EEF3F0] rounded-xl p-4">
-                        <div className="w-9 h-9 rounded-full bg-[#DCEBE3] flex items-center justify-center shrink-0">
-                            <ShieldCheck size={17} className="text-[#1F6F5C]" />
+                    {/* Trust Strip */}
+                    <div className="mx-6 mt-4 mb-3 flex items-center gap-3 bg-[#EAF3EE] rounded-2xl p-4">
+                        <div className="w-10 h-10 rounded-full bg-[#DCEBE3] flex items-center justify-center shrink-0">
+                            <ShieldCheck size={18} className="text-[#1F6F5C]" />
                         </div>
-                        <div>
-                            <p className="text-[12.5px] font-medium text-[#14203D] leading-tight">
-                                100% safe and secure
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-bold text-[#0F1B3D] leading-tight">
+                                100% Safe &amp; Secure
                             </p>
-                            <p className="text-[11px] text-[#5B6072] leading-snug mt-0.5">
-                                We never share your details with any third party.
+                            <p className="text-[11.5px] text-[#6B7080] leading-snug mt-0.5">
+                                We do not share your details with any third party.
                             </p>
+                        </div>
+                        <div className="shrink-0">
+                            <svg viewBox="0 0 60 68" className="w-11 h-13">
+                                <path
+                                    d="M30 2 L56 12 V34 C56 50 45 60 30 66 C15 60 4 50 4 34 V12 Z"
+                                    fill="none"
+                                    stroke="#22A06B"
+                                    strokeWidth="2"
+                                />
+                                <text
+                                    x="30"
+                                    y="30"
+                                    textAnchor="middle"
+                                    fontSize="8"
+                                    fontWeight="700"
+                                    fill="#22A06B"
+                                    fontFamily="sans-serif"
+                                >
+                                    SECURE
+                                </text>
+                                <text
+                                    x="30"
+                                    y="45"
+                                    textAnchor="middle"
+                                    fontSize="9"
+                                    fontWeight="700"
+                                    fill="#22A06B"
+                                    fontFamily="sans-serif"
+                                >
+                                    100%
+                                </text>
+                            </svg>
                         </div>
                     </div>
 
-                    {/* footer */}
+                    {/* Footer */}
                     <div className="text-center py-5">
-                        <span className="text-[12.5px] text-[#5B6072]">
+                        <span className="text-[13px] text-[#6B7080]">
                             Already have an account?{" "}
                         </span>
                         <button
                             type="button"
-                            className="text-[12.5px] font-medium text-[#14203D] underline underline-offset-2"
+                            className="text-[13px] font-semibold text-[#2F6BFF]"
                         >
-                            Log in
+                            Login
                         </button>
                     </div>
                 </div>
-            </div>
-        </div>
-    );
-}
-
-function Field({
-    label,
-    icon,
-    placeholder,
-    value,
-    onChange,
-    type = "text",
-    focused,
-    onFocus,
-    onBlur,
-}) {
-    return (
-        <div>
-            <label className="text-[12px] font-medium text-[#14203D] mb-1.5 block">
-                {label}
-            </label>
-            <div
-                className={`flex items-center gap-2.5 rounded-xl border px-3 py-3 transition-colors ${focused ? "border-[#14203D]" : "border-[#E7E4DA]"
-                    }`}
-            >
-                <span className="text-[#8A8F9E] shrink-0">{icon}</span>
-                <input
-                    type={type}
-                    placeholder={placeholder}
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    onFocus={onFocus}
-                    onBlur={onBlur}
-                    className="flex-1 min-w-0 text-[14px] text-[#14203D] placeholder:text-[#B5B9C4] bg-transparent outline-none"
-                />
             </div>
         </div>
     );

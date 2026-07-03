@@ -16,6 +16,7 @@ import {
     Lock,
     RotateCw,
     FileCheck2,
+    Loader2,
 } from "lucide-react";
 
 const STEPS = [
@@ -45,6 +46,87 @@ const KYC_ROWS = [
 
 export default function YourLoanReviewSubmit() {
     const [agreed, setAgreed] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState(null);
+
+    // Function to simulate API call
+    const submitApplication = async () => {
+        try {
+            setIsSubmitting(true);
+            setSubmitError(null);
+
+            // Prepare all application data
+            const applicationData = {
+                personalDetails: {
+                    fullName: "Prince Kumar",
+                    mobile: "9876543210",
+                    email: "princekumar@gmail.com",
+                    aadhaar: "1234 5678 9012",
+                    pan: "ABCDE1234F",
+                },
+                loanDetails: {
+                    purpose: "Business Expansion",
+                    referenceContact: "Ramesh Kumar (Brother)",
+                    employmentType: "Self Employed",
+                },
+                kycDocuments: [
+                    { type: "Aadhaar Card", file: "aadhaar_front.jpg" },
+                    { type: "PAN Card", file: "pan_card.jpg" },
+                ],
+                cibilData: JSON.parse(localStorage.getItem("cibilData") || "{}"),
+                applicationId: "APP_" + Date.now(),
+                submittedAt: new Date().toISOString(),
+                status: "pending",
+            };
+
+            // Real API call - Replace with actual endpoint
+            // const response = await fetch('/api/loan-application/submit', {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //         'Authorization': 'Bearer ' + localStorage.getItem('token')
+            //     },
+            //     body: JSON.stringify(applicationData)
+            // });
+            // 
+            // if (!response.ok) {
+            //     throw new Error('Failed to submit application');
+            // }
+            // 
+            // const data = await response.json();
+            // 
+            // if (!data.success) {
+            //     throw new Error(data.message || 'Submission failed');
+            // }
+
+            // Simulate network delay
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+
+            // Simulate successful response
+            const success = true;
+            
+            if (success) {
+                // Store the application data
+                localStorage.setItem("loanApplication", JSON.stringify(applicationData));
+                localStorage.setItem("applicationStatus", "approved");
+                localStorage.setItem("applicationId", applicationData.applicationId);
+
+                // Navigate to approved page
+                window.location.href = "/approvedpage";
+            } else {
+                throw new Error("Application submission failed. Please try again.");
+            }
+        } catch (error) {
+            setSubmitError(error.message || "Network error. Please check your connection and try again.");
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleSubmit = () => {
+        if (agreed && !isSubmitting) {
+            submitApplication();
+        }
+    };
 
     return (
         <div className="min-h-screen w-full bg-[#E7E4DA] flex items-center justify-center py-10 px-4">
@@ -63,7 +145,12 @@ export default function YourLoanReviewSubmit() {
                 <div className="max-h-[790px] overflow-y-auto">
                     {/* header */}
                     <div className="flex items-center justify-between px-4 py-3.5 bg-white border-b border-[#EEF0F5]">
-                        <button type="button" aria-label="Go back" className="text-[#0F1B3D] shrink-0">
+                        <button 
+                            type="button" 
+                            aria-label="Go back" 
+                            className="text-[#0F1B3D] shrink-0"
+                            disabled={isSubmitting}
+                        >
                             <ArrowLeft size={20} />
                         </button>
                         <div className="flex items-center gap-2 flex-1 justify-center">
@@ -144,6 +231,7 @@ export default function YourLoanReviewSubmit() {
                             <button
                                 type="button"
                                 className="flex items-center gap-1 text-[#2A4BDE] text-[11.5px] font-semibold"
+                                disabled={isSubmitting}
                             >
                                 <Pencil size={12} />
                                 Edit
@@ -179,6 +267,7 @@ export default function YourLoanReviewSubmit() {
                             <button
                                 type="button"
                                 className="flex items-center gap-1 text-[#2A4BDE] text-[11.5px] font-semibold"
+                                disabled={isSubmitting}
                             >
                                 <Pencil size={12} />
                                 Edit
@@ -238,8 +327,11 @@ export default function YourLoanReviewSubmit() {
                     <div className="mx-4 mt-4">
                         <button
                             type="button"
-                            onClick={() => setAgreed((v) => !v)}
-                            className="w-full flex items-start gap-3 bg-white border border-[#EEF0F5] rounded-2xl p-4 text-left"
+                            onClick={() => !isSubmitting && setAgreed((v) => !v)}
+                            disabled={isSubmitting}
+                            className={`w-full flex items-start gap-3 bg-white border border-[#EEF0F5] rounded-2xl p-4 text-left ${
+                                isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+                            }`}
                         >
                             <div
                                 className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 mt-0.5 ${agreed
@@ -264,18 +356,39 @@ export default function YourLoanReviewSubmit() {
                         </button>
                     </div>
 
+                    {/* Error message */}
+                    {submitError && (
+                        <div className="mx-4 mt-3 bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5">
+                            <p className="text-[12px] text-red-600 flex items-center gap-2">
+                                <span className="text-red-500">⚠</span>
+                                {submitError}
+                            </p>
+                        </div>
+                    )}
+
                     {/* submit button */}
                     <div className="px-4 mt-5">
                         <button
                             type="button"
-                            disabled={!agreed}
-                            className={`w-full h-12 rounded-xl font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-colors ${agreed
-                                    ? "bg-[#2A4BDE] text-white"
+                            onClick={handleSubmit}
+                            disabled={!agreed || isSubmitting}
+                            className={`w-full h-12 rounded-xl font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${
+                                agreed && !isSubmitting
+                                    ? "bg-[#2A4BDE] text-white hover:bg-[#1A3BAE] active:scale-[0.99]"
                                     : "bg-[#EDEBE3] text-[#A9ACB6] cursor-not-allowed"
-                                }`}
+                            }`}
                         >
-                            Submit Application
-                            <ArrowRight size={16} />
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 size={18} className="animate-spin" />
+                                    Submitting Application...
+                                </>
+                            ) : (
+                                <>
+                                    Submit Application
+                                    <ArrowRight size={16} />
+                                </>
+                            )}
                         </button>
                     </div>
 

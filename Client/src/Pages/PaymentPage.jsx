@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Lock, QrCode, ShieldCheck, X } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import { useNavigate } from "react-router-dom";
+
 
 const TABS = ["UPI", "QR Code", "Card", "Netbanking", "Wallet"];
 
@@ -13,6 +15,8 @@ const QUICK_APPS = [
 export default function PaymentCheckout() {
     const [activeTab, setActiveTab] = useState("UPI");
     const amount = 259;
+    const navigate = useNavigate();
+
 
     // Generate UPI QR Code data
     const generateUPIString = () => {
@@ -24,7 +28,7 @@ export default function PaymentCheckout() {
             cu: "INR", // Currency
             tn: "Loan Processing Fee", // Transaction Note
         };
-        
+
         // Convert to UPI deep link
         const upiString = `upi://pay?pa=${upiData.pa}&pn=${upiData.pn}&am=${upiData.am}&cu=${upiData.cu}&tn=${encodeURIComponent(upiData.tn)}`;
         return upiString;
@@ -54,8 +58,11 @@ export default function PaymentCheckout() {
                             </p>
                         </div>
                     </div>
-                    <X size={20} className="opacity-80 cursor-pointer" />
-                </div>
+                    <X
+                        size={20}
+                        className="opacity-80 cursor-pointer"
+                        onClick={() => navigate(-1)}
+                    />                </div>
 
                 {/* Merchant row */}
                 <div className="px-5 py-4 flex items-center justify-between border-b border-[#EEEEEE]">
@@ -65,7 +72,7 @@ export default function PaymentCheckout() {
                         </div>
                         <div>
                             <p className="text-[13.5px] font-bold text-[#111]">
-                                YourLoan Pvt Ltd
+                                OwnPocket Pvt Ltd
                             </p>
                             <p className="text-[11px] text-[#888] mt-0.5">
                                 Order #ORD10293847
@@ -87,11 +94,10 @@ export default function PaymentCheckout() {
                             key={tab}
                             type="button"
                             onClick={() => setActiveTab(tab)}
-                            className={`flex-1 whitespace-nowrap text-center px-2 py-3 text-[12px] font-semibold border-b-2 transition-colors ${
-                                activeTab === tab
+                            className={`flex-1 whitespace-nowrap text-center px-2 py-3 text-[12px] font-semibold border-b-2 transition-colors ${activeTab === tab
                                     ? "text-[#4D2FC4] border-[#4D2FC4] bg-white"
                                     : "text-[#888] border-transparent"
-                            }`}
+                                }`}
                         >
                             {tab}
                         </button>
@@ -108,7 +114,7 @@ export default function PaymentCheckout() {
 
                             {/* QR Code with proper styling */}
                             <div className="relative w-[200px] h-[200px] rounded-xl border-2 border-[#D9D3F5] bg-white p-2 shadow-md flex items-center justify-center">
-                                <QRCodeSVG 
+                                <QRCodeSVG
                                     value={generateUPIString()}
                                     size={180}
                                     bgColor="#FFFFFF"

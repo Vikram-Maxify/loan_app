@@ -5,7 +5,7 @@ const generateToken = require("../utils/generateToken");
 
 exports.sendOTP = async (req, res) => {
     try {
-        const { mobile,fullName,email } = req.body;
+        const { mobile, fullName, email } = req.body;
 
         if (!mobile) {
             return res.status(400).json({
@@ -14,11 +14,29 @@ exports.sendOTP = async (req, res) => {
             });
         }
 
+        // Generate 6 digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
+        // Check existing user
         let user = await User.findOne({ mobile });
 
-        if (!user) {
+        if (user) {
+            // Existing User -> Login
+            user.otp = otp;
+            user.otpExpire = new Date(Date.now() + 5 * 60 * 1000);
+
+            // Update only if empty
+            if (!user.fullName && fullName) {
+                user.fullName = fullName;
+            }
+
+            if (!user.email && email) {
+                user.email = email;
+            }
+
+            await user.save();
+        } else {
+            // New User -> Register
             user = await User.create({
                 mobile,
                 fullName,
@@ -26,19 +44,22 @@ exports.sendOTP = async (req, res) => {
                 otp,
                 otpExpire: new Date(Date.now() + 5 * 60 * 1000),
                 role: "user",
+                isVerified: false,
             });
-        } else {
-            user.otp = otp;
-            user.otpExpire = new Date(Date.now() + 5 * 60 * 1000);
-            await user.save();
         }
+
+        // TODO: Send OTP via SMS Provider
+        console.log("OTP:", otp);
 
         return res.status(200).json({
             success: true,
             message: "OTP sent successfully",
-            otp, // Remove in production
+            otp
         });
+
     } catch (err) {
+        console.error(err);
+
         return res.status(500).json({
             success: false,
             message: err.message,
@@ -68,6 +89,13 @@ exports.verifyOTP = async (req, res) => {
             });
         }
 
+        if (!user.otp) {
+            return res.status(400).json({
+                success: false,
+                message: "Please request a new OTP",
+            });
+        }
+
         if (user.otp !== otp) {
             return res.status(400).json({
                 success: false,
@@ -75,24 +103,27 @@ exports.verifyOTP = async (req, res) => {
             });
         }
 
-        if (!user.otpExpire || user.otpExpire < Date.now()) {
+        if (!user.otpExpire || user.otpExpire < new Date()) {
             return res.status(400).json({
                 success: false,
                 message: "OTP expired",
             });
         }
 
+        // Verify User
         user.isVerified = true;
-        user.otp = undefined;
-        user.otpExpire = undefined;
+        user.otp = null;
+        user.otpExpire = null;
 
         await user.save();
 
+        // Generate JWT
         const token = generateToken({
             id: user._id,
             role: user.role,
         });
 
+        // Set Cookie
         res.cookie("token", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
@@ -100,15 +131,21 @@ exports.verifyOTP = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
-        const userData = await User.findById(user._id).select("-otp -otpExpire");
+        // Get Updated User
+        const userData = await User.findById(user._id).select(
+            "-otp -otpExpire"
+        );
 
         return res.status(200).json({
             success: true,
-            message: "OTP verified successfully",
+            message: "Login successful",
             token,
             user: userData,
         });
+
     } catch (err) {
+        console.error(err);
+
         return res.status(500).json({
             success: false,
             message: err.message,

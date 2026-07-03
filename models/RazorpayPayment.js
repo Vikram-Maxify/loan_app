@@ -9,10 +9,10 @@ const razorpayPaymentSchema = new mongoose.Schema(
       required: true,
     },
 
-    // Loan Application
-    loanApplication: {
+    // Application
+    application: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "LoanApplication",
+      ref: "Application",
       required: true,
     },
 
@@ -60,11 +60,7 @@ const razorpayPaymentSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: [
-        "created",
-        "success",
-        "failed",
-      ],
+      enum: ["created", "success", "failed"],
       default: "created",
     },
 
@@ -73,7 +69,10 @@ const razorpayPaymentSchema = new mongoose.Schema(
       default: "",
     },
 
-    paidAt: Date,
+    paidAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

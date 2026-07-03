@@ -2,42 +2,44 @@ const Razorpay = require("razorpay");
 const crypto = require("crypto");
 
 const RazorpayPayment = require("../models/RazorpayPayment");
-const LoanApplication = require("../models/LoanApplication");
+const Application = require("../models/Application");
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+// =========================
+// Create Payment
+// =========================
 exports.createPayment = async (req, res) => {
     try {
-
         const { applicationId, amount } = req.body;
 
-        const loan = await LoanApplication.findOne({
-            applicationId,
+        const application = await Application.findOne({
+            _id: applicationId,
             user: req.user.id,
         });
 
-        if (!loan) {
+        if (!application) {
             return res.status(404).json({
                 success: false,
-                message: "Loan Application not found",
+                message: "Application not found",
             });
         }
 
         const options = {
             amount: amount * 100,
             currency: "INR",
-            receipt: applicationId,
+            receipt: application._id.toString(),
         };
 
         const order = await razorpay.orders.create(options);
 
         const payment = await RazorpayPayment.create({
             user: req.user.id,
-            loanApplication: loan._id,
-            applicationId,
+            application: application._id,
+            applicationId: application._id.toString(),
             razorpayOrderId: order.id,
             amount,
             status: "created",
@@ -48,21 +50,19 @@ exports.createPayment = async (req, res) => {
             order,
             payment,
         });
-
     } catch (err) {
-
         res.status(500).json({
             success: false,
             message: err.message,
         });
-
     }
 };
 
+// =========================
+// Verify Payment
+// =========================
 exports.verifyPayment = async (req, res) => {
-
     try {
-
         const {
             razorpay_order_id,
             razorpay_payment_id,
@@ -70,62 +70,44 @@ exports.verifyPayment = async (req, res) => {
         } = req.body;
 
         const sign = crypto
-            .createHmac(
-                "sha256",
-                process.env.RAZORPAY_KEY_SECRET
-            )
-            .update(
-                razorpay_order_id +
-                "|" +
-                razorpay_payment_id
-            )
+            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+            .update(`${razorpay_order_id}|${razorpay_payment_id}`)
             .digest("hex");
 
         if (sign !== razorpay_signature) {
-
             return res.status(400).json({
                 success: false,
                 message: "Payment Verification Failed",
             });
-
         }
 
-        const payment =
-            await RazorpayPayment.findOneAndUpdate(
-                {
-                    razorpayOrderId: razorpay_order_id,
-                },
-                {
-                    razorpayPaymentId:
-                        razorpay_payment_id,
+        const payment = await RazorpayPayment.findOneAndUpdate(
+            {
+                razorpayOrderId: razorpay_order_id,
+            },
+            {
+                razorpayPaymentId: razorpay_payment_id,
+                razorpaySignature: razorpay_signature,
+                status: "success",
+                paidAt: new Date(),
+            },
+            {
+                new: true,
+            }
+        );
 
-                    razorpaySignature:
-                        razorpay_signature,
-
-                    status: "success",
-
-                    paidAt: new Date(),
-                },
-                {
-                    new: true,
-                }
-            );
-
-        res.json({
+        res.status(200).json({
             success: true,
             payment,
         });
-
     } catch (err) {
-
         res.status(500).json({
             success: false,
             message: err.message,
         });
-
     }
-
 };
+
 
 exports.paymentFailed = async (req, res) => {
 
@@ -167,77 +149,79 @@ exports.paymentFailed = async (req, res) => {
 
 };
 
+// =========================
+// Get All Payments
+// =========================
 exports.getAllPayments = async (req, res) => {
-
     try {
+        const payments = await RazorpayPayment.find()
+            .populate("user", "fullName mobile")
+            .populate("application")
+            .sort({ createdAt: -1 });
 
-        const payments =
-            await RazorpayPayment.find()
-                .populate(
-                    "user",
-                    "fullName mobile"
-                )
-                .populate(
-                    "loanApplication"
-                )
-                .sort({
-                    createdAt: -1,
-                });
-
-        res.json({
+        res.status(200).json({
             success: true,
             total: payments.length,
             payments,
         });
-
     } catch (err) {
-
         res.status(500).json({
             success: false,
             message: err.message,
         });
-
     }
-
 };
 
+// =========================
+// Get Payment By Id
+// =========================
 exports.getPaymentById = async (req, res) => {
-
     try {
-
-        const payment =
-            await RazorpayPayment.findById(
-                req.params.id
-            )
-                .populate(
-                    "user",
-                    "fullName mobile"
-                )
-                .populate(
-                    "loanApplication"
-                );
+        const payment = await RazorpayPayment.findById(req.params.id)
+            .populate("user", "fullName mobile")
+            .populate("application");
 
         if (!payment) {
-
             return res.status(404).json({
                 success: false,
                 message: "Payment not found",
             });
-
         }
 
-        res.json({
+        res.status(200).json({
             success: true,
             payment,
         });
-
     } catch (err) {
-
         res.status(500).json({
             success: false,
             message: err.message,
         });
-
     }
+};
 
+// =========================
+// Get Orders By User Id
+// =========================
+exports.getOrdersByUserId = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const payments = await RazorpayPayment.find({
+            user: userId,
+        })
+            .populate("application")
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            total: payments.length,
+            payments,
+        });
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            message: err.message,
+        });
+    }
 };

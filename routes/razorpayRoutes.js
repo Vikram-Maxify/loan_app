@@ -10,6 +10,7 @@ const {
     paymentFailed,
     getAllPayments,
     getPaymentById,
+    getOrdersByUserId,
 } = require("../controllers/razorpayController");
 
 router.post(
@@ -40,6 +41,12 @@ router.get(
     "/:id",
     auth,
     getPaymentById
+);
+
+router.get(
+    "/my-orders",
+    auth,
+    getOrdersByUserId
 );
 
 module.exports = router;

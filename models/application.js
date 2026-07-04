@@ -21,6 +21,10 @@ const applicationSchema = new mongoose.Schema(
             required: true,
             trim: true,
         },
+        applicationId: {
+            type: String,
+            unique: true,
+        },
 
         email: {
             type: String,
@@ -227,6 +231,8 @@ const applicationSchema = new mongoose.Schema(
                 uppercase: true,
             },
 
+
+
             accountType: {
                 type: String,
                 enum: ["Savings", "Current"],
@@ -309,7 +315,17 @@ applicationSchema.pre("save", function (next) {
             break;
     }
 
-    next();
+});
+
+applicationSchema.pre("validate", function (next) {
+  if (!this.applicationId) {
+    const random = Math.floor(1000 + Math.random() * 9000);
+
+    this.applicationId = `APP${Date.now()}${random}`;
+    // Example:
+    // APP17515481234561234
+  }
+
 });
 
 module.exports =

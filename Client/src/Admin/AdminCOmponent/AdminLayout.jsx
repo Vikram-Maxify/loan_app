@@ -18,6 +18,7 @@ const AdminLayout = () => {
         { name: 'Dashboard', icon: LayoutDashboard, to: '/admin/dashboard' },
         { name: 'Users', icon: Users, to: '/admin/users' },
         { name: 'Settings', icon: Settings, to: '/admin/settings' },
+        { name: 'Profile', icon: Settings, to: '/admin/profile' },
     ];
 
     // Check if a nav item is active

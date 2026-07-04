@@ -22,7 +22,7 @@ function App() {
   useEffect(() => {
     if (!normalizedOnLoad.current) {
       normalizedOnLoad.current = true
-      if (location.pathname !== '/') {
+      if (location.pathname !== '/' && !location.pathname.startsWith('/admin')) {
         navigate('/', { replace: true })
       }
     }

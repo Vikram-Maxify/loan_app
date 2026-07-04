@@ -5,7 +5,7 @@ import { getAllOrders } from "../../redux/slice/orderSlice";
 const AdminOrders = () => {
   const dispatch = useDispatch();
 
-  const { loading, orders } = useSelector((state) => state.order);
+  const { loading, orders = [] } = useSelector((state) => state.order);
 
   const [search, setSearch] = useState("");
 
@@ -13,25 +13,28 @@ const AdminOrders = () => {
     dispatch(getAllOrders());
   }, [dispatch]);
 
-  // Filter orders and remove duplicate orderIds
+  // Show only one order per user (latest order)
   const filteredOrders = useMemo(() => {
-    // First filter by search term
+    // Search by Order ID
     const filtered = orders.filter((item) =>
       item.orderId?.toLowerCase().includes(search.toLowerCase())
     );
-    
-    // Remove duplicate orderIds (exact same orderId)
-    const seenOrderIds = new Set();
-    
+
+    // Remove duplicate users
+    const seenUsers = new Set();
+
     return filtered.filter((order) => {
-      const orderId = order.orderId;
-      
-      // If this orderId already exists, skip it (duplicate)
-      if (seenOrderIds.has(orderId)) {
+      const userId = order.user?._id;
+
+      // If user data is missing, show the order
+      if (!userId) return true;
+
+      // Skip duplicate user
+      if (seenUsers.has(userId)) {
         return false;
       }
-      // Otherwise, add to set and keep it
-      seenOrderIds.add(orderId);
+
+      seenUsers.add(userId);
       return true;
     });
   }, [orders, search]);
@@ -49,55 +52,51 @@ const AdminOrders = () => {
   return (
     <div className="w-full px-4 py-4 md:px-6">
       <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
-        {/* Card Header */}
+        {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 px-6 py-4 border-b border-gray-200 bg-gray-50">
-          <h4 className="text-xl font-semibold text-gray-800 m-0">
-            All Orders {filteredOrders.length > 0 && `(${filteredOrders.length})`}
+          <h4 className="text-xl font-semibold text-gray-800">
+            All Orders ({filteredOrders.length})
           </h4>
 
           <button
             onClick={() => dispatch(getAllOrders())}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition"
           >
             Refresh
           </button>
         </div>
 
-        {/* Card Body */}
         <div className="px-6 py-4">
-          {/* Search Bar */}
-          <div className="mb-4">
-            <div className="max-w-md">
-              <input
-                type="text"
-                placeholder="Search Order ID..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-              />
-            </div>
+          {/* Search */}
+          <div className="mb-4 max-w-md">
+            <input
+              type="text"
+              placeholder="Search Order ID..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
 
-          {/* Loading State */}
+          {/* Loading */}
           {loading ? (
             <div className="flex justify-center items-center py-16">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             </div>
           ) : (
-            /* Table */
-            <div className="overflow-x-auto -mx-2">
+            <div className="overflow-x-auto">
               <table className="w-full text-sm text-left border-collapse">
                 <thead className="bg-gray-800 text-white">
                   <tr>
-                    <th className="px-4 py-3 font-medium">#</th>
-                    <th className="px-4 py-3 font-medium">Order ID</th>
-                    <th className="px-4 py-3 font-medium">User ID</th>
-                    <th className="px-4 py-3 font-medium">User</th>
-                    <th className="px-4 py-3 font-medium">Mobile</th>
-                    <th className="px-4 py-3 font-medium">Email</th>
-                    <th className="px-4 py-3 font-medium">Amount</th>
-                    <th className="px-4 py-3 font-medium">Status</th>
-                    <th className="px-4 py-3 font-medium">Date</th>
+                    <th className="px-4 py-3">#</th>
+                    <th className="px-4 py-3">Order ID</th>
+                    <th className="px-4 py-3">User ID</th>
+                    <th className="px-4 py-3">User</th>
+                    <th className="px-4 py-3">Mobile</th>
+                    <th className="px-4 py-3">Email</th>
+                    <th className="px-4 py-3">Amount</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Date</th>
                   </tr>
                 </thead>
 
@@ -106,15 +105,15 @@ const AdminOrders = () => {
                     filteredOrders.map((order, index) => (
                       <tr
                         key={order._id}
-                        className="hover:bg-gray-50 transition-colors duration-150"
+                        className="hover:bg-gray-50 transition"
                       >
                         <td className="px-4 py-3">{index + 1}</td>
 
-                        <td className="px-4 py-3 font-semibold text-gray-700">
+                        <td className="px-4 py-3 font-semibold">
                           {order.orderId}
                         </td>
 
-                        <td className="px-4 py-3 text-xs font-mono text-gray-500">
+                        <td className="px-4 py-3 text-xs font-mono">
                           {order.user?._id || "-"}
                         </td>
 
@@ -130,13 +129,13 @@ const AdminOrders = () => {
                           {order.user?.email || "-"}
                         </td>
 
-                        <td className="px-4 py-3 font-medium text-gray-700">
+                        <td className="px-4 py-3 font-semibold">
                           ₹ {order.amount}
                         </td>
 
                         <td className="px-4 py-3">
                           <span
-                            className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(
                               order.status
                             )}`}
                           >
@@ -144,7 +143,7 @@ const AdminOrders = () => {
                           </span>
                         </td>
 
-                        <td className="px-4 py-3 text-gray-600">
+                        <td className="px-4 py-3">
                           {new Date(order.createdAt).toLocaleDateString(
                             "en-IN",
                             {
@@ -159,10 +158,12 @@ const AdminOrders = () => {
                   ) : (
                     <tr>
                       <td
-                        colSpan="9"
-                        className="px-4 py-8 text-center text-gray-500"
+                        colSpan={9}
+                        className="text-center py-8 text-gray-500"
                       >
-                        {search ? "No orders found matching your search" : "No Orders Found"}
+                        {search
+                          ? "No orders found matching your search."
+                          : "No Orders Found."}
                       </td>
                     </tr>
                   )}

@@ -345,7 +345,7 @@ export default function OwnPocketLogin() {
                                     onFocus={() => setFocused("name")}
                                     onBlur={() => {
                                         setFocused(null);
-                                        handleNameBlur();
+                                        
                                     }}
                                     className="flex-1 min-w-0 text-[14px] text-[#0F1B3D] placeholder:text-[#B5B9C4] bg-transparent outline-none"
                                 />

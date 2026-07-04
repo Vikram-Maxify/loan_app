@@ -1,7 +1,7 @@
 // src/pages/Admin/AdminUpi.jsx
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { QrCode, Upload, X, CheckCircle2, AlertCircle, Save, Loader2 } from 'lucide-react';
+import { QrCode, CheckCircle2, AlertCircle, Save, Loader2 } from 'lucide-react';
 import { fetchUpi, updateUpi, resetUpiState } from '../../redux/slice/adminUpiSlice';
 
 const AdminUpi = () => {
@@ -9,12 +9,8 @@ const AdminUpi = () => {
     const { upi, loading, success, error } = useSelector((state) => state.upi);
 
     const [upiId, setUpiId] = useState('');
-    const [payeeName, setPayeeName] = useState('');
-    const [qrFile, setQrFile] = useState(null);
-    const [qrPreview, setQrPreview] = useState(null);
+    const [upiName, setUpiName] = useState('');
     const [formError, setFormError] = useState(null);
-
-    const qrInputRef = useRef(null);
 
     useEffect(() => {
         dispatch(fetchUpi());
@@ -24,8 +20,7 @@ const AdminUpi = () => {
     useEffect(() => {
         if (upi) {
             setUpiId(upi.upiId || '');
-            setPayeeName(upi.payeeName || upi.name || '');
-            setQrPreview(upi.qrCode || upi.qrImage || null);
+            setUpiName(upi.upiName || '');
         }
     }, [upi]);
 
@@ -37,34 +32,6 @@ const AdminUpi = () => {
         }
     }, [success, error, dispatch]);
 
-    const handleQrChange = (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-        if (!validTypes.includes(file.type)) {
-            setFormError('Please upload a valid image file (JPEG, PNG, WEBP)');
-            return;
-        }
-        if (file.size > 5 * 1024 * 1024) {
-            setFormError('QR image should be less than 5MB');
-            return;
-        }
-
-        setFormError(null);
-        setQrFile(file);
-
-        const reader = new FileReader();
-        reader.onloadend = () => setQrPreview(reader.result);
-        reader.readAsDataURL(file);
-    };
-
-    const removeQr = () => {
-        setQrFile(null);
-        setQrPreview(upi?.qrCode || upi?.qrImage || null);
-        if (qrInputRef.current) qrInputRef.current.value = '';
-    };
-
     const handleSubmit = (e) => {
         e.preventDefault();
 
@@ -73,14 +40,19 @@ const AdminUpi = () => {
             return;
         }
 
+        if (!upiName.trim()) {
+            setFormError('Payee Name is required');
+            return;
+        }
+
         setFormError(null);
 
-        const formData = new FormData();
-        formData.append('upiId', upiId.trim());
-        if (payeeName.trim()) formData.append('payeeName', payeeName.trim());
-        if (qrFile) formData.append('qrCode', qrFile);
+        const payload = {
+            upiId: upiId.trim(),
+            upiName: upiName.trim()
+        };
 
-        dispatch(updateUpi(formData));
+        dispatch(updateUpi(payload));
     };
 
     return (
@@ -89,7 +61,7 @@ const AdminUpi = () => {
             <div className="mb-6">
                 <h1 className="text-3xl font-bold text-gray-800">UPI Settings</h1>
                 <p className="text-gray-500 text-sm mt-1">
-                    Manage the UPI ID and QR code shown to users for payments
+                    Manage the UPI ID and payee name shown to users for payments
                 </p>
             </div>
 
@@ -146,64 +118,22 @@ const AdminUpi = () => {
                                     placeholder="e.g. yourname@upi"
                                     className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors"
                                 />
+                                <p className="text-xs text-gray-400 mt-1">The UPI ID where users will send payments</p>
                             </div>
 
                             {/* Payee Name */}
                             <div>
                                 <label className="text-sm font-medium text-gray-700 block mb-1">
-                                    Payee Name <span className="text-gray-400">(optional)</span>
+                                    Payee Name <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="text"
-                                    value={payeeName}
-                                    onChange={(e) => setPayeeName(e.target.value)}
+                                    value={upiName}
+                                    onChange={(e) => setUpiName(e.target.value)}
                                     placeholder="e.g. Own Pocket Pvt. Ltd."
                                     className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors"
                                 />
-                            </div>
-
-                            {/* QR Code Upload */}
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 block mb-1">
-                                    QR Code <span className="text-gray-400">(optional)</span>
-                                </label>
-
-                                <div className="flex items-center gap-4">
-                                    {qrPreview ? (
-                                        <div className="relative w-28 h-28 rounded-xl overflow-hidden border-2 border-gray-200">
-                                            <img src={qrPreview} alt="UPI QR preview" className="w-full h-full object-cover" />
-                                            {qrFile && (
-                                                <button
-                                                    type="button"
-                                                    onClick={removeQr}
-                                                    className="absolute top-1 right-1 bg-white/90 hover:bg-white rounded-full p-1 shadow"
-                                                >
-                                                    <X size={14} className="text-red-500" />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <div className="w-28 h-28 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-300">
-                                            <QrCode size={36} />
-                                        </div>
-                                    )}
-
-                                    <button
-                                        type="button"
-                                        onClick={() => qrInputRef.current?.click()}
-                                        className="flex items-center gap-2 border-2 border-gray-200 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:border-indigo-500 hover:text-indigo-600 transition-colors"
-                                    >
-                                        <Upload size={16} />
-                                        {qrPreview ? 'Replace QR Code' : 'Upload QR Code'}
-                                    </button>
-                                    <input
-                                        ref={qrInputRef}
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleQrChange}
-                                        className="hidden"
-                                    />
-                                </div>
+                                <p className="text-xs text-gray-400 mt-1">The name that will appear on the user's payment app</p>
                             </div>
 
                             {/* Submit */}

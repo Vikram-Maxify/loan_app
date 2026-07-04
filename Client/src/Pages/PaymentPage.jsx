@@ -1,16 +1,35 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Lock, QrCode, ShieldCheck, X, Loader2 } from "lucide-react";
+import { Lock, QrCode, ShieldCheck, X, Loader2, ExternalLink } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useNavigate } from "react-router-dom";
 import { generateUserDepositUpiQR, resetUserUpiState } from "../redux/slice/userUpiSlice";
+import { openUPIApp, UPI_APPS } from "../utils/upiUtils";
 
 const TABS = ["UPI", "QR Code", "Card", "Netbanking", "Wallet"];
 
 const QUICK_APPS = [
-    { label: "Google Pay", short: "GP", color: "#5F259F" },
-    { label: "PhonePe", short: "PP", color: "#00BAF2" },
-    { label: "Paytm", short: "PT", color: "#00B9F1" },
+    { 
+        label: "Google Pay", 
+        short: "GP", 
+        color: "#5F259F",
+        key: "GOOGLE_PAY",
+        icon: "/icons/gpay.png" // Optional
+    },
+    { 
+        label: "PhonePe", 
+        short: "PP", 
+        color: "#00BAF2",
+        key: "PHONEPE",
+        icon: "/icons/phonepe.png" // Optional
+    },
+    { 
+        label: "Paytm", 
+        short: "PT", 
+        color: "#00B9F1",
+        key: "PAYTM",
+        icon: "/icons/paytm.png" // Optional
+    },
 ];
 
 export default function PaymentCheckout() {
@@ -21,6 +40,7 @@ export default function PaymentCheckout() {
     const [amount, setAmount] = useState(259);
     const [upiId, setUpiId] = useState("");
     const [copied, setCopied] = useState(false);
+    const [appOpening, setAppOpening] = useState(null);
 
     // Redux state
     const { loading, qrData, success, error } = useSelector(
@@ -33,7 +53,6 @@ export default function PaymentCheckout() {
             dispatch(generateUserDepositUpiQR(amount));
         }
 
-        // Cleanup on unmount
         return () => {
             dispatch(resetUserUpiState());
         };
@@ -52,7 +71,6 @@ export default function PaymentCheckout() {
             return qrData.qrCode || qrData.upiString;
         }
 
-        // Fallback UPI string if API fails
         const upiData = {
             pa: "yourloan@upi",
             pn: "OwnPocket Pvt Ltd",
@@ -79,15 +97,60 @@ export default function PaymentCheckout() {
         setTimeout(() => setCopied(false), 2000);
     };
 
+    // ===================== NEW: Handle UPI App Open =====================
+    const handleOpenUPIApp = async (appKey, appLabel) => {
+        setAppOpening(appLabel);
+        
+        const upiIdToUse = getUPIId();
+        const amountToUse = amount;
+
+        // Try to open the app
+        const opened = openUPIApp(appKey, upiIdToUse, amountToUse);
+
+        if (!opened) {
+            // If app couldn't be opened, fallback to copy UPI ID
+            alert(`${appLabel} is not installed on your device. Please copy the UPI ID and pay manually.`);
+            handleCopyUPI();
+        }
+
+        // Reset loading state after 3 seconds
+        setTimeout(() => {
+            setAppOpening(null);
+        }, 3000);
+    };
+
+    // ===================== NEW: Handle Pay with Custom UPI =====================
+    const handlePayWithUPI = () => {
+        if (!upiId.trim()) {
+            alert("Please enter a valid UPI ID");
+            return;
+        }
+
+        // Open default UPI app or system UPI picker
+        try {
+            const upiString = `upi://pay?pa=${upiId.trim()}&pn=OwnPocket%20Pvt%20Ltd&am=${amount}&cu=INR`;
+            window.location.href = upiString;
+            
+            // Fallback after 3 seconds
+            setTimeout(() => {
+                // If UPI app didn't open, show UPI ID
+                alert(`Pay to: ${upiId.trim()}\nAmount: ₹${amount}`);
+            }, 3000);
+        } catch (error) {
+            console.error("Error paying with UPI:", error);
+            alert(`Please pay to: ${upiId.trim()}\nAmount: ₹${amount}`);
+        }
+    };
+
     // Handle pay button click
     const handlePay = async () => {
         if (activeTab === "QR Code") {
-            // For QR Code tab, regenerate QR
             await dispatch(generateUserDepositUpiQR(amount));
+        } else if (activeTab === "UPI") {
+            handlePayWithUPI();
         } else {
-            // For other tabs, proceed with payment
+            // For other tabs
             try {
-                // Add your payment logic here
                 console.log("Processing payment...");
             } catch (error) {
                 console.error("Payment failed:", error);
@@ -205,7 +268,6 @@ export default function PaymentCheckout() {
                                         className="rounded-lg"
                                     />
                                 )}
-                                {/* Center logo on QR */}
                                 {!loading && !error && (
                                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                         <div className="w-[40px] h-[40px] rounded-full bg-white shadow-lg flex items-center justify-center border-2 border-[#4D2FC4]">
@@ -222,15 +284,29 @@ export default function PaymentCheckout() {
                                 Open any UPI app &rarr; Scan QR &rarr; Pay instantly
                             </p>
 
+                            {/* ===================== UPDATED QUICK APPS BUTTONS ===================== */}
                             <div className="flex items-center gap-3 mt-4">
                                 {QUICK_APPS.map((app) => (
-                                    <div
+                                    <button
                                         key={app.label}
-                                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-extrabold cursor-pointer hover:scale-110 transition-transform"
-                                        style={{ background: app.color }}
+                                        onClick={() => handleOpenUPIApp(app.key, app.label)}
+                                        disabled={appOpening !== null}
+                                        className="relative group"
                                     >
-                                        {app.short}
-                                    </div>
+                                        <div
+                                            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-extrabold cursor-pointer hover:scale-110 transition-transform"
+                                            style={{ background: app.color }}
+                                        >
+                                            {appOpening === app.label ? (
+                                                <Loader2 size={14} className="animate-spin" />
+                                            ) : (
+                                                app.short
+                                            )}
+                                        </div>
+                                        <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] text-white bg-black/70 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                            Open {app.label}
+                                        </span>
+                                    </button>
                                 ))}
                             </div>
 
@@ -242,7 +318,6 @@ export default function PaymentCheckout() {
                                 </span>
                             </div>
 
-                            {/* Copy UPI ID button */}
                             <button
                                 type="button"
                                 onClick={handleCopyUPI}
@@ -260,7 +335,6 @@ export default function PaymentCheckout() {
                                 )}
                             </button>
 
-                            {/* Error message */}
                             {error && (
                                 <div className="mt-3 w-full bg-red-50 border border-red-200 rounded-lg px-3 py-2">
                                     <p className="text-[11px] text-red-600 text-center">
@@ -269,7 +343,6 @@ export default function PaymentCheckout() {
                                 </div>
                             )}
 
-                            {/* Success message */}
                             {success && !loading && (
                                 <div className="mt-2 w-full bg-green-50 border border-green-200 rounded-lg px-3 py-2">
                                     <p className="text-[11px] text-green-600 text-center flex items-center justify-center gap-1">
@@ -299,22 +372,33 @@ export default function PaymentCheckout() {
                             <p className="text-[12px] font-semibold text-[#333] mb-2.5">
                                 Or pay using
                             </p>
+                            
+                            {/* ===================== UPDATED QUICK APPS BUTTONS ===================== */}
                             <div className="flex gap-2.5 mb-4">
                                 {QUICK_APPS.map((app) => (
-                                    <div
+                                    <button
                                         key={app.label}
-                                        className="flex-1 border border-[#EEEEEE] rounded-lg py-2.5 px-1.5 text-center cursor-pointer hover:border-[#4D2FC4] transition-colors"
+                                        onClick={() => handleOpenUPIApp(app.key, app.label)}
+                                        disabled={appOpening !== null}
+                                        className="flex-1 border border-[#EEEEEE] rounded-lg py-2.5 px-1.5 text-center hover:border-[#4D2FC4] transition-colors relative group"
                                     >
                                         <div
                                             className="w-[26px] h-[26px] rounded-full mx-auto mb-1.5 flex items-center justify-center text-white text-[11px] font-extrabold"
                                             style={{ background: app.color }}
                                         >
-                                            {app.short}
+                                            {appOpening === app.label ? (
+                                                <Loader2 size={12} className="animate-spin" />
+                                            ) : (
+                                                app.short
+                                            )}
                                         </div>
                                         <span className="text-[10.5px] font-semibold text-[#555]">
                                             {app.label}
                                         </span>
-                                    </div>
+                                        <span className="text-[8px] text-[#4D2FC4] opacity-0 group-hover:opacity-100 transition-opacity block mt-0.5">
+                                            Open App
+                                        </span>
+                                    </button>
                                 ))}
                             </div>
                         </>
@@ -323,15 +407,15 @@ export default function PaymentCheckout() {
                     <button
                         type="button"
                         onClick={handlePay}
-                        disabled={loading}
+                        disabled={loading || appOpening !== null}
                         className={`w-full py-[13px] rounded-lg bg-gradient-to-br from-[#4D2FC4] to-[#3A1FA0] text-white text-[14.5px] font-bold flex items-center justify-center gap-2 transition-all ${
-                            loading ? 'opacity-70 cursor-not-allowed' : 'hover:opacity-90 hover:scale-[1.01]'
+                            loading || appOpening !== null ? 'opacity-70 cursor-not-allowed' : 'hover:opacity-90 hover:scale-[1.01]'
                         }`}
                     >
-                        {loading ? (
+                        {loading || appOpening !== null ? (
                             <>
                                 <Loader2 size={16} className="animate-spin" />
-                                Generating...
+                                {appOpening ? `Opening ${appOpening}...` : 'Generating...'}
                             </>
                         ) : (
                             <>

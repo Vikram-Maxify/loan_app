@@ -18,6 +18,7 @@ const AdminApplication = () => {
 
     const [filterType, setFilterType] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
+    const [showAllApplications, setShowAllApplications] = useState(false);
 
     useEffect(() => {
         if (filterType === 'all') {
@@ -49,19 +50,48 @@ const AdminApplication = () => {
         dispatch(clearApplication());
     };
 
-    // ✅ FIX: Deduplicate applications by _id
+    // ✅ FIX: Deduplicate applications by applicant email
     const uniqueApplications = useMemo(() => {
         if (!applications) return [];
         
-        // Create a Map with _id as key to ensure uniqueness
+        if (showAllApplications) {
+            // Show all applications, just add grouping info
+            const applicantCount = {};
+            applications.forEach(app => {
+                const key = app.email || app.mobileNumber || app._id;
+                if (key) {
+                    applicantCount[key] = (applicantCount[key] || 0) + 1;
+                }
+            });
+            
+            return applications.map(app => {
+                const key = app.email || app.mobileNumber || app._id;
+                return {
+                    ...app,
+                    applicantGroupCount: key ? applicantCount[key] : 1,
+                    isDuplicateApplicant: key ? applicantCount[key] > 1 : false
+                };
+            });
+        }
+        
+        // Show unique applicants (only most recent application per applicant)
         const appMap = new Map();
         applications.forEach(app => {
-            if (app?._id && !appMap.has(app._id)) {
-                appMap.set(app._id, app);
+            if (app?._id) {
+                const key = app.email || app.mobileNumber || app._id;
+                if (!appMap.has(key)) {
+                    appMap.set(key, app);
+                } else {
+                    // Keep the most recent application
+                    const existing = appMap.get(key);
+                    if (new Date(app.createdAt) > new Date(existing.createdAt)) {
+                        appMap.set(key, app);
+                    }
+                }
             }
         });
         return Array.from(appMap.values());
-    }, [applications]);
+    }, [applications, showAllApplications]);
 
     const filteredApplications = uniqueApplications.filter((app) => {
         if (!searchTerm) return true;
@@ -440,17 +470,34 @@ const AdminApplication = () => {
                     <h1 className="text-3xl font-bold text-gray-800">Applications</h1>
                     <p className="text-gray-500 text-sm mt-1">Manage and track all loan applications</p>
                 </div>
-                <button
-                    onClick={handleRefresh}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors shadow-md hover:shadow-lg flex items-center gap-2"
-                    disabled={loading}
-                >
-                    <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M23 4v6h-6" />
-                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-                    </svg>
-                    {loading ? 'Loading...' : 'Refresh'}
-                </button>
+                <div className="flex gap-2 flex-wrap">
+                    <button
+                        onClick={() => setShowAllApplications(!showAllApplications)}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
+                            showAllApplications 
+                                ? 'bg-yellow-500 text-white hover:bg-yellow-600' 
+                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                    >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M4 4v16h16" />
+                            <path d="M8 16l4-4 4 4" />
+                            <path d="M8 8h8" />
+                        </svg>
+                        {showAllApplications ? 'Show Unique' : 'Show All'}
+                    </button>
+                    <button
+                        onClick={handleRefresh}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors shadow-md hover:shadow-lg flex items-center gap-2"
+                        disabled={loading}
+                    >
+                        <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M23 4v6h-6" />
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                        </svg>
+                        {loading ? 'Loading...' : 'Refresh'}
+                    </button>
+                </div>
             </div>
 
             {/* Filters */}
@@ -547,7 +594,14 @@ const AdminApplication = () => {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {filteredApplications.map((app, index) => (
                                     <tr key={app._id || index} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{index + 1}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {index + 1}
+                                            {app.isDuplicateApplicant && (
+                                                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                    {app.applicantGroupCount} apps
+                                                </span>
+                                            )}
+                                        </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-600">
                                             {app.applicationId || app._id?.slice(-8).toUpperCase() || 'N/A'}
                                         </td>

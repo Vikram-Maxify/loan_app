@@ -20,6 +20,7 @@ const AdminLayout = () => {
         { name: 'Applications', icon: FileText, to: '/admin/applications' },
         { name: 'UPI Settings', icon: Settings, to: '/admin/upi-settings' },
         { name: 'Profile', icon: UserCog, to: '/admin/profile' },
+        { name: 'Amount Setting', icon: Settings, to: '/admin/amount-setting' },
     ];
 
     // Check if a nav item is active

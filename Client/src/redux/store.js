@@ -8,6 +8,7 @@ import paymentReducer from "./slice/paymentSlice";
 import adminApplicationReducer from "./slice/adminApplicationSlice";
 import upiReducer from "./slice/adminUpiSlice"
 import userUpiReducer from "./slice/userUpiSlice";
+import amountSettingReducer from "./slice/amountSettingSlice";
 
 export const store = configureStore({
     reducer: {
@@ -19,6 +20,8 @@ export const store = configureStore({
         payment: paymentReducer,
         adminApplication: adminApplicationReducer,
         upi: upiReducer,
-        userUpi: userUpiReducer
+        userUpi: userUpiReducer,
+        amountSetting: amountSettingReducer,
+
     },
 });

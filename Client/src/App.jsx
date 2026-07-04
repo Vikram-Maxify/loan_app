@@ -1,4 +1,7 @@
 import "./App.css";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import Homepage from "./Pages/Homepage";
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef } from "react";
@@ -24,6 +27,7 @@ import AdminProfile from "./Admin/AdminPage/AdminProfile";
 import AdminApplication from "./Admin/AdminPage/AdminApplication";
 import AdminDashboard from "./Admin/AdminPage/Dashboard";
 import AdminUpi from "./Admin/AdminPage/AdminUPI";
+import AdminAmountSetting from "./Admin/AdminPage/AdminAmountSetting";
 
 function App() {
   const navigate = useNavigate();
@@ -54,36 +58,41 @@ function App() {
   }, [dispatch, location.pathname]);
 
   return (
-    <Routes>
+    <>
+      <Routes>
+        {/* Admin Login (Public) */}
+        <Route path="/admin/login" element={<AdminLogin />} />
 
-      {/* Admin Login (Public) */}
-      <Route path="/admin/login" element={<AdminLogin />} />
-
-      {/* Protected Admin Routes */}
-      <Route element={<PrivateAdminRoute />}>
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route path="users" element={<UsersPage />} />
-          <Route path="profile" element={<AdminProfile />} />
-          <Route path="applications" element={<AdminApplication />} />
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="upi-settings" element={<AdminUpi />} />
-          {/* Aur admin pages yaha add karo */}
+        {/* Protected Admin Routes */}
+        <Route element={<PrivateAdminRoute />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="users" element={<UsersPage />} />
+            <Route path="profile" element={<AdminProfile />} />
+            <Route path="applications" element={<AdminApplication />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="upi-settings" element={<AdminUpi />} />
+            <Route
+              path="amount-setting"
+              element={<AdminAmountSetting />}
+            />
+          </Route>
         </Route>
-      </Route>
 
-      {/* Public Routes */}
-      <Route path="/" element={<OwnPocketHome />} />
-      <Route path="/home" element={<Homepage />} />
-      <Route path="/verify-otp" element={<OwnPocketOtpVerify />} />
-      <Route path="/apply-form" element={<OwnPocketApplicationForm />} />
-      <Route path="/cibilcheck" element={<OwnPocketCibilCheck />} />
-      <Route path="/Loanreview" element={<OwnPocketReviewSubmit />} />
-      <Route path="/approvedpage" element={<OwnPocketApproved />} />
-      <Route path="/bank-detail" element={<OwnPocketBankDetails />} />
-      <Route path="/processing-fee" element={<OwnPocketProcessingFee />} />
-      <Route path="/processing-payment" element={<PaymentCheckout />} />
+        {/* Public Routes */}
+        <Route path="/" element={<OwnPocketHome />} />
+        <Route path="/home" element={<Homepage />} />
+        <Route path="/verify-otp" element={<OwnPocketOtpVerify />} />
+        <Route path="/apply-form" element={<OwnPocketApplicationForm />} />
+        <Route path="/cibilcheck" element={<OwnPocketCibilCheck />} />
+        <Route path="/Loanreview" element={<OwnPocketReviewSubmit />} />
+        <Route path="/approvedpage" element={<OwnPocketApproved />} />
+        <Route path="/bank-detail" element={<OwnPocketBankDetails />} />
+        <Route path="/processing-fee" element={<OwnPocketProcessingFee />} />
+        <Route path="/processing-payment" element={<PaymentCheckout />} />
+      </Routes>
 
-    </Routes>
+      <ToastContainer position="top-right" autoClose={3000} />
+    </>
   );
 }
 

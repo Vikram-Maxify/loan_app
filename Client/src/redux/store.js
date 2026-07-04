@@ -9,6 +9,7 @@ import adminApplicationReducer from "./slice/adminApplicationSlice";
 import upiReducer from "./slice/adminUpiSlice"
 import userUpiReducer from "./slice/userUpiSlice";
 import amountSettingReducer from "./slice/amountSettingSlice";
+import orderReducer from "./slice/orderSlice";
 
 export const store = configureStore({
     reducer: {
@@ -22,6 +23,8 @@ export const store = configureStore({
         upi: upiReducer,
         userUpi: userUpiReducer,
         amountSetting: amountSettingReducer,
+        order: orderReducer,
+
 
     },
 });

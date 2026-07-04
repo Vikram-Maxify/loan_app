@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BrandLogo from "../Components/BrandLogo";
-import {OwnPocketLogo} from "../Components/Header";
+import { OwnPocketLogo } from "../Components/Header";
 
 const FEATURES_TOP = [
     { icon: Zap, label: ["Quick Approval", "in 24 Hours"] },
@@ -53,34 +53,39 @@ export default function OwnPocketHome() {
 
     const navigate = useNavigate();
 
-const handleContinue = () => {
-        navigate('/home');
-};
+    const handleContinue = () => {
+        // Facebook Meta Pixel Events
+        if (window.fbq) {
+            window.fbq("track", "Lead");
+            window.fbq("track", "InitiateCheckout");
+        }
 
-useEffect(() => {
-    // Scroll to top on route change
-    window.scrollTo(0, 0);
-  }, []);
+        navigate("/home");
+    };
+    useEffect(() => {
+        // Scroll to top on route change
+        window.scrollTo(0, 0);
+    }, []);
 
     return (
         <div className=" w-full bg-white flex items-center justify-center">
             <div className="max-w-[480px] w-full shrink-0 bg-[#F5F6FA] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
-            
+
                 <div className="  overflow-y-auto">
                     {/* header */}
-                   <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100">
-    <div className="flex items-center gap-2">
-        <OwnPocketLogo />
-        <h1 className="text-xl font-bold text-gray-800">OwnPocket</h1>
-    </div>
-    {/* <button 
+                    <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100">
+                        <div className="flex items-center gap-2">
+                            <OwnPocketLogo />
+                            <h1 className="text-xl font-bold text-gray-800">OwnPocket</h1>
+                        </div>
+                        {/* <button 
         type="button" 
         aria-label="Open menu"
         className="p-2 rounded-lg hover:bg-gray-50 transition-colors"
     >
         <Menu size={22} className="text-[#2A4BDE]" strokeWidth={2.25} />
     </button> */}
-</div>
+                    </div>
 
                     {/* hero */}
                     <div className="bg-[#EEF1FA] px-5 pt-6 pb-8">
@@ -106,7 +111,7 @@ useEffect(() => {
                         </p>
 
                         <button
-                        onClick={handleContinue}
+                            onClick={handleContinue}
                             type="button"
                             className="w-full h-12 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[15px] flex items-center justify-center gap-2 mb-7"
                         >
@@ -199,7 +204,7 @@ useEffect(() => {
                                 </p>
                             </div>
                             <button
-                            onClick={handleContinue}
+                                onClick={handleContinue}
                                 type="button"
                                 className="shrink-0 h-9 px-3.5 rounded-lg bg-white text-[#2A4BDE] font-semibold text-[12px] flex items-center gap-1.5"
                             >
@@ -209,7 +214,7 @@ useEffect(() => {
                         </div>
                     </div>
                 </div>
-                
+
             </div>
         </div>
     );

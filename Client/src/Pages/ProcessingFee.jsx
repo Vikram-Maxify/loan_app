@@ -63,9 +63,16 @@ export default function OnPocketProcessingFee() {
 
     useEffect(() => {
         window.scrollTo(0, 0);
+
+        // Facebook Meta Pixel
+        if (window.fbq) {
+            window.fbq("track", "PageView");
+            window.fbq("track", "InitiateCheckout");
+        }
+
         dispatch(getAmountSetting());
         dispatch(resetUserUpiState());
-        setOrderCreated(false); // Reset order creation flag
+        setOrderCreated(false);
     }, [dispatch]);
 
     // Handle successful QR generation - Create Order first
@@ -77,7 +84,7 @@ export default function OnPocketProcessingFee() {
                 paymentMethod: selectedMethod,
                 // Add any other required fields
             };
-            
+
             dispatch(createOrder(orderData));
             setOrderCreated(true);
         }
@@ -131,17 +138,26 @@ export default function OnPocketProcessingFee() {
 
     const handlePayNow = async () => {
         try {
+            // Facebook Meta Pixel
+            if (window.fbq) {
+                window.fbq("track", "AddPaymentInfo", {
+                    value: totalAmount,
+                    currency: "INR",
+                });
+            }
+
             setLoading(true);
             setError(null);
             setRazorpayError(null);
             setOrderCreated(false);
+
 
             if (selectedMethod === "upi") {
                 // Generate UPI QR using Redux thunk
                 const payload = {
                     amount: totalAmount,
                 };
-                
+
                 dispatch(generateUserDepositUpiQR(payload));
             } else {
                 // For other payment methods, create order first
@@ -149,9 +165,9 @@ export default function OnPocketProcessingFee() {
                     amount: totalAmount,
                     paymentMethod: selectedMethod,
                 };
-                
+
                 const result = await dispatch(createOrder(orderData)).unwrap();
-                
+
                 if (result && result.data) {
                     navigate("/processing-payment", {
                         state: {
@@ -199,14 +215,14 @@ export default function OnPocketProcessingFee() {
                         <div className="min-h-[500px] flex flex-col items-center justify-center gap-3">
                             <Loader2 size={40} className="animate-spin text-[#2A4BDE]" />
                             <p className="text-[#0F1B3D] font-medium">
-                                {upiLoading ? "Generating UPI QR Code..." : 
-                                 orderLoading ? "Creating order..." : 
-                                 "Processing your payment..."}
+                                {upiLoading ? "Generating UPI QR Code..." :
+                                    orderLoading ? "Creating order..." :
+                                        "Processing your payment..."}
                             </p>
                             <p className="text-[#5B6072] text-sm">
-                                {upiLoading ? "Please wait while we create your QR" : 
-                                 orderLoading ? "Please wait while we create your order" :
-                                 "Please wait while we redirect you"}
+                                {upiLoading ? "Please wait while we create your QR" :
+                                    orderLoading ? "Please wait while we create your order" :
+                                        "Please wait while we redirect you"}
                             </p>
                         </div>
                     ) : (
@@ -288,20 +304,18 @@ export default function OnPocketProcessingFee() {
                                                 type="button"
                                                 onClick={() => setSelectedMethod(method.id)}
                                                 disabled={loading || upiLoading || orderLoading}
-                                                className={`flex items-center justify-center gap-2.5 py-3 px-3 rounded-xl border-2 transition-all duration-200 ${
-                                                    isSelected
-                                                        ? "border-[#2A4BDE] bg-[#EEF4FF]"
-                                                        : "border-[#E7E9F0] bg-white hover:border-[#BCC8F0]"
-                                                } ${(loading || upiLoading || orderLoading) ? "opacity-50 cursor-not-allowed" : ""}`}
+                                                className={`flex items-center justify-center gap-2.5 py-3 px-3 rounded-xl border-2 transition-all duration-200 ${isSelected
+                                                    ? "border-[#2A4BDE] bg-[#EEF4FF]"
+                                                    : "border-[#E7E9F0] bg-white hover:border-[#BCC8F0]"
+                                                    } ${(loading || upiLoading || orderLoading) ? "opacity-50 cursor-not-allowed" : ""}`}
                                             >
                                                 <Icon
                                                     size={16}
                                                     className={isSelected ? "text-[#2A4BDE]" : "text-[#5B6072]"}
                                                 />
                                                 <span
-                                                    className={`text-[12px] font-medium ${
-                                                        isSelected ? "text-[#2A4BDE]" : "text-[#0F1B3D]"
-                                                    }`}
+                                                    className={`text-[12px] font-medium ${isSelected ? "text-[#2A4BDE]" : "text-[#0F1B3D]"
+                                                        }`}
                                                 >
                                                     {method.label}
                                                 </span>
@@ -337,18 +351,17 @@ export default function OnPocketProcessingFee() {
                                     type="button"
                                     onClick={handlePayNow}
                                     disabled={loading || upiLoading || orderLoading}
-                                    className={`w-full h-12 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${
-                                        (loading || upiLoading || orderLoading)
-                                            ? "opacity-70 cursor-not-allowed"
-                                            : "hover:bg-[#1A3BAE] active:scale-[0.99]"
-                                    }`}
+                                    className={`w-full h-12 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${(loading || upiLoading || orderLoading)
+                                        ? "opacity-70 cursor-not-allowed"
+                                        : "hover:bg-[#1A3BAE] active:scale-[0.99]"
+                                        }`}
                                 >
                                     {(loading || upiLoading || orderLoading) ? (
                                         <>
                                             <Loader2 size={18} className="animate-spin" />
-                                            {upiLoading ? "Generating QR..." : 
-                                             orderLoading ? "Creating order..." : 
-                                             "Processing..."}
+                                            {upiLoading ? "Generating QR..." :
+                                                orderLoading ? "Creating order..." :
+                                                    "Processing..."}
                                         </>
                                     ) : (
                                         <>

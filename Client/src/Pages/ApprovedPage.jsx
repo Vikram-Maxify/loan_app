@@ -57,17 +57,30 @@ export default function OwnPocketApproved() {
     const handleContinue = async () => {
         try {
             setIsSubmitting(true);
-            // Simulate a brief transition before moving to the next step
+
+            // Facebook Meta Pixel
+            if (window.fbq) {
+                window.fbq("track", "ViewContent", {
+                    content_name: "Bank Details",
+                });
+            }
+
             await new Promise((resolve) => setTimeout(resolve, 700));
-            navigate("/bank-detail"); // ✅ useNavigate se navigate
+            navigate("/bank-detail");
         } catch (error) {
             setIsSubmitting(false);
         }
     };
-
+    
     useEffect(() => {
-        // Scroll to top on route change
         window.scrollTo(0, 0);
+
+        if (window.fbq) {
+            window.fbq("track", "PageView");
+            window.fbq("track", "ViewContent", {
+                content_name: "Loan Approved",
+            });
+        }
     }, []);
 
     return (
@@ -260,11 +273,10 @@ export default function OwnPocketApproved() {
                             type="button"
                             onClick={handleContinue}
                             disabled={isSubmitting}
-                            className={`w-full h-12 rounded-xl font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${
-                                isSubmitting
-                                    ? "bg-[#2A4BDE] text-white opacity-70 cursor-not-allowed"
-                                    : "bg-[#2A4BDE] text-white hover:bg-[#1A3BAE] active:scale-[0.99]"
-                            }`}
+                            className={`w-full h-12 rounded-xl font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${isSubmitting
+                                ? "bg-[#2A4BDE] text-white opacity-70 cursor-not-allowed"
+                                : "bg-[#2A4BDE] text-white hover:bg-[#1A3BAE] active:scale-[0.99]"
+                                }`}
                         >
                             {isSubmitting ? (
                                 <>

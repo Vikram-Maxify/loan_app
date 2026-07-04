@@ -30,7 +30,7 @@ const STEPS = [
 // Improved email validation function
 const isValidEmail = (email) => {
     if (!email || email.trim() === "") return true; // Empty is valid (optional)
-    
+
     // More comprehensive email validation
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailRegex.test(email.trim());
@@ -89,7 +89,7 @@ export default function OwnPocketLogin() {
     const dispatch = useDispatch();
     const { loading, error } = useSelector((state) => state.auth);
     const pendingAuth = JSON.parse(localStorage.getItem("pendingAuth") || "{}");
-    
+
     const [name, setName] = useState(pendingAuth.fullName || "");
     const [phone, setPhone] = useState(() => {
         const mobile = pendingAuth.mobile || "";
@@ -103,6 +103,17 @@ export default function OwnPocketLogin() {
     const [emailError, setEmailError] = useState(null);
 
     const navigate = useNavigate();
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+
+        if (window.fbq) {
+            window.fbq("track", "PageView");
+            window.fbq("track", "ViewContent", {
+                content_name: "Loan Details Form",
+            });
+        }
+    }, []);
 
     // Save to localStorage
     useEffect(() => {
@@ -139,7 +150,7 @@ export default function OwnPocketLogin() {
 
     const handleContinue = async () => {
         const mobile = phone.replace(/\D/g, "");
-        
+
         // Validate phone number length
         if (mobile.length !== 10) {
             setPhoneError("Please enter a valid 10-digit mobile number");
@@ -177,6 +188,10 @@ export default function OwnPocketLogin() {
                 })
             );
 
+            if (window.fbq) {
+                window.fbq("track", "Lead");
+            }
+
             navigate("/verify-otp");
         } catch (err) {
             setFormError(err.message || "Failed to send OTP. Please try again.");
@@ -203,13 +218,13 @@ export default function OwnPocketLogin() {
     };
 
     const phoneState = getPhoneValidationState();
-    
+
     // FIXED: Check if all fields are valid with improved email validation
     const isValid = useMemo(() => {
         const isNameValid = name.trim().length >= 2;
         const isPhoneValid = rawPhoneDigits.length === 10;
         const isEmailValid = !email.trim() || isValidEmail(email);
-        
+
         return isNameValid && isPhoneValid && isEmailValid;
     }, [name, rawPhoneDigits, email]);
 
@@ -271,20 +286,18 @@ export default function OwnPocketLogin() {
                                 <React.Fragment key={step.id}>
                                     <div className="flex flex-col items-center gap-2 w-16">
                                         <div
-                                            className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-semibold ${
-                                                i === 0
-                                                    ? "bg-[#2F6BFF] text-white"
-                                                    : "bg-white border border-[#D6D9E3] text-[#A6ABB8]"
-                                            }`}
+                                            className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-semibold ${i === 0
+                                                ? "bg-[#2F6BFF] text-white"
+                                                : "bg-white border border-[#D6D9E3] text-[#A6ABB8]"
+                                                }`}
                                         >
                                             {step.id}
                                         </div>
                                         <span
-                                            className={`text-[11px] text-center leading-tight ${
-                                                i === 0
-                                                    ? "text-[#2F6BFF] font-semibold"
-                                                    : "text-[#9CA1AF]"
-                                            }`}
+                                            className={`text-[11px] text-center leading-tight ${i === 0
+                                                ? "text-[#2F6BFF] font-semibold"
+                                                : "text-[#9CA1AF]"
+                                                }`}
                                         >
                                             {step.label}
                                         </span>
@@ -345,7 +358,7 @@ export default function OwnPocketLogin() {
                                     onFocus={() => setFocused("name")}
                                     onBlur={() => {
                                         setFocused(null);
-                                        
+
                                     }}
                                     className="flex-1 min-w-0 text-[14px] text-[#0F1B3D] placeholder:text-[#B5B9C4] bg-transparent outline-none"
                                 />
@@ -398,13 +411,12 @@ export default function OwnPocketLogin() {
                                 </p>
                             )}
                             <div className="flex justify-between mt-1">
-                                <span className={`text-[10px] ${
-                                    phoneState === 'valid' 
-                                        ? "text-emerald-500" 
-                                        : phoneState === 'invalid'
+                                <span className={`text-[10px] ${phoneState === 'valid'
+                                    ? "text-emerald-500"
+                                    : phoneState === 'invalid'
                                         ? "text-amber-500"
                                         : "text-[#B5B9C4]"
-                                }`}>
+                                    }`}>
                                     {phone.replace(/\D/g, "").length}/10 digits
                                 </span>
                                 {phoneState === 'valid' && (
@@ -464,11 +476,10 @@ export default function OwnPocketLogin() {
                             type="button"
                             disabled={!isValid || loading}
                             onClick={handleContinue}
-                            className={`w-full h-12 rounded-xl flex items-center justify-center gap-2 text-[15px] font-semibold transition-all ${
-                                isValid && !loading
-                                    ? "bg-[#2F6BFF] text-white hover:bg-[#2558D6] active:scale-[0.99] cursor-pointer"
-                                    : "bg-[#2F6BFF] text-white opacity-60 cursor-not-allowed"
-                            }`}
+                            className={`w-full h-12 rounded-xl flex items-center justify-center gap-2 text-[15px] font-semibold transition-all ${isValid && !loading
+                                ? "bg-[#2F6BFF] text-white hover:bg-[#2558D6] active:scale-[0.99] cursor-pointer"
+                                : "bg-[#2F6BFF] text-white opacity-60 cursor-not-allowed"
+                                }`}
                         >
                             {loading ? (
                                 <>
@@ -487,10 +498,10 @@ export default function OwnPocketLogin() {
                         {!isValid && !loading && (
                             <div className="mt-3 text-center">
                                 <p className="text-[11px] text-amber-600">
-                                    {!name.trim() || name.trim().length < 2 ? "⚠️ Please enter your full name" : 
-                                     rawPhoneDigits.length !== 10 ? "⚠️ Please enter 10-digit mobile number" :
-                                     email.trim() && !isValidEmail(email) ? "⚠️ Please enter valid email address" : 
-                                     "⚠️ Please fill all required fields"}
+                                    {!name.trim() || name.trim().length < 2 ? "⚠️ Please enter your full name" :
+                                        rawPhoneDigits.length !== 10 ? "⚠️ Please enter 10-digit mobile number" :
+                                            email.trim() && !isValidEmail(email) ? "⚠️ Please enter valid email address" :
+                                                "⚠️ Please fill all required fields"}
                                 </p>
                             </div>
                         )}

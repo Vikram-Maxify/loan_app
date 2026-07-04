@@ -123,7 +123,7 @@ export default function OwnPocketApplicationForm() {
         if (formDraft?.formData) {
             return formDraft.formData;
         }
-        
+
         // ✅ Pre-fill from pendingAuth (from login page)
         return {
             fullName: pendingAuth.fullName || "",
@@ -290,6 +290,13 @@ export default function OwnPocketApplicationForm() {
 
             localStorage.setItem("application", JSON.stringify(application));
             localStorage.setItem("applicationId", application._id);
+
+            // Facebook Meta Pixel
+            if (window.fbq) {
+                window.fbq("track", "SubmitApplication");
+                window.fbq("track", "Lead");
+            }
+
             navigate("/cibilcheck");
         } catch (error) {
             setSubmitError(error || "Network error. Please check your connection and try again.");
@@ -306,8 +313,14 @@ export default function OwnPocketApplicationForm() {
 
     useEffect(() => {
         window.scrollTo(0, 0);
-    }, [location.pathname]);
 
+        if (window.fbq) {
+            window.fbq("track", "PageView");
+            window.fbq("track", "ViewContent", {
+                content_name: "Loan Application Form",
+            });
+        }
+    }, [location.pathname]);
     return (
         <div className="w-full bg-white flex items-center justify-center">
             <div className="max-w-[480px] w-full shrink-0 bg-[#F5F6FA] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
@@ -431,7 +444,7 @@ export default function OwnPocketApplicationForm() {
                             preFilled={!!pendingAuth.email}
                         />
                         <div className="h-3.5" />
-                        
+
                         <TextField
                             label="Aadhaar Card Number"
                             icon={<CreditCard size={15} />}
@@ -443,7 +456,7 @@ export default function OwnPocketApplicationForm() {
                             error={fieldErrors.aadhaarNumber}
                         />
                         <div className="h-3.5" />
-                        
+
                         <TextField
                             label="PAN Card Number"
                             icon={<CreditCard size={15} />}

@@ -68,6 +68,17 @@ export default function OwnPocketOtpVerify() {
 
     const phoneNumber = pendingAuth.mobile || "";
 
+    useEffect(() => {
+        window.scrollTo(0, 0);
+
+        if (window.fbq) {
+            window.fbq("track", "PageView");
+            window.fbq("track", "ViewContent", {
+                content_name: "OTP Verification",
+            });
+        }
+    }, []);
+
     // simulate OTP arriving and auto-filling digit by digit
     useEffect(() => {
         const startDelay = setTimeout(() => {
@@ -94,7 +105,7 @@ export default function OwnPocketOtpVerify() {
             }, 400);
             return () => clearTimeout(submitDelay);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [otp, status]);
 
     // resend countdown
@@ -123,6 +134,11 @@ export default function OwnPocketOtpVerify() {
             setStatus("verified");
             localStorage.setItem("user", JSON.stringify(data.user));
             localStorage.setItem("isAuthenticated", "true");
+
+            // Facebook Meta Pixel
+            if (window.fbq) {
+                window.fbq("track", "CompleteRegistration");
+            }
 
             setTimeout(() => {
                 setStatus("redirecting");
@@ -185,9 +201,9 @@ export default function OwnPocketOtpVerify() {
     };
 
     useEffect(() => {
-    // Scroll to top on route change
-    window.scrollTo(0, 0);
-  }, []);
+        // Scroll to top on route change
+        window.scrollTo(0, 0);
+    }, []);
 
 
     return (
@@ -207,35 +223,32 @@ export default function OwnPocketOtpVerify() {
                                     <React.Fragment key={step.id}>
                                         <div className="flex flex-col items-center gap-2 w-16">
                                             <div
-                                                className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-semibold ${
-                                                    done
-                                                        ? "bg-[#DCE8FF] text-[#2F6BFF]"
-                                                        : active
+                                                className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-semibold ${done
+                                                    ? "bg-[#DCE8FF] text-[#2F6BFF]"
+                                                    : active
                                                         ? "bg-[#2F6BFF] text-white"
                                                         : "bg-white border border-[#D6D9E3] text-[#A6ABB8]"
-                                                }`}
+                                                    }`}
                                             >
                                                 {done ? <Check size={14} /> : step.id}
                                             </div>
                                             <span
-                                                className={`text-[11px] text-center leading-tight ${
-                                                    active
-                                                        ? "text-[#2F6BFF] font-semibold"
-                                                        : done
+                                                className={`text-[11px] text-center leading-tight ${active
+                                                    ? "text-[#2F6BFF] font-semibold"
+                                                    : done
                                                         ? "text-[#0F1B3D] font-medium"
                                                         : "text-[#9CA1AF]"
-                                                }`}
+                                                    }`}
                                             >
                                                 {step.label}
                                             </span>
                                         </div>
                                         {i < STEPS.length - 1 && (
                                             <div
-                                                className={`flex-1 border-t-2 mt-4 mx-[-8px] ${
-                                                    done
-                                                        ? "border-dotted border-[#2F6BFF]"
-                                                        : "border-dotted border-[#C7CBD8]"
-                                                }`}
+                                                className={`flex-1 border-t-2 mt-4 mx-[-8px] ${done
+                                                    ? "border-dotted border-[#2F6BFF]"
+                                                    : "border-dotted border-[#C7CBD8]"
+                                                    }`}
                                             />
                                         )}
                                     </React.Fragment>
@@ -263,31 +276,31 @@ export default function OwnPocketOtpVerify() {
 
                     {/* Card */}
                     <div className="mx-4 sm:mx-6 bg-white rounded-2xl border border-[#ECEDF3] p-4 sm:p-5 shadow-sm">
-    <div className="flex items-center justify-center gap-2 sm:gap-3 py-2">
-        {otp.map((digit, i) => (
-            <input
-                key={i}
-                id={`otp-${i}`}
-                type="text"
-                inputMode="numeric"
-                maxLength={1}
-                value={digit}
-                onChange={(e) => handleOtpChange(i, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(i, e)}
-                disabled={loading || status === "verifying" || status === "verified" || status === "redirecting"}
-                className={`w-10 h-12 sm:w-11 sm:h-14 rounded-xl border flex items-center justify-center text-[18px] sm:text-[22px] font-semibold text-[#0F1B3D] transition-all text-center outline-none
+                        <div className="flex items-center justify-center gap-2 sm:gap-3 py-2">
+                            {otp.map((digit, i) => (
+                                <input
+                                    key={i}
+                                    id={`otp-${i}`}
+                                    type="text"
+                                    inputMode="numeric"
+                                    maxLength={1}
+                                    value={digit}
+                                    onChange={(e) => handleOtpChange(i, e.target.value)}
+                                    onKeyDown={(e) => handleKeyDown(i, e)}
+                                    disabled={loading || status === "verifying" || status === "verified" || status === "redirecting"}
+                                    className={`w-10 h-12 sm:w-11 sm:h-14 rounded-xl border flex items-center justify-center text-[18px] sm:text-[22px] font-semibold text-[#0F1B3D] transition-all text-center outline-none
                     ${status === "redirecting" ? "border-[#2F6BFF] bg-[#DCE8FF]" : ""}
                     ${digit
-                        ? "border-[#2F6BFF] bg-[#F5F8FF]"
-                        : "border-[#E3E5EC] bg-white"
-                    }
+                                            ? "border-[#2F6BFF] bg-[#F5F8FF]"
+                                            : "border-[#E3E5EC] bg-white"
+                                        }
                     ${status === "verified" ? "border-[#1F6F5C] bg-[#EAF3EE]" : ""}
                     ${status === "verifying" ? "opacity-50 cursor-not-allowed" : ""}
                     focus:border-[#2F6BFF] focus:ring-2 focus:ring-[#2F6BFF]/20`}
-                autoFocus={i === 0}
-            />
-        ))}
-    </div>
+                                    autoFocus={i === 0}
+                                />
+                            ))}
+                        </div>
 
                         <div className="text-center mt-4 min-h-[20px]">
                             {status === "waiting" && (
@@ -322,15 +335,14 @@ export default function OwnPocketOtpVerify() {
                         <button
                             type="button"
                             disabled
-                            className={`w-full mt-5 h-12 rounded-xl flex items-center justify-center gap-2 text-[15px] font-semibold transition-all ${
-                                status === "redirecting"
-                                    ? "bg-[#DCE8FF] text-[#2F6BFF]"
-                                    : status === "verified"
+                            className={`w-full mt-5 h-12 rounded-xl flex items-center justify-center gap-2 text-[15px] font-semibold transition-all ${status === "redirecting"
+                                ? "bg-[#DCE8FF] text-[#2F6BFF]"
+                                : status === "verified"
                                     ? "bg-[#1F6F5C] text-white"
                                     : status === "verifying"
-                                    ? "bg-[#2F6BFF] text-white"
-                                    : "bg-[#EDEEF3] text-[#A9ACB6]"
-                            }`}
+                                        ? "bg-[#2F6BFF] text-white"
+                                        : "bg-[#EDEEF3] text-[#A9ACB6]"
+                                }`}
                         >
                             {status === "redirecting" && (
                                 <>
@@ -366,11 +378,10 @@ export default function OwnPocketOtpVerify() {
                                     type="button"
                                     onClick={handleResend}
                                     disabled={status === "verifying" || status === "verified" || status === "redirecting"}
-                                    className={`font-semibold ${
-                                        status === "verifying" || status === "verified" || status === "redirecting"
-                                            ? "text-[#A9ACB6] cursor-not-allowed"
-                                            : "text-[#2F6BFF] hover:text-[#2558D6]"
-                                    }`}
+                                    className={`font-semibold ${status === "verifying" || status === "verified" || status === "redirecting"
+                                        ? "text-[#A9ACB6] cursor-not-allowed"
+                                        : "text-[#2F6BFF] hover:text-[#2558D6]"
+                                        }`}
                                 >
                                     Resend OTP
                                 </button>

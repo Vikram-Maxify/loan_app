@@ -14,51 +14,101 @@ exports.sendOTP = async (req, res) => {
             });
         }
 
-        // Generate 6 digit OTP
+        // Generate OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpire = new Date(Date.now() + 5 * 60 * 1000);
 
-        // Check existing user
+        // ==========================
+        // 1. Check by Mobile
+        // ==========================
         let user = await User.findOne({ mobile });
 
         if (user) {
-            // Existing User -> Login
-            user.otp = otp;
-            user.otpExpire = new Date(Date.now() + 5 * 60 * 1000);
+            // If email is being changed, make sure it doesn't belong to another user
+            if (
+                email &&
+                email !== user.email
+            ) {
+                const emailExists = await User.findOne({
+                    email,
+                    _id: { $ne: user._id },
+                });
 
-            // Update only if empty
-            if (!user.fullName && fullName) {
-                user.fullName = fullName;
-            }
+                if (emailExists) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Email is already registered with another account.",
+                    });
+                }
 
-            if (!user.email && email) {
                 user.email = email;
             }
 
+            if (fullName) {
+                user.fullName = fullName;
+            }
+
+            user.otp = otp;
+            user.otpExpire = otpExpire;
+
             await user.save();
-        } else {
-            // New User -> Register
-            user = await User.create({
-                mobile,
-                fullName,
-                email,
-                otp,
-                otpExpire: new Date(Date.now() + 5 * 60 * 1000),
-                role: "user",
-                isVerified: false,
+
+            console.log("OTP:", otp);
+
+            return res.status(200).json({
+                success: true,
+                message: "OTP sent successfully",
+                otp, // Remove in production
             });
         }
 
-        // TODO: Send OTP via SMS Provider
+        // ==========================
+        // 2. New User -> Check Email
+        // ==========================
+        if (email) {
+            const emailExists = await User.findOne({ email });
+
+            if (emailExists) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Email is already registered.",
+                });
+            }
+        }
+
+        // ==========================
+        // 3. Create New User
+        // ==========================
+        user = await User.create({
+            mobile,
+            fullName,
+            email,
+            otp,
+            otpExpire,
+            role: "user",
+            isVerified: false,
+        });
+
         console.log("OTP:", otp);
 
         return res.status(200).json({
             success: true,
             message: "OTP sent successfully",
-            otp
+            otp, // Remove in production
         });
 
     } catch (err) {
         console.error(err);
+
+        // Mongo Duplicate Error
+        if (err.code === 11000) {
+            const field = Object.keys(err.keyPattern)[0];
+
+            return res.status(400).json({
+                success: false,
+                message: `${field} already exists.`,
+            });
+        }
 
         return res.status(500).json({
             success: false,

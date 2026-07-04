@@ -27,6 +27,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
@@ -38,7 +39,21 @@ app.use("/api/application", require("./routes/applicationRoutes"));
 // React Build
 const clientPath = path.join(__dirname, "Client", "dist");
 
+const bcrypt = require("bcryptjs");
+
+async function generatePassword() {
+  const password = "admin123";
+  const hash = await bcrypt.hash(password, 10);
+
+  console.log("Password:", password);
+  console.log("Hash:", hash);
+}
+
+generatePassword();
+
 app.use(express.static(clientPath));
+
+
 
 app.get(/^(?!\/api).*/, (req, res) => {
   res.sendFile(path.join(clientPath, "index.html"));

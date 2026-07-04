@@ -14,12 +14,11 @@ import {
     Loader2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import OwnPocketHeader from "../Components/Header";
 import { useDispatch, useSelector } from "react-redux";
-import {
-    getAmountSetting,
-} from "../redux/slice/amountSettingSlice";
-import { createOrder } from "../redux/slice/orderSlice"; // Import the createOrder thunk
+import OwnPocketHeader from "../Components/Header";
+import { generateUserDepositUpiQR, resetUserUpiState } from "../redux/slice/userUpiSlice";
+import { getAmountSetting } from "../redux/slice/amountSettingSlice";
+import { createOrder } from "../redux/slice/orderSlice"; // Import createOrder
 
 const PAYMENT_METHODS = [
     { id: "upi", label: "UPI", icon: QrCode },
@@ -28,17 +27,6 @@ const PAYMENT_METHODS = [
     { id: "wallet", label: "Wallet", icon: Wallet },
 ];
 
-// Make BREAKDOWN dynamic based on amount
-const getBreakdown = (totalAmount) => {
-    const processingFee = totalAmount - (totalAmount * 18 / 118); // Reverse calculate processing fee (excluding GST)
-    const gst = totalAmount * 18 / 118;
-
-    return [
-        { label: "Processing Fee", value: `₹ ${Math.round(processingFee)}`, emphasis: false },
-        { label: "GST (18%)", value: `₹ ${Math.round(gst)}`, emphasis: false },
-    ];
-};
-
 export default function OnPocketProcessingFee() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -46,126 +34,155 @@ export default function OnPocketProcessingFee() {
     const [error, setError] = useState(null);
     const [selectedMethod, setSelectedMethod] = useState("upi");
     const [razorpayError, setRazorpayError] = useState(null);
+    const [orderCreated, setOrderCreated] = useState(false); // Track order creation
 
     // Get amount from Redux store
-    const { amount, loading: amountLoading, success, message, error: amountError } = useSelector(
+    const { amount, loading: amountLoading, error: amountError } = useSelector(
         (state) => state.amountSetting
     );
 
-    // Get order state from Redux store
-    const {
-        loading: orderLoading,
-        error: orderError,
-        orderData
-    } = useSelector((state) => state.order || {});
+    // Get UPI state from Redux
+    const { loading: upiLoading, qrData, success, error: upiError } = useSelector(
+        (state) => state.userUpi
+    );
 
-    const totalAmount = amount || 259; // Fallback to 259 if not fetched
-    const breakdown = getBreakdown(totalAmount);
-    const gstAmount = Math.round(totalAmount * 18 / 118);
-    const processingFeeAmount = Math.round(totalAmount - gstAmount);
+    // Get Order state from Redux
+    const { loading: orderLoading, success: orderSuccess, order, error: orderError } = useSelector(
+        (state) => state.order
+    );
 
+    // Calculate GST and total
+    const processingFee = amount || 0;
+    const gst = Math.round((processingFee * 18) / 100);
+    const totalAmount = processingFee + gst;
 
-    // Fetch amount settings on component mount
+    const BREAKDOWN = [
+        { label: "Processing Fee", value: `₹ ${processingFee}`, emphasis: false },
+        { label: "GST (18%)", value: `₹ ${gst}`, emphasis: false },
+    ];
+
     useEffect(() => {
         window.scrollTo(0, 0);
         dispatch(getAmountSetting());
+        dispatch(resetUserUpiState());
+        setOrderCreated(false); // Reset order creation flag
     }, [dispatch]);
 
-    // Handle amount fetch error
+    // Handle successful QR generation - Create Order first
     useEffect(() => {
-        if (amountError) {
-            toast.error(amountError);
-            setError("Failed to load payment amount. Please try again.");
+        if (success && qrData && !orderCreated) {
+            // First create the order
+            const orderData = {
+                amount: totalAmount,
+                paymentMethod: selectedMethod,
+                // Add any other required fields
+            };
+            
+            dispatch(createOrder(orderData));
+            setOrderCreated(true);
         }
-    }, [amountError]);
+    }, [success, qrData, dispatch, totalAmount, selectedMethod, orderCreated]);
 
-    // Handle order creation response
+    // Handle order creation success - Then navigate
     useEffect(() => {
-        if (orderData) {
-            // Order created successfully, navigate to processing payment
+        if (orderSuccess && order && qrData) {
+            // Order created successfully, now navigate to payment page with both QR and order data
             navigate("/processing-payment", {
                 state: {
                     amount: totalAmount,
                     applicationId: localStorage.getItem("applicationId"),
                     paymentMethod: selectedMethod,
-                    processingFee: processingFeeAmount,
-                    gst: gstAmount,
-                    orderId: orderData.orderId, // Pass order ID if needed
-                    razorpayKey: orderData.razorpayKey, // Pass Razorpay key if needed
+                    qrData: qrData,
+                    upiDetails: qrData,
+                    orderId: order.orderId || order._id,
+                    orderData: order,
                 }
             });
             setLoading(false);
+            // Reset order creation flag for next time
+            setOrderCreated(false);
         }
-    }, [orderData, navigate, totalAmount, selectedMethod, processingFeeAmount, gstAmount]);
+    }, [orderSuccess, order, qrData, navigate, selectedMethod, totalAmount]);
 
-    // Handle order creation error
+    // Handle UPI errors
+    useEffect(() => {
+        if (upiError) {
+            setError(upiError);
+            setLoading(false);
+            setOrderCreated(false);
+        }
+    }, [upiError]);
+
+    // Handle order errors
     useEffect(() => {
         if (orderError) {
-            console.error("Order creation failed:", orderError);
-            setError(orderError || "Failed to create order. Please try again.");
+            setError(`Order creation failed: ${orderError}`);
             setLoading(false);
+            setOrderCreated(false);
         }
     }, [orderError]);
 
-    // Calculate total amount and breakdown
+    // Handle amount fetch errors
+    useEffect(() => {
+        if (amountError) {
+            setError("Failed to load payment amount. Please try again.");
+        }
+    }, [amountError]);
 
     const handlePayNow = async () => {
         try {
             setLoading(true);
             setError(null);
             setRazorpayError(null);
+            setOrderCreated(false);
 
-            // Validate amount is available
-            if (!amount) {
-                setError("Amount configuration not available. Please try again.");
+            if (selectedMethod === "upi") {
+                // Generate UPI QR using Redux thunk
+                const payload = {
+                    amount: totalAmount,
+                };
+                
+                dispatch(generateUserDepositUpiQR(payload));
+            } else {
+                // For other payment methods, create order first
+                const orderData = {
+                    amount: totalAmount,
+                    paymentMethod: selectedMethod,
+                };
+                
+                const result = await dispatch(createOrder(orderData)).unwrap();
+                
+                if (result && result.data) {
+                    navigate("/processing-payment", {
+                        state: {
+                            amount: totalAmount,
+                            applicationId: localStorage.getItem("applicationId"),
+                            paymentMethod: selectedMethod,
+                            orderId: result.data.orderId || result.data._id,
+                            orderData: result.data,
+                        }
+                    });
+                }
                 setLoading(false);
-                return;
             }
-
-            // Get application ID from localStorage
-            const applicationId = localStorage.getItem("applicationId");
-            if (!applicationId) {
-                setError("Application ID not found. Please restart the process.");
-                setLoading(false);
-                return;
-            }
-
-            // Prepare order data
-            const orderData = {
-                applicationId: applicationId,
-                amount: totalAmount,
-                paymentMethod: selectedMethod,
-                processingFee: processingFeeAmount,
-                gst: gstAmount,
-                // Add any other required fields
-            };
-
-            // Dispatch createOrder action
-            const result = await dispatch(createOrder(orderData)).unwrap();
-
-            // If we reach here, order was created successfully
-            // The useEffect for orderData will handle navigation
-            console.log("Order created successfully:", result);
 
         } catch (err) {
             console.error("Payment processing failed:", err);
-            setError(err || "Failed to process payment. Please try again.");
+            setError("Failed to process payment. Please try again.");
             setLoading(false);
+            setOrderCreated(false);
         }
     };
 
-    // Loading state while fetching amount
+    // Show loading state while fetching amount
     if (amountLoading) {
         return (
             <div className="w-full bg-white flex items-center justify-center">
                 <div className="max-w-[480px] w-full shrink-0 bg-[#F5F6FA] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
-                    <div className="overflow-y-auto">
-                        <OwnPocketHeader />
-                        <div className="min-h-[500px] flex flex-col items-center justify-center gap-3">
-                            <Loader2 size={40} className="animate-spin text-[#2A4BDE]" />
-                            <p className="text-[#0F1B3D] font-medium">Loading payment details...</p>
-                            <p className="text-[#5B6072] text-sm">Please wait while we fetch the amount</p>
-                        </div>
+                    <OwnPocketHeader />
+                    <div className="min-h-[500px] flex flex-col items-center justify-center gap-3">
+                        <Loader2 size={40} className="animate-spin text-[#2A4BDE]" />
+                        <p className="text-[#0F1B3D] font-medium">Loading payment details...</p>
                     </div>
                 </div>
             </div>
@@ -176,17 +193,21 @@ export default function OnPocketProcessingFee() {
         <div className="w-full bg-white flex items-center justify-center">
             <div className="max-w-[480px] w-full shrink-0 bg-[#F5F6FA] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
                 <div className="overflow-y-auto">
-                    {/* Header */}
                     <OwnPocketHeader />
 
-                    {/* Loading Overlay - Conditional rendering inside return */}
-                    {(loading || orderLoading) ? (
+                    {(loading || upiLoading || orderLoading) ? (
                         <div className="min-h-[500px] flex flex-col items-center justify-center gap-3">
                             <Loader2 size={40} className="animate-spin text-[#2A4BDE]" />
                             <p className="text-[#0F1B3D] font-medium">
-                                {loading ? "Processing your payment..." : "Creating order..."}
+                                {upiLoading ? "Generating UPI QR Code..." : 
+                                 orderLoading ? "Creating order..." : 
+                                 "Processing your payment..."}
                             </p>
-                            <p className="text-[#5B6072] text-sm">Please wait while we process your request</p>
+                            <p className="text-[#5B6072] text-sm">
+                                {upiLoading ? "Please wait while we create your QR" : 
+                                 orderLoading ? "Please wait while we create your order" :
+                                 "Please wait while we redirect you"}
+                            </p>
                         </div>
                     ) : (
                         <>
@@ -200,7 +221,7 @@ export default function OnPocketProcessingFee() {
                                 </p>
                             </div>
 
-                            {/* Amount to Pay */}
+                            {/* Amount to Pay - Dynamic */}
                             <div className="mx-4 mt-4 bg-gradient-to-br from-[#2A4BDE] to-[#1A3BAE] rounded-2xl p-5 text-white">
                                 <p className="text-[13px] opacity-80">Total Amount to Pay</p>
                                 <p className="text-[42px] font-extrabold tracking-tight mt-1">
@@ -208,12 +229,12 @@ export default function OnPocketProcessingFee() {
                                 </p>
                                 <div className="flex items-center gap-2 mt-1">
                                     <span className="text-[11px] bg-white/20 px-2.5 py-0.5 rounded-full">
-                                        ₹ {processingFeeAmount} + ₹ {gstAmount} GST
+                                        ₹ {processingFee} + ₹ {gst} GST
                                     </span>
                                 </div>
                             </div>
 
-                            {/* Breakdown Card */}
+                            {/* Breakdown Card - Dynamic */}
                             <div className="mx-4 mt-4 bg-white border border-[#EEF0F5] rounded-2xl p-4">
                                 <div className="flex items-center gap-2.5 mb-4">
                                     <div className="w-8 h-8 rounded-lg bg-[#DCE6FB] flex items-center justify-center">
@@ -225,7 +246,7 @@ export default function OnPocketProcessingFee() {
                                 </div>
 
                                 <div className="flex flex-col gap-3">
-                                    {breakdown.map((row) => (
+                                    {BREAKDOWN.map((row) => (
                                         <div key={row.label} className="flex items-center justify-between">
                                             <span className="text-[12.5px] text-[#5B6072]">
                                                 {row.label}
@@ -266,19 +287,21 @@ export default function OnPocketProcessingFee() {
                                                 key={method.id}
                                                 type="button"
                                                 onClick={() => setSelectedMethod(method.id)}
-                                                disabled={loading || amountLoading || orderLoading}
-                                                className={`flex items-center justify-center gap-2.5 py-3 px-3 rounded-xl border-2 transition-all duration-200 ${isSelected
+                                                disabled={loading || upiLoading || orderLoading}
+                                                className={`flex items-center justify-center gap-2.5 py-3 px-3 rounded-xl border-2 transition-all duration-200 ${
+                                                    isSelected
                                                         ? "border-[#2A4BDE] bg-[#EEF4FF]"
                                                         : "border-[#E7E9F0] bg-white hover:border-[#BCC8F0]"
-                                                    } ${(loading || amountLoading || orderLoading) ? "opacity-50 cursor-not-allowed" : ""}`}
+                                                } ${(loading || upiLoading || orderLoading) ? "opacity-50 cursor-not-allowed" : ""}`}
                                             >
                                                 <Icon
                                                     size={16}
                                                     className={isSelected ? "text-[#2A4BDE]" : "text-[#5B6072]"}
                                                 />
                                                 <span
-                                                    className={`text-[12px] font-medium ${isSelected ? "text-[#2A4BDE]" : "text-[#0F1B3D]"
-                                                        }`}
+                                                    className={`text-[12px] font-medium ${
+                                                        isSelected ? "text-[#2A4BDE]" : "text-[#0F1B3D]"
+                                                    }`}
                                                 >
                                                     {method.label}
                                                 </span>
@@ -299,11 +322,11 @@ export default function OnPocketProcessingFee() {
                             </div>
 
                             {/* Error Messages */}
-                            {(error || amountError || orderError) && (
+                            {(error || razorpayError) && (
                                 <div className="mx-4 mt-2 bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5">
                                     <p className="text-[12px] text-red-600 flex items-center gap-2">
                                         <span className="text-red-500">⚠</span>
-                                        {error || amountError || orderError}
+                                        {error || razorpayError}
                                     </p>
                                 </div>
                             )}
@@ -313,16 +336,19 @@ export default function OnPocketProcessingFee() {
                                 <button
                                     type="button"
                                     onClick={handlePayNow}
-                                    disabled={loading || amountLoading || orderLoading || !amount}
-                                    className={`w-full h-12 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${(loading || amountLoading || orderLoading || !amount)
+                                    disabled={loading || upiLoading || orderLoading}
+                                    className={`w-full h-12 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${
+                                        (loading || upiLoading || orderLoading)
                                             ? "opacity-70 cursor-not-allowed"
                                             : "hover:bg-[#1A3BAE] active:scale-[0.99]"
-                                        }`}
+                                    }`}
                                 >
-                                    {(loading || orderLoading) ? (
+                                    {(loading || upiLoading || orderLoading) ? (
                                         <>
                                             <Loader2 size={18} className="animate-spin" />
-                                            {orderLoading ? "Creating Order..." : "Processing..."}
+                                            {upiLoading ? "Generating QR..." : 
+                                             orderLoading ? "Creating order..." : 
+                                             "Processing..."}
                                         </>
                                     ) : (
                                         <>

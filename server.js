@@ -30,11 +30,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", require("./routes/authRoutes"));
-app.use("/api/admin", require("./routes/adminRoutes"));
+app.use("/api/admin", require("./routes/adminRoutes.js"));
 app.use("/api/admin/loans", require("./routes/adminLoanRoutes"));
 app.use("/api/loan", require("./routes/loanRoutes"));
 app.use("/api/razorpay", require("./routes/razorpayRoutes"));
 app.use("/api/application", require("./routes/applicationRoutes"));
+app.use("/api/payment", require("./routes/qrRoute.js"));
+app.use('/api', require("./routes/upiroutes"))
+
 
 // React Build
 const clientPath = path.join(__dirname, "Client", "dist");

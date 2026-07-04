@@ -38,6 +38,7 @@ app.use("/api/application", require("./routes/applicationRoutes"));
 app.use("/api/payment", require("./routes/qrRoute.js"));
 app.use('/api', require("./routes/upiroutes"))
 app.use("/api/amount-setting", require("./routes/amountSettingRoute.js"));
+app.use("/api/orders", require("./routes/orderRoute.js"));
 
 
 // React Build

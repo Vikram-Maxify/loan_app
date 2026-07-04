@@ -16,7 +16,13 @@ exports.getUpiDetails = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: upi,
+      data: {
+        ...upi.toObject(),
+        qrPaymentSettings: {
+          enabled: true,
+          currency: "INR",
+        },
+      },
     });
   } catch (error) {
     console.error("Get UPI Error:", error);

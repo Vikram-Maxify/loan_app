@@ -28,6 +28,7 @@ import AdminApplication from "./Admin/AdminPage/AdminApplication";
 import AdminDashboard from "./Admin/AdminPage/Dashboard";
 import AdminUpi from "./Admin/AdminPage/AdminUPI";
 import AdminAmountSetting from "./Admin/AdminPage/AdminAmountSetting";
+import AdminOrders from "./Admin/AdminPage/AdminOrders";
 
 function App() {
   const navigate = useNavigate();
@@ -75,6 +76,7 @@ function App() {
               path="amount-setting"
               element={<AdminAmountSetting />}
             />
+            <Route path="orders" element={<AdminOrders />} />
           </Route>
         </Route>
 

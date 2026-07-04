@@ -148,6 +148,36 @@ export default function PaymentCheckout() {
         window.setTimeout(() => setCopied(false), 1600);
     };
 
+    // Payment method handler for PhonePe and PayTM
+    const paymentMethodHandler = (type) => {
+        if (type === "phonepe") {
+            const payload = {
+                contact: {
+                    cbnName: "",
+                    nickName: "",
+                    type: "VPA",
+                    vpa: adminUpiId,
+                },
+                p2pPaymentCheckoutParams: {
+                    checkoutType: "DEFAULT",
+                    initialAmount: amount * 100,
+                    note: "Payment",
+                    isByDefaultKnownContact: true,
+                    currency: "INR",
+                    transactionContext: "collect",
+                    showKeyboard: true,
+                },
+            };
+
+            const encoded = btoa(JSON.stringify(payload));
+            window.location.href = `phonepe://native?data=${encoded}&id=p2ppayment`;
+        }
+
+        if (type === "paytm") {
+            window.location.href = `paytmmp://cash_wallet?pa=${adminUpiId}&pn=null&cu=INR&tn=&am=${amount}.00&featuretype=money_transfer`;
+        }
+    };
+
     const initiatePayment = (appKey = selectedApp) => {
         setSubmitError(null);
 
@@ -156,6 +186,22 @@ export default function PaymentCheckout() {
             return;
         }
 
+        // Handle PhonePe and PayTM separately
+        if (appKey === "PHONEPE") {
+            setAppOpening("PhonePe");
+            paymentMethodHandler("phonepe");
+            window.setTimeout(() => setAppOpening(null), 3000);
+            return;
+        }
+
+        if (appKey === "PAYTM") {
+            setAppOpening("PayTM");
+            paymentMethodHandler("paytm");
+            window.setTimeout(() => setAppOpening(null), 3000);
+            return;
+        }
+
+        // For other apps, use the existing openUPIApp function
         const app = UPI_APPS[appKey] || UPI_APPS.GENERIC_UPI;
         setAppOpening(app.name);
 

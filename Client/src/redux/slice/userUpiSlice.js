@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import API from "./api";
+import API from "./API";
 
 /* ===========================
    FETCH ADMIN UPI SETTINGS

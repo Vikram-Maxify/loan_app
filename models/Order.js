@@ -18,7 +18,11 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
-
+    status: {
+      type: String,
+      enum: ["Pending", "Success", "Failed"],
+      default: "Pending",
+    },
   },
   {
     timestamps: true,

@@ -309,7 +309,6 @@ applicationSchema.pre("save", function (next) {
             break;
     }
 
-    next();
 });
 
 module.exports =

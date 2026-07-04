@@ -12,7 +12,6 @@ const generateOrderId = () => {
 exports.createOrder = async (req, res) => {
   try {
     const { amount } = req.body;
-    const userId = req.user?.id;
 
     if (!amount) {
       return res.status(400).json({
@@ -21,32 +20,6 @@ exports.createOrder = async (req, res) => {
       });
     }
 
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "User not authenticated",
-      });
-    }
-
-    // Check if user has any pending order
-    const existingPendingOrder = await Order.findOne({
-      user: userId,
-      status: 'pending'
-    });
-
-    if (existingPendingOrder) {
-      return res.status(409).json({
-        success: false,
-        message: "You already have a pending order. Complete or cancel it before creating a new one.",
-        data: {
-          orderId: existingPendingOrder.orderId,
-          amount: existingPendingOrder.amount,
-          status: existingPendingOrder.status
-        }
-      });
-    }
-
-    // Generate unique orderId
     let orderId;
     let exists = true;
 
@@ -56,7 +29,7 @@ exports.createOrder = async (req, res) => {
     }
 
     const order = await Order.create({
-      user: userId,
+      user: req.user?.id,
       amount,
       orderId,
     });
@@ -67,14 +40,6 @@ exports.createOrder = async (req, res) => {
       data: order,
     });
   } catch (error) {
-    // Handle duplicate key error
-    if (error.code === 11000) {
-      return res.status(409).json({
-        success: false,
-        message: "An order already exists for this user.",
-      });
-    }
-
     res.status(500).json({
       success: false,
       message: error.message,

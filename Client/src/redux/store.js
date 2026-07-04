@@ -5,7 +5,9 @@ import loanReducer from "./slice/loanSlice";
 import loanApplicationReducer from "./slice/loanApplicationSlice";
 import applicationReducer from "./slice/applicationSlice";
 import paymentReducer from "./slice/paymentSlice";
-import adminApplicationReducer from "./slice/adminApplicationSlice"
+import adminApplicationReducer from "./slice/adminApplicationSlice";
+import upiReducer from "./slice/adminUpiSlice"
+import userUpiReducer from "./slice/userUpiSlice";
 
 export const store = configureStore({
     reducer: {
@@ -15,6 +17,8 @@ export const store = configureStore({
         loanApplication: loanApplicationReducer,
         application: applicationReducer,
         payment: paymentReducer,
-        adminApplication: adminApplicationReducer
+        adminApplication: adminApplicationReducer,
+        upi: upiReducer,
+        userUpi: userUpiReducer
     },
 });

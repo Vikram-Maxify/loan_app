@@ -1,31 +1,26 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-    ArrowLeft,
-    Menu,
     Landmark,
     Banknote,
-    Fingerprint,
-    CreditCard,
-    Upload,
-    ShieldCheck,
     FileCheck2,
+    ShieldCheck,
     ArrowRight,
     Lock,
-    RotateCw,
-    X,
     Loader2,
 } from "lucide-react";
+import OwnPocketHeader from "../Components/Header";
 
 const NEXT_STEPS = [
     {
         icon: FileCheck2,
-        title: "1. Submit KYC",
-        desc: "Upload your KYC documents",
+        title: "1. Verification",
+        desc: "We will verify your details",
     },
     {
         icon: ShieldCheck,
-        title: "2. Verification",
-        desc: "We will verify your documents",
+        title: "2. Bank Details",
+        desc: "Add your bank account",
     },
     {
         icon: Landmark,
@@ -35,138 +30,37 @@ const NEXT_STEPS = [
 ];
 
 const CONFETTI = [
-    { top: "2px", left: "8px", size: 6, color: "#EC4899" },
-    { top: "18px", left: "0px", size: 5, color: "#F59E0B" },
-    { top: "38px", left: "6px", size: 4, color: "#6366F1" },
-    { top: "4px", left: "70px", size: 5, color: "#22C55E" },
-    { top: "26px", left: "82px", size: 6, color: "#F59E0B" },
-    { top: "48px", left: "76px", size: 4, color: "#EC4899" },
+    { top: "2px", left: "8px", size: 6, color: "#EC4899", delay: 0.5 },
+    { top: "18px", left: "0px", size: 5, color: "#F59E0B", delay: 0.62 },
+    { top: "38px", left: "6px", size: 4, color: "#6366F1", delay: 0.74 },
+    { top: "4px", left: "70px", size: 5, color: "#22C55E", delay: 0.68 },
+    { top: "26px", left: "82px", size: 6, color: "#F59E0B", delay: 0.56 },
+    { top: "48px", left: "76px", size: 4, color: "#EC4899", delay: 0.8 },
 ];
 
+const getPersistedCibilData = () => {
+    try {
+        return JSON.parse(localStorage.getItem("cibilData") || "null") || {};
+    } catch {
+        return {};
+    }
+};
+
 export default function OwnPocketApproved() {
-    const [aadhaarFile, setAadhaarFile] = useState(null);
-    const [panFile, setPanFile] = useState(null);
-    const [aadhaarPreview, setAadhaarPreview] = useState(null);
-    const [panPreview, setPanPreview] = useState(null);
-    const [uploadError, setUploadError] = useState(null);
+    const navigate = useNavigate(); // ✅ useNavigate hook
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const cibilData = useMemo(getPersistedCibilData, []);
+    const approvedAmount = Number(cibilData.selectedAmount || 0);
+    const approvedTenure = Number(cibilData.tenureMonths || 6);
+    const approvedRate = cibilData.estimatedRate || "2.5";
 
-    const aadhaarInputRef = useRef(null);
-    const panInputRef = useRef(null);
-
-    const handleFileUpload = (type, file) => {
-        // Validate file type
-        const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-        if (!validTypes.includes(file.type)) {
-            setUploadError('Please upload a valid image file (JPEG, PNG, WEBP)');
-            return false;
-        }
-
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            setUploadError('File size should be less than 5MB');
-            return false;
-        }
-
-        setUploadError(null);
-
-        // Create preview
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            if (type === 'aadhaar') {
-                setAadhaarFile(file);
-                setAadhaarPreview(reader.result);
-            } else {
-                setPanFile(file);
-                setPanPreview(reader.result);
-            }
-        };
-        reader.readAsDataURL(file);
-
-        return true;
-    };
-
-    const handleFileChange = (type, event) => {
-        const file = event.target.files[0];
-        if (file) {
-            handleFileUpload(type, file);
-        }
-    };
-
-    const removeFile = (type) => {
-        if (type === 'aadhaar') {
-            setAadhaarFile(null);
-            setAadhaarPreview(null);
-            if (aadhaarInputRef.current) {
-                aadhaarInputRef.current.value = '';
-            }
-        } else {
-            setPanFile(null);
-            setPanPreview(null);
-            if (panInputRef.current) {
-                panInputRef.current.value = '';
-            }
-        }
-    };
-
-    const handleSubmit = async () => {
-        if (!aadhaarFile || !panFile) {
-            setUploadError('Please upload both Aadhaar and PAN card images');
-            return;
-        }
-
+    const handleContinue = async () => {
         try {
             setIsSubmitting(true);
-            setUploadError(null);
-
-            // Prepare KYC data
-            const kycData = {
-                aadhaar: {
-                    fileName: aadhaarFile.name,
-                    fileSize: aadhaarFile.size,
-                    fileType: aadhaarFile.type,
-                    // In real implementation, you would upload the file to server
-                    // and get back a URL or file ID
-                },
-                pan: {
-                    fileName: panFile.name,
-                    fileSize: panFile.size,
-                    fileType: panFile.type,
-                },
-                submittedAt: new Date().toISOString(),
-                status: 'pending_verification'
-            };
-
-            // Store KYC data
-            localStorage.setItem('kycData', JSON.stringify(kycData));
-            localStorage.setItem('kycStatus', 'submitted');
-
-            // Simulate API call
-            // const formData = new FormData();
-            // formData.append('aadhaar', aadhaarFile);
-            // formData.append('pan', panFile);
-            // 
-            // const response = await fetch('/api/kyc/upload', {
-            //     method: 'POST',
-            //     headers: {
-            //         'Authorization': 'Bearer ' + localStorage.getItem('token')
-            //     },
-            //     body: formData
-            // });
-            // 
-            // if (!response.ok) {
-            //     throw new Error('Failed to upload KYC documents');
-            // }
-            // 
-            // const data = await response.json();
-
-            // Simulate network delay
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-
-            // Navigate to bank details page
-            window.location.href = "/bank-detail";
+            // Simulate a brief transition before moving to the next step
+            await new Promise((resolve) => setTimeout(resolve, 700));
+            navigate("/bank-detail"); // ✅ useNavigate se navigate
         } catch (error) {
-            setUploadError(error.message || 'Failed to upload documents. Please try again.');
             setIsSubmitting(false);
         }
     };
@@ -174,58 +68,61 @@ export default function OwnPocketApproved() {
     useEffect(() => {
         // Scroll to top on route change
         window.scrollTo(0, 0);
-      }, []);
-    
+    }, []);
 
     return (
         <div className="min-h-screen w-full bg-white flex items-center justify-center py-10 px-4">
-            <div className="max-w-[480px] w-full shrink-0 bg-white rounded-[2.75rem] border-[6px] border-[#0F1B3D] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.35)] overflow-hidden relative">
-                {/* status bar */}
-                <div className="h-9 bg-white flex items-center justify-between px-7">
-                    <span className="text-[11px] font-mono tracking-wide text-[#0F1B3D]">
-                        9:41
-                    </span>
-                    <div className="flex items-center gap-1">
-                        <div className="w-3.5 h-2 rounded-[1px] border border-[#0F1B3D]/70" />
-                        <div className="w-3.5 h-2 rounded-[1px] border border-[#0F1B3D]/70" />
-                    </div>
-                </div>
+            {/* Scoped keyframes for the approval tick animation */}
+            <style>{`
+                @keyframes opCirclePop {
+                    0% { transform: scale(0); opacity: 0; }
+                    55% { transform: scale(1.18); opacity: 1; }
+                    75% { transform: scale(0.95); }
+                    100% { transform: scale(1); }
+                }
+                @keyframes opCheckDraw {
+                    from { stroke-dashoffset: 24; }
+                    to { stroke-dashoffset: 0; }
+                }
+                @keyframes opRingPulse {
+                    0% { transform: scale(0.6); opacity: 0.55; }
+                    100% { transform: scale(1.8); opacity: 0; }
+                }
+                @keyframes opConfettiPop {
+                    0% { transform: scale(0) translateY(4px); opacity: 0; }
+                    60% { transform: scale(1.3) translateY(0); opacity: 1; }
+                    100% { transform: scale(1) translateY(0); opacity: 1; }
+                }
+                @keyframes opFadeUp {
+                    from { opacity: 0; transform: translateY(6px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .op-tick-ring {
+                    animation: opRingPulse 1.1s ease-out 0.15s 1;
+                }
+                .op-tick-circle {
+                    animation: opCirclePop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
+                }
+                .op-tick-check {
+                    stroke-dasharray: 24;
+                    stroke-dashoffset: 24;
+                    animation: opCheckDraw 0.35s ease-out 0.55s forwards;
+                }
+                .op-confetti-dot {
+                    opacity: 0;
+                    animation: opConfettiPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+                }
+                .op-heading-fade {
+                    opacity: 0;
+                    animation: opFadeUp 0.5s ease-out 0.35s forwards;
+                }
+            `}</style>
 
-                <div className="  overflow-y-auto">
+            <div className="max-w-[480px] w-full shrink-0 bg-[#F5F6FA] border border-[#E3E5EC] shadow-[0_30px_60px_-15px_rgba(20,32,61,0.2)] overflow-hidden relative">
+
+                <div className="overflow-y-auto">
                     {/* header */}
-                    <div className="flex items-center justify-between px-5 py-4 bg-white border-b border-[#EEF0F5]">
-                        <button
-                            type="button"
-                            aria-label="Go back"
-                            className="text-[#0F1B3D] shrink-0"
-                            disabled={isSubmitting}
-                            onClick={() => {
-                                if (window.history.length > 1) {
-                                    navigate(-1);
-                                } else {
-                                    navigate("/");
-                                }
-                            }}
-                        >
-                            <ArrowLeft size={20} />
-                        </button>
-                        <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-full bg-[#2A4BDE] flex items-center justify-center shrink-0">
-                                <RotateCw size={17} className="text-white" strokeWidth={2.25} />
-                            </div>
-                            <div>
-                                <p className="text-[17px] font-bold text-[#0F1B3D] leading-none">
-                                    OwnPocket
-                                </p>
-                                <p className="text-[11px] text-[#8A8F9E] mt-1">
-                                    Smart Loans For Business
-                                </p>
-                            </div>
-                        </div>
-                        <button type="button" aria-label="Open menu">
-                            <Menu size={22} className="text-[#0F1B3D]" strokeWidth={2.25} />
-                        </button>
-                    </div>
+                    <OwnPocketHeader />
 
                     {/* approved banner */}
                     <div className="mx-4 mt-4 bg-[#EEF6EF] rounded-2xl p-4 relative overflow-hidden">
@@ -233,19 +130,25 @@ export default function OwnPocketApproved() {
                             {CONFETTI.map((c, i) => (
                                 <span
                                     key={i}
-                                    className="absolute rounded-full"
+                                    className="absolute rounded-full op-confetti-dot"
                                     style={{
                                         top: c.top,
                                         left: c.left,
                                         width: c.size,
                                         height: c.size,
                                         background: c.color,
+                                        animationDelay: `${c.delay}s`,
                                     }}
                                 />
                             ))}
-                            <div className="w-12 h-12 rounded-full bg-[#1FA24C] flex items-center justify-center">
+
+                            {/* expanding ring pulse behind the tick */}
+                            <span className="op-tick-ring absolute inset-0 m-auto w-12 h-12 rounded-full bg-[#1FA24C]" />
+
+                            <div className="op-tick-circle w-12 h-12 rounded-full bg-[#1FA24C] flex items-center justify-center relative">
                                 <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
                                     <path
+                                        className="op-tick-check"
                                         d="M6 12.5L10 16.5L18 8"
                                         stroke="white"
                                         strokeWidth="2.5"
@@ -257,15 +160,15 @@ export default function OwnPocketApproved() {
                         </div>
 
                         <div className="flex items-start justify-between gap-3">
-                            <div className="max-w-[180px]">
+                            <div className="max-w-[180px] op-heading-fade">
                                 <h1 className="text-[22px] font-extrabold leading-[1.15]">
                                     <span className="text-[#0F1B3D]">Your Loan Has</span>
                                     <br />
                                     <span className="text-[#1FA24C]">Been Approved!</span>
                                 </h1>
                                 <p className="text-[12.5px] text-[#5B6072] leading-relaxed mt-2.5">
-                                    Congratulations! Your loan is approved. Submit your KYC
-                                    documents to receive the amount in your bank account.
+                                    Congratulations! Your loan is approved. Proceed to add your
+                                    bank account to receive the amount.
                                 </p>
                             </div>
 
@@ -301,168 +204,23 @@ export default function OwnPocketApproved() {
                             <div className="flex flex-col items-center px-1">
                                 <p className="text-[10.5px] text-[#8A8F9E]">Approved Amount</p>
                                 <p className="text-[15px] font-extrabold text-[#1FA24C] mt-1">
-                                    ₹ 30,000
+                                    {approvedAmount
+                                        ? `₹ ${approvedAmount.toLocaleString("en-IN")}`
+                                        : "Not provided"}
                                 </p>
                             </div>
                             <div className="flex flex-col items-center px-1">
                                 <p className="text-[10.5px] text-[#8A8F9E]">Tenure</p>
                                 <p className="text-[15px] font-extrabold text-[#0F1B3D] mt-1">
-                                    6 Months
+                                    {approvedTenure} Months
                                 </p>
                             </div>
                             <div className="flex flex-col items-center px-1">
                                 <p className="text-[10.5px] text-[#8A8F9E]">Interest Rate</p>
                                 <p className="text-[15px] font-extrabold text-[#0F1B3D] mt-1">
-                                    2.5% p.m.
+                                    {approvedRate}% p.a.
                                 </p>
                             </div>
-                        </div>
-                    </div>
-
-                    {/* KYC card */}
-                    <div className="mx-4 mt-4 bg-white border border-[#EEF0F5] rounded-2xl p-4">
-                        <p className="text-[16px] font-extrabold text-[#0F1B3D] mb-1">
-                            Submit Your KYC
-                        </p>
-                        <p className="text-[12px] text-[#5B6072] mb-4">
-                            Complete KYC verification to disburse the loan amount.
-                        </p>
-
-                        {/* Aadhaar Upload */}
-                        <div className="border border-[#EEF0F5] rounded-xl divide-y divide-[#EEF0F5]">
-                            <div className="p-3.5">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-11 h-11 rounded-lg bg-[#FFF3E4] border border-[#F6E3C8] flex items-center justify-center shrink-0">
-                                        <Fingerprint size={20} className="text-[#E8792B]" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-[13px] font-bold text-[#0F1B3D]">
-                                            Aadhaar Card
-                                        </p>
-                                        <p className="text-[10.5px] text-[#8A8F9E] mt-0.5">
-                                            {aadhaarFile ? aadhaarFile.name : 'Upload clear front side image'}
-                                        </p>
-                                    </div>
-                                    {aadhaarPreview ? (
-                                        <div className="flex items-center gap-2">
-                                            <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-[#EEF0F5]">
-                                                <img
-                                                    src={aadhaarPreview}
-                                                    alt="Aadhaar preview"
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => removeFile('aadhaar')}
-                                                className="p-1 hover:bg-red-50 rounded-full transition-colors"
-                                            >
-                                                <X size={16} className="text-red-500" />
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            onClick={() => aadhaarInputRef.current?.click()}
-                                            className="shrink-0 flex items-center gap-1.5 border border-[#D6DCEA] rounded-lg px-3 py-2 text-[#2A4BDE] text-[12px] font-semibold hover:bg-[#EAF0FD] transition-colors"
-                                        >
-                                            <Upload size={13} />
-                                            Upload
-                                        </button>
-                                    )}
-                                </div>
-                                <input
-                                    ref={aadhaarInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => handleFileChange('aadhaar', e)}
-                                    className="hidden"
-                                />
-                            </div>
-
-                            {/* PAN Upload */}
-                            <div className="p-3.5">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-11 h-11 rounded-lg bg-[#EAF0FD] border border-[#D6E1F9] flex items-center justify-center shrink-0">
-                                        <CreditCard size={20} className="text-[#2A4BDE]" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-[13px] font-bold text-[#0F1B3D]">
-                                            PAN Card
-                                        </p>
-                                        <p className="text-[10.5px] text-[#8A8F9E] mt-0.5">
-                                            {panFile ? panFile.name : 'Upload clear image'}
-                                        </p>
-                                    </div>
-                                    {panPreview ? (
-                                        <div className="flex items-center gap-2">
-                                            <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-[#EEF0F5]">
-                                                <img
-                                                    src={panPreview}
-                                                    alt="PAN preview"
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => removeFile('pan')}
-                                                className="p-1 hover:bg-red-50 rounded-full transition-colors"
-                                            >
-                                                <X size={16} className="text-red-500" />
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            onClick={() => panInputRef.current?.click()}
-                                            className="shrink-0 flex items-center gap-1.5 border border-[#D6DCEA] rounded-lg px-3 py-2 text-[#2A4BDE] text-[12px] font-semibold hover:bg-[#EAF0FD] transition-colors"
-                                        >
-                                            <Upload size={13} />
-                                            Upload
-                                        </button>
-                                    )}
-                                </div>
-                                <input
-                                    ref={panInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => handleFileChange('pan', e)}
-                                    className="hidden"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Upload status indicators */}
-                        <div className="mt-3 flex items-center gap-4">
-                            <div className="flex items-center gap-1.5">
-                                <div className={`w-2 h-2 rounded-full ${aadhaarFile ? 'bg-[#1FA24C]' : 'bg-[#D6DCEA]'}`} />
-                                <span className="text-[10.5px] text-[#5B6072]">
-                                    Aadhaar {aadhaarFile ? '✓' : 'pending'}
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <div className={`w-2 h-2 rounded-full ${panFile ? 'bg-[#1FA24C]' : 'bg-[#D6DCEA]'}`} />
-                                <span className="text-[10.5px] text-[#5B6072]">
-                                    PAN {panFile ? '✓' : 'pending'}
-                                </span>
-                            </div>
-                        </div>
-
-                        {uploadError && (
-                            <div className="mt-3 bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5">
-                                <p className="text-[11.5px] text-red-600 flex items-center gap-2">
-                                    <span className="text-red-500">⚠</span>
-                                    {uploadError}
-                                </p>
-                            </div>
-                        )}
-
-                        <div className="mt-3.5 bg-[#EAF0FD] rounded-xl px-3.5 py-3 flex items-start gap-2.5">
-                            <ShieldCheck size={16} className="text-[#2A4BDE] shrink-0 mt-0.5" />
-                            <p className="text-[11.5px] text-[#0F1B3D] leading-snug">
-                                Your documents are 100% secure and will be used only for
-                                verification purposes.
-                            </p>
                         </div>
                     </div>
 
@@ -500,21 +258,22 @@ export default function OwnPocketApproved() {
                     <div className="px-4 mt-5">
                         <button
                             type="button"
-                            onClick={handleSubmit}
+                            onClick={handleContinue}
                             disabled={isSubmitting}
-                            className={`w-full h-12 rounded-xl font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${isSubmitting
+                            className={`w-full h-12 rounded-xl font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${
+                                isSubmitting
                                     ? "bg-[#2A4BDE] text-white opacity-70 cursor-not-allowed"
                                     : "bg-[#2A4BDE] text-white hover:bg-[#1A3BAE] active:scale-[0.99]"
-                                }`}
+                            }`}
                         >
                             {isSubmitting ? (
                                 <>
                                     <Loader2 size={18} className="animate-spin" />
-                                    Submitting KYC...
+                                    Please wait...
                                 </>
                             ) : (
                                 <>
-                                    Submit KYC Now
+                                    Continue
                                     <ArrowRight size={16} />
                                 </>
                             )}

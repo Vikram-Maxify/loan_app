@@ -18,7 +18,7 @@ const AdminLayout = () => {
         { name: 'Dashboard', icon: LayoutDashboard, to: '/admin/dashboard' },
         { name: 'Users', icon: Users, to: '/admin/users' },
         { name: 'Applications', icon: FileText, to: '/admin/applications' },
-        { name: 'Settings', icon: Settings, to: '/admin/settings' },
+        { name: 'UPI Settings', icon: Settings, to: '/admin/upi-settings' },
         { name: 'Profile', icon: UserCog, to: '/admin/profile' },
     ];
 

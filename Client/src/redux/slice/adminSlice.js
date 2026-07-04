@@ -83,7 +83,6 @@ const initialState = {
   loading: false,
   error: null,
   success: false,
-  isLoaded: false, // Add this flag to track if users have been loaded
 
   admin: null,
   users: [],
@@ -105,7 +104,6 @@ const adminSlice = createSlice({
       state.loading = false;
       state.error = null;
       state.success = false;
-      state.isLoaded = false; // Reset isLoaded
     },
     clearAdminError(state) {
       state.error = null;
@@ -115,10 +113,6 @@ const adminSlice = createSlice({
     },
     resetAdminState() {
       return initialState;
-    },
-    // Add a new reducer to manually set isLoaded
-    setUsersLoaded(state, action) {
-      state.isLoaded = action.payload;
     },
   },
 
@@ -137,7 +131,6 @@ const adminSlice = createSlice({
         state.loading = false;
         state.success = true;
         state.admin = action.payload.admin;
-
         localStorage.setItem("adminToken", action.payload.token);
       })
 
@@ -168,20 +161,16 @@ const adminSlice = createSlice({
       .addCase(getAllUsers.pending, (state) => {
         state.loading = true;
         state.error = null;
-        state.isLoaded = false; // Reset when fetching
       })
 
       .addCase(getAllUsers.fulfilled, (state, action) => {
         state.loading = false;
         state.users = action.payload.users;
-        state.isLoaded = true; // Mark as loaded
-        state.error = null;
       })
 
       .addCase(getAllUsers.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        state.isLoaded = false; // Reset on error
       })
 
       // ================= Logout =================
@@ -196,7 +185,6 @@ const adminSlice = createSlice({
         state.success = false;
         state.admin = null;
         state.users = [];
-        state.isLoaded = false; // Reset isLoaded
       })
 
       .addCase(adminLogout.rejected, (state, action) => {
@@ -206,12 +194,6 @@ const adminSlice = createSlice({
   },
 });
 
-export const { 
-  clearAdmin, 
-  clearAdminError, 
-  clearAdminSuccess, 
-  resetAdminState,
-  setUsersLoaded // Export the new reducer
-} = adminSlice.actions;
+export const { clearAdmin, clearAdminError, clearAdminSuccess, resetAdminState } = adminSlice.actions;
 
 export default adminSlice.reducer;

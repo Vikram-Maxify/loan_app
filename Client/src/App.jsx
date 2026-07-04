@@ -23,6 +23,7 @@ import AdminLogin from "./Admin/AdminPage/AdminLogin";
 import AdminProfile from "./Admin/AdminPage/AdminProfile";
 import AdminApplication from "./Admin/AdminPage/AdminApplication";
 import AdminDashboard from "./Admin/AdminPage/Dashboard";
+import AdminUpi from "./Admin/AdminPage/AdminUPI";
 
 function App() {
   const navigate = useNavigate();
@@ -65,6 +66,7 @@ function App() {
           <Route path="profile" element={<AdminProfile />} />
           <Route path="applications" element={<AdminApplication />} />
           <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="upi-settings" element={<AdminUpi />} />
           {/* Aur admin pages yaha add karo */}
         </Route>
       </Route>

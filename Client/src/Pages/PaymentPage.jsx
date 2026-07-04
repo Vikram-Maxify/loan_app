@@ -1,8 +1,9 @@
-import React, { useState } from "react";
-import { Lock, QrCode, ShieldCheck, X } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Lock, QrCode, ShieldCheck, X, Loader2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useNavigate } from "react-router-dom";
-
+import { generateUserDepositUpiQR, resetUserUpiState } from "../redux/slice/userUpiSlice";
 
 const TABS = ["UPI", "QR Code", "Card", "Netbanking", "Wallet"];
 
@@ -13,31 +14,93 @@ const QUICK_APPS = [
 ];
 
 export default function PaymentCheckout() {
-    const [activeTab, setActiveTab] = useState("UPI");
-    const amount = 259;
+    const dispatch = useDispatch();
     const navigate = useNavigate();
+    
+    const [activeTab, setActiveTab] = useState("QR Code");
+    const [amount, setAmount] = useState(259);
+    const [upiId, setUpiId] = useState("");
+    const [copied, setCopied] = useState(false);
 
+    // Redux state
+    const { loading, qrData, success, error } = useSelector(
+        (state) => state.userUpi
+    );
 
-    // Generate UPI QR Code data
-    const generateUPIString = () => {
-        // UPI format: upi://pay?pa=merchant@upi&pn=MerchantName&am=259&cu=INR
-        const upiData = {
-            pa: "yourloan@upi", // Merchant UPI ID
-            pn: "YourLoan Pvt Ltd", // Merchant Name
-            am: amount, // Amount
-            cu: "INR", // Currency
-            tn: "Loan Processing Fee", // Transaction Note
+    // Generate UPI QR when component mounts or amount changes
+    useEffect(() => {
+        if (activeTab === "QR Code" && amount > 0) {
+            dispatch(generateUserDepositUpiQR(amount));
+        }
+
+        // Cleanup on unmount
+        return () => {
+            dispatch(resetUserUpiState());
         };
+    }, [dispatch, amount, activeTab]);
 
-        // Convert to UPI deep link
-        const upiString = `upi://pay?pa=${upiData.pa}&pn=${upiData.pn}&am=${upiData.am}&cu=${upiData.cu}&tn=${encodeURIComponent(upiData.tn)}`;
-        return upiString;
+    // Handle QR generation on tab change
+    useEffect(() => {
+        if (activeTab === "QR Code") {
+            dispatch(generateUserDepositUpiQR(amount));
+        }
+    }, [activeTab, dispatch, amount]);
+
+    // Generate UPI string from API response or fallback
+    const getUPIString = () => {
+        if (qrData?.qrCode || qrData?.upiString) {
+            return qrData.qrCode || qrData.upiString;
+        }
+
+        // Fallback UPI string if API fails
+        const upiData = {
+            pa: "yourloan@upi",
+            pn: "OwnPocket Pvt Ltd",
+            am: amount,
+            cu: "INR",
+            tn: "Loan Processing Fee",
+        };
+        return `upi://pay?pa=${upiData.pa}&pn=${upiData.pn}&am=${upiData.am}&cu=${upiData.cu}&tn=${encodeURIComponent(upiData.tn)}`;
     };
 
-    // Generate mock QR code for demo
-    const generateMockQRData = () => {
-        // This creates a unique QR code based on amount and timestamp
-        return `LOAN-${amount}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    // Get UPI ID from API response or fallback
+    const getUPIId = () => {
+        if (qrData?.upiId) {
+            return qrData.upiId;
+        }
+        return "yourloan@upi";
+    };
+
+    // Handle copy UPI ID
+    const handleCopyUPI = () => {
+        const upiToCopy = getUPIId();
+        navigator.clipboard.writeText(upiToCopy);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    // Handle pay button click
+    const handlePay = async () => {
+        if (activeTab === "QR Code") {
+            // For QR Code tab, regenerate QR
+            await dispatch(generateUserDepositUpiQR(amount));
+        } else {
+            // For other tabs, proceed with payment
+            try {
+                // Add your payment logic here
+                console.log("Processing payment...");
+            } catch (error) {
+                console.error("Payment failed:", error);
+            }
+        }
+    };
+
+    // Get QR data from API response
+    const getQRData = () => {
+        if (qrData?.qrData) {
+            return qrData.qrData;
+        }
+        return getUPIString();
     };
 
     return (
@@ -60,22 +123,23 @@ export default function PaymentCheckout() {
                     </div>
                     <X
                         size={20}
-                        className="opacity-80 cursor-pointer"
+                        className="opacity-80 cursor-pointer hover:opacity-100 transition-opacity"
                         onClick={() => navigate(-1)}
-                    />                </div>
+                    />
+                </div>
 
                 {/* Merchant row */}
                 <div className="px-5 py-4 flex items-center justify-between border-b border-[#EEEEEE]">
                     <div className="flex items-center gap-2.5">
                         <div className="w-[38px] h-[38px] rounded-full bg-[#EEF0FF] text-[#4D2FC4] flex items-center justify-center font-bold text-[14px]">
-                            YL
+                            OP
                         </div>
                         <div>
                             <p className="text-[13.5px] font-bold text-[#111]">
                                 OwnPocket Pvt Ltd
                             </p>
                             <p className="text-[11px] text-[#888] mt-0.5">
-                                Order #ORD10293847
+                                Order #ORD{Date.now().toString().slice(-8)}
                             </p>
                         </div>
                     </div>
@@ -94,10 +158,11 @@ export default function PaymentCheckout() {
                             key={tab}
                             type="button"
                             onClick={() => setActiveTab(tab)}
-                            className={`flex-1 whitespace-nowrap text-center px-2 py-3 text-[12px] font-semibold border-b-2 transition-colors ${activeTab === tab
+                            className={`flex-1 whitespace-nowrap text-center px-2 py-3 text-[12px] font-semibold border-b-2 transition-colors ${
+                                activeTab === tab
                                     ? "text-[#4D2FC4] border-[#4D2FC4] bg-white"
-                                    : "text-[#888] border-transparent"
-                                }`}
+                                    : "text-[#888] border-transparent hover:text-[#4D2FC4]"
+                            }`}
                         >
                             {tab}
                         </button>
@@ -112,23 +177,42 @@ export default function PaymentCheckout() {
                                 Scan &amp; Pay with any UPI app
                             </p>
 
-                            {/* QR Code with proper styling */}
+                            {/* QR Code with loading state */}
                             <div className="relative w-[200px] h-[200px] rounded-xl border-2 border-[#D9D3F5] bg-white p-2 shadow-md flex items-center justify-center">
-                                <QRCodeSVG
-                                    value={generateUPIString()}
-                                    size={180}
-                                    bgColor="#FFFFFF"
-                                    fgColor="#1A1A1A"
-                                    level="H"
-                                    includeMargin={false}
-                                    className="rounded-lg"
-                                />
-                                {/* Center logo on QR */}
-                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <div className="w-[40px] h-[40px] rounded-full bg-white shadow-lg flex items-center justify-center border-2 border-[#4D2FC4]">
-                                        <span className="text-[10px] font-extrabold text-[#4D2FC4]">₹</span>
+                                {loading ? (
+                                    <div className="flex flex-col items-center gap-2">
+                                        <Loader2 size={40} className="text-[#4D2FC4] animate-spin" />
+                                        <span className="text-[11px] text-[#888]">Generating QR...</span>
                                     </div>
-                                </div>
+                                ) : error ? (
+                                    <div className="text-center px-4">
+                                        <p className="text-[12px] text-red-500 font-medium">Failed to generate QR</p>
+                                        <button
+                                            onClick={() => dispatch(generateUserDepositUpiQR(amount))}
+                                            className="mt-2 text-[11px] text-[#4D2FC4] font-semibold hover:underline"
+                                        >
+                                            Try Again
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <QRCodeSVG
+                                        value={getQRData()}
+                                        size={180}
+                                        bgColor="#FFFFFF"
+                                        fgColor="#1A1A1A"
+                                        level="H"
+                                        includeMargin={false}
+                                        className="rounded-lg"
+                                    />
+                                )}
+                                {/* Center logo on QR */}
+                                {!loading && !error && (
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                        <div className="w-[40px] h-[40px] rounded-full bg-white shadow-lg flex items-center justify-center border-2 border-[#4D2FC4]">
+                                            <span className="text-[10px] font-extrabold text-[#4D2FC4]">₹</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <p className="text-[18px] font-extrabold text-[#111] mt-4">
@@ -142,7 +226,7 @@ export default function PaymentCheckout() {
                                 {QUICK_APPS.map((app) => (
                                     <div
                                         key={app.label}
-                                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-extrabold"
+                                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-extrabold cursor-pointer hover:scale-110 transition-transform"
                                         style={{ background: app.color }}
                                     >
                                         {app.short}
@@ -153,20 +237,46 @@ export default function PaymentCheckout() {
                             {/* UPI ID below QR */}
                             <div className="mt-4 w-full bg-[#F5F5F5] rounded-lg px-3 py-2 flex items-center justify-between">
                                 <span className="text-[11px] text-[#666]">UPI ID</span>
-                                <span className="text-[12px] font-semibold text-[#111]">yourloan@upi</span>
+                                <span className="text-[12px] font-semibold text-[#111]">
+                                    {getUPIId()}
+                                </span>
                             </div>
 
                             {/* Copy UPI ID button */}
                             <button
                                 type="button"
-                                onClick={() => {
-                                    navigator.clipboard.writeText("yourloan@upi");
-                                    alert("UPI ID copied to clipboard!");
-                                }}
-                                className="mt-2 text-[11px] text-[#4D2FC4] font-semibold hover:underline"
+                                onClick={handleCopyUPI}
+                                className="mt-2 text-[11px] text-[#4D2FC4] font-semibold hover:underline flex items-center gap-1"
                             >
-                                Copy UPI ID
+                                {copied ? (
+                                    <>
+                                        <span>✓</span> Copied!
+                                    </>
+                                ) : (
+                                    <>
+                                        <QrCode size={14} />
+                                        Copy UPI ID
+                                    </>
+                                )}
                             </button>
+
+                            {/* Error message */}
+                            {error && (
+                                <div className="mt-3 w-full bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                                    <p className="text-[11px] text-red-600 text-center">
+                                        {typeof error === 'string' ? error : 'Failed to generate QR code'}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Success message */}
+                            {success && !loading && (
+                                <div className="mt-2 w-full bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                                    <p className="text-[11px] text-green-600 text-center flex items-center justify-center gap-1">
+                                        <span>✓</span> QR Code generated successfully
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <>
@@ -176,8 +286,9 @@ export default function PaymentCheckout() {
                             <div className="flex items-center gap-2 border-[1.5px] border-[#E0E0E0] rounded-lg px-3 py-[11px] mb-3.5">
                                 <input
                                     type="text"
-                                    readOnly
-                                    value="yourname@okhdfcbank"
+                                    value={upiId}
+                                    onChange={(e) => setUpiId(e.target.value)}
+                                    placeholder="Enter your UPI ID"
                                     className="flex-1 outline-none text-[13px] text-[#111] bg-transparent"
                                 />
                                 <span className="text-[10px] font-bold text-[#0A8A4A] bg-[#E8F8EE] px-2 py-1 rounded">
@@ -192,7 +303,7 @@ export default function PaymentCheckout() {
                                 {QUICK_APPS.map((app) => (
                                     <div
                                         key={app.label}
-                                        className="flex-1 border border-[#EEEEEE] rounded-lg py-2.5 px-1.5 text-center"
+                                        className="flex-1 border border-[#EEEEEE] rounded-lg py-2.5 px-1.5 text-center cursor-pointer hover:border-[#4D2FC4] transition-colors"
                                     >
                                         <div
                                             className="w-[26px] h-[26px] rounded-full mx-auto mb-1.5 flex items-center justify-center text-white text-[11px] font-extrabold"
@@ -211,10 +322,23 @@ export default function PaymentCheckout() {
 
                     <button
                         type="button"
-                        className="w-full py-[13px] rounded-lg bg-gradient-to-br from-[#4D2FC4] to-[#3A1FA0] text-white text-[14.5px] font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity mt-1"
+                        onClick={handlePay}
+                        disabled={loading}
+                        className={`w-full py-[13px] rounded-lg bg-gradient-to-br from-[#4D2FC4] to-[#3A1FA0] text-white text-[14.5px] font-bold flex items-center justify-center gap-2 transition-all ${
+                            loading ? 'opacity-70 cursor-not-allowed' : 'hover:opacity-90 hover:scale-[1.01]'
+                        }`}
                     >
-                        <Lock size={14} />
-                        Pay ₹{amount.toFixed(2)}
+                        {loading ? (
+                            <>
+                                <Loader2 size={16} className="animate-spin" />
+                                Generating...
+                            </>
+                        ) : (
+                            <>
+                                <Lock size={14} />
+                                Pay ₹{amount.toFixed(2)}
+                            </>
+                        )}
                     </button>
 
                     <p className="flex items-center justify-center gap-1.5 text-[10.5px] text-[#999] mt-3">

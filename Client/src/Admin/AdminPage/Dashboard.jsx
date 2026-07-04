@@ -11,9 +11,6 @@ import {
     UserCheck,
 } from 'lucide-react';
 import { getAllApplications } from '../../redux/slice/adminApplicationSlice';
-// NOTE: adjust this import to match your actual users slice/action names.
-// Assumed shape: state.adminUser.users -> array of user objects, each with
-// at least _id, name/fullName, email, createdAt.
 import { getAllUsers } from '../../redux/slice/adminSlice';
 
 const AdminDashboard = () => {

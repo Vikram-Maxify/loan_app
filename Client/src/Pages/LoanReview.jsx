@@ -100,7 +100,7 @@ export default function OwnPocketReviewSubmit() {
             localStorage.setItem("application", JSON.stringify(response.data));
 
             localStorage.setItem("applicationStatus", "approved");
-            navigate("/bank-detail");
+            navigate("/approvedpage");
         } catch (error) {
             setSubmitError(error?.message || error || "Network error. Please check your connection and try again.");
             setIsSubmitting(false);

@@ -13,10 +13,28 @@ const AdminOrders = () => {
     dispatch(getAllOrders());
   }, [dispatch]);
 
+  // Filter orders and remove duplicates based on userId + orderId combination
   const filteredOrders = useMemo(() => {
-    return orders.filter((item) =>
-      item.orderId.toLowerCase().includes(search.toLowerCase())
+    // First filter by search term
+    const filtered = orders.filter((item) =>
+      item.orderId?.toLowerCase().includes(search.toLowerCase())
     );
+    
+    // Remove duplicate orderIds for the SAME user
+    // A user can have only one unique orderId
+    const seenUserOrderMap = new Map();
+    
+    return filtered.filter((order) => {
+      // Create a unique key using userId and orderId
+      const userId = order.user?._id || order.user?.email || 'unknown';
+      const key = `${userId}-${order.orderId}`;
+      
+      if (seenUserOrderMap.has(key)) {
+        return false; // This user already has this orderId
+      }
+      seenUserOrderMap.set(key, true);
+      return true;
+    });
   }, [orders, search]);
 
   // Status badge color mapping
@@ -35,7 +53,7 @@ const AdminOrders = () => {
         {/* Card Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 px-6 py-4 border-b border-gray-200 bg-gray-50">
           <h4 className="text-xl font-semibold text-gray-800 m-0">
-            All Orders
+            All Orders {filteredOrders.length > 0 && `(${filteredOrders.length})`}
           </h4>
 
           <button
@@ -74,6 +92,7 @@ const AdminOrders = () => {
                   <tr>
                     <th className="px-4 py-3 font-medium">#</th>
                     <th className="px-4 py-3 font-medium">Order ID</th>
+                    <th className="px-4 py-3 font-medium">User ID</th>
                     <th className="px-4 py-3 font-medium">User</th>
                     <th className="px-4 py-3 font-medium">Mobile</th>
                     <th className="px-4 py-3 font-medium">Email</th>
@@ -94,6 +113,10 @@ const AdminOrders = () => {
 
                         <td className="px-4 py-3 font-semibold text-gray-700">
                           {order.orderId}
+                        </td>
+
+                        <td className="px-4 py-3 text-xs font-mono text-gray-500">
+                          {order.user?._id || "-"}
                         </td>
 
                         <td className="px-4 py-3">
@@ -137,10 +160,10 @@ const AdminOrders = () => {
                   ) : (
                     <tr>
                       <td
-                        colSpan="8"
+                        colSpan="9"
                         className="px-4 py-8 text-center text-gray-500"
                       >
-                        No Orders Found
+                        {search ? "No orders found matching your search" : "No Orders Found"}
                       </td>
                     </tr>
                   )}

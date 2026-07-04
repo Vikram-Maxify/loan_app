@@ -1,5 +1,5 @@
 // src/pages/Admin/AdminApplication.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
     getAllApplications,
@@ -49,7 +49,21 @@ const AdminApplication = () => {
         dispatch(clearApplication());
     };
 
-    const filteredApplications = applications.filter((app) => {
+    // ✅ FIX: Deduplicate applications by _id
+    const uniqueApplications = useMemo(() => {
+        if (!applications) return [];
+        
+        // Create a Map with _id as key to ensure uniqueness
+        const appMap = new Map();
+        applications.forEach(app => {
+            if (app?._id && !appMap.has(app._id)) {
+                appMap.set(app._id, app);
+            }
+        });
+        return Array.from(appMap.values());
+    }, [applications]);
+
+    const filteredApplications = uniqueApplications.filter((app) => {
         if (!searchTerm) return true;
         const searchLower = searchTerm.toLowerCase();
         return (
@@ -496,7 +510,7 @@ const AdminApplication = () => {
 
             {/* Table */}
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-                {loading && applications.length === 0 ? (
+                {loading && uniqueApplications.length === 0 ? (
                     <div className="flex justify-center items-center h-64">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
                     </div>

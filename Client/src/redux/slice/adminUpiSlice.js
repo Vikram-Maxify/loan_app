@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import adminAPI from "./api";
+import adminAPI from "./adminAPI";
 
 // GET UPI
 export const fetchUpi = createAsyncThunk(

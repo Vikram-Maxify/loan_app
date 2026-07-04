@@ -4,12 +4,12 @@ const {
   getUpiDetails,
   updateUpiDetails,
 } = require("../controllers/adminUpiController");
-const protect = require("../middlewares/authMiddleware");
+const auth = require("../middleware/authMiddleware");
 
 // Public route (user fetch kare)
-router.get("/upi",protect, getUpiDetails);
+router.get("/upi",auth, getUpiDetails);
 
 // Admin route
-router.put("/admin/upi", protect, updateUpiDetails);
+router.put("/admin/upi", auth, updateUpiDetails);
 
 module.exports = router;

@@ -1,9 +1,11 @@
 const UpiSettings = require("../models/upiSettingsModel");
 
+// ==============================
 // Get UPI Details
+// ==============================
 exports.getUpiDetails = async (req, res) => {
   try {
-    const upi = await UpiSettings.findOne();
+    const upi = await UpiSettings.findOne().sort({ createdAt: -1 });
 
     if (!upi) {
       return res.status(404).json({
@@ -12,27 +14,34 @@ exports.getUpiDetails = async (req, res) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: upi,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Get UPI Error:", error);
+
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 };
 
-// Create or Update UPI (Admin)
+// ==============================
+// Create / Update UPI
+// ==============================
 exports.updateUpiDetails = async (req, res) => {
   try {
-    const { upiId, upiName } = req.body;
+    const body = req.body || {};
+
+    const upiId = body.upiId?.trim();
+    const upiName = (body.upiName || body.payeeName)?.trim();
 
     if (!upiId || !upiName) {
       return res.status(400).json({
         success: false,
-        message: "UPI ID and UPI Name are required",
+        message: "UPI ID and Payee Name are required",
       });
     }
 
@@ -43,16 +52,21 @@ exports.updateUpiDetails = async (req, res) => {
       upi.upiName = upiName;
       await upi.save();
     } else {
-      upi = await UpiSettings.create({ upiId, upiName });
+      upi = await UpiSettings.create({
+        upiId,
+        upiName,
+      });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: "UPI details updated successfully",
+      message: "UPI details saved successfully",
       data: upi,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error(error);
+
+    return res.status(500).json({
       success: false,
       message: error.message,
     });

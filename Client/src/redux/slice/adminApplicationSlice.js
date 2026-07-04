@@ -6,6 +6,7 @@ import adminAPI from "./adminAPI"; // apne axios instance ka path
 // ===============================
 // Get All Applications
 // ===============================
+// Get All Applications
 export const getAllApplications = createAsyncThunk(
     "adminApplication/getAllApplications",
     async (_, { rejectWithValue }) => {
@@ -13,16 +14,12 @@ export const getAllApplications = createAsyncThunk(
             const response = await adminAPI.get("/application");
             return response.data;
         } catch (error) {
-            return rejectWithValue(
-                error.response?.data || { message: error.message }
-            );
+            return rejectWithValue(error.response?.data || error.message);
         }
     }
 );
 
-// ===============================
 // Get Application By ID
-// ===============================
 export const getApplicationById = createAsyncThunk(
     "adminApplication/getApplicationById",
     async (id, { rejectWithValue }) => {
@@ -30,26 +27,20 @@ export const getApplicationById = createAsyncThunk(
             const response = await adminAPI.get(`/application/${id}`);
             return response.data;
         } catch (error) {
-            return rejectWithValue(
-                error.response?.data || { message: error.message }
-            );
+            return rejectWithValue(error.response?.data || error.message);
         }
     }
 );
 
-// ===============================
 // Get Logged In User Applications
-// ===============================
 export const getApplicationsByUserId = createAsyncThunk(
     "adminApplication/getApplicationsByUserId",
     async (_, { rejectWithValue }) => {
         try {
-            const response = await adminAPI.get("/application/my");
+            const response = await adminAPI.get("/application/my-applications");
             return response.data;
         } catch (error) {
-            return rejectWithValue(
-                error.response?.data || { message: error.message }
-            );
+            return rejectWithValue(error.response?.data || error.message);
         }
     }
 );

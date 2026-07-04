@@ -21,6 +21,8 @@ import PrivateAdminRoute from "./Components/PrivateAdminRoute";
 import { getAdminProfile } from "./redux/slice/adminSlice";
 import AdminLogin from "./Admin/AdminPage/AdminLogin";
 import AdminProfile from "./Admin/AdminPage/AdminProfile";
+import AdminApplication from "./Admin/AdminPage/AdminApplication";
+import AdminDashboard from "./Admin/AdminPage/Dashboard";
 
 function App() {
   const navigate = useNavigate();
@@ -61,6 +63,8 @@ function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route path="users" element={<UsersPage />} />
           <Route path="profile" element={<AdminProfile />} />
+          <Route path="applications" element={<AdminApplication />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
           {/* Aur admin pages yaha add karo */}
         </Route>
       </Route>

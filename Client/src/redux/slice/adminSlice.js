@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import adminAPI from "./adminAPI";
+import API from "./API";
 
 const getErrorMessage = (err) =>
   err.response?.data?.message ||
@@ -15,7 +15,7 @@ export const adminLogin = createAsyncThunk(
   "admin/login",
   async ({ mobile, password }, thunkAPI) => {
     try {
-      const { data } = await adminAPI.post("/admin/login", {
+      const { data } = await API.post("/admin/login", {
         mobile,
         password,
       });
@@ -35,7 +35,7 @@ export const getAdminProfile = createAsyncThunk(
   "admin/profile",
   async (_, thunkAPI) => {
     try {
-      const { data } = await adminAPI.get("/admin/profile");
+      const { data } = await API.get("/admin/profile");
       return data;
     } catch (err) {
       return thunkAPI.rejectWithValue(getErrorMessage(err));
@@ -51,7 +51,7 @@ export const getAllUsers = createAsyncThunk(
   "admin/users",
   async (_, thunkAPI) => {
     try {
-      const { data } = await adminAPI.get("/admin/users");
+      const { data } = await API.get("/admin/users");
       return data;
     } catch (err) {
       return thunkAPI.rejectWithValue(getErrorMessage(err));
@@ -67,7 +67,7 @@ export const adminLogout = createAsyncThunk(
   "admin/logout",
   async (_, thunkAPI) => {
     try {
-      const { data } = await adminAPI.post("/admin/logout");
+      const { data } = await API.post("/admin/logout");
       return data;
     } catch (err) {
       return thunkAPI.rejectWithValue(getErrorMessage(err));

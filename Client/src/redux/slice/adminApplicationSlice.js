@@ -1,7 +1,7 @@
 // src/redux/slices/adminApplicationSlice.js
 
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import adminAPI from "./adminAPI"; // apne axios instance ka path
+import API from "./API";
 
 // ===============================
 // Get All Applications
@@ -11,7 +11,7 @@ export const getAllApplications = createAsyncThunk(
     "adminApplication/getAllApplications",
     async (_, { rejectWithValue }) => {
         try {
-            const response = await adminAPI.get("/application");
+            const response = await API.get("/application");
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data || error.message);
@@ -24,7 +24,7 @@ export const getApplicationById = createAsyncThunk(
     "adminApplication/getApplicationById",
     async (id, { rejectWithValue }) => {
         try {
-            const response = await adminAPI.get(`/application/${id}`);
+            const response = await API.get(`/application/${id}`);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data || error.message);
@@ -37,7 +37,7 @@ export const getApplicationsByUserId = createAsyncThunk(
     "adminApplication/getApplicationsByUserId",
     async (_, { rejectWithValue }) => {
         try {
-            const response = await adminAPI.get("/application/my-applications");
+            const response = await API.get("/application/my-applications");
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data || error.message);

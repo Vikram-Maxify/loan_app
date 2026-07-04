@@ -1,15 +1,18 @@
 const express = require("express");
 const router = express.Router();
+
 const {
   getUpiDetails,
   updateUpiDetails,
 } = require("../controllers/adminUpiController");
+
 const auth = require("../middleware/authMiddleware");
+const adminAuth = require("../middleware/adminAuth");
 
-// Public route (user fetch kare)
-router.get("/upi",auth, getUpiDetails);
+// User Route
+router.get("/upi", auth, getUpiDetails);
 
-// Admin route
-router.put("/admin/upi", auth, updateUpiDetails);
+// Admin Route
+router.put("/admin/upi", adminAuth, updateUpiDetails);
 
 module.exports = router;

@@ -10,20 +10,19 @@ const {
   adminRegister,
 } = require("../controllers/adminController");
 
-const auth = require("../middleware/authMiddleware");
 const adminAuth = require("../middleware/adminAuth");
 
 // Public
 router.post("/login", adminLogin);
 
-// Protected
-router.get("/profile", auth, adminAuth, getProfile);
-
+// Register (agar public rakhna hai)
 router.post("/register", adminRegister);
 
+// Protected Admin Routes
+router.get("/profile", adminAuth, getProfile);
 
-router.get("/users", auth, getAllUsers);
+router.get("/users", adminAuth, getAllUsers);
 
-router.post("/logout", auth, adminAuth, logout);
+router.post("/logout", adminAuth, logout);
 
 module.exports = router;

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import {
-    Search, Filter, CheckCircle, XCircle, Clock,
-    UserCircle, Phone, Calendar
+    Search, Filter, UserCircle, Phone, Calendar, Mail
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getAllUsers } from '../../redux/slice/adminSlice';
@@ -12,53 +11,12 @@ const UsersPage = () => {
     const initialFetchDone = useRef(false);
 
     useEffect(() => {
-        // Only fetch on first mount and if not loaded and not loading
         if (!isLoaded && !loading && !initialFetchDone.current) {
             initialFetchDone.current = true;
             dispatch(getAllUsers());
         }
     }, [dispatch, loading, isLoaded]);
 
-    // Calculate verification progress
-    const getVerificationProgress = (steps) => {
-        const totalSteps = Object.keys(steps).length;
-        const completedSteps = Object.values(steps).filter(value => value === true).length;
-        return {
-            completed: completedSteps,
-            total: totalSteps,
-            percentage: Math.round((completedSteps / totalSteps) * 100)
-        };
-    };
-
-    // Get status badge color
-    const getStatusBadge = (status) => {
-        const statusConfig = {
-            verified: { color: 'bg-emerald-100 text-emerald-700', icon: CheckCircle },
-            active: { color: 'bg-blue-100 text-blue-700', icon: CheckCircle },
-            pending: { color: 'bg-yellow-100 text-yellow-700', icon: Clock },
-            inactive: { color: 'bg-red-100 text-red-700', icon: XCircle },
-            new: { color: 'bg-gray-100 text-gray-700', icon: Clock },
-        };
-        return statusConfig[status] || statusConfig.new;
-    };
-
-    // Get step icon and color
-    const getStepStatus = (completed) => {
-        return completed
-            ? { icon: CheckCircle, color: 'text-emerald-500' }
-            : { icon: XCircle, color: 'text-gray-300' };
-    };
-
-    // Step labels
-    const stepLabels = {
-        emailVerified: 'Email',
-        phoneVerified: 'Phone',
-        identityVerified: 'Identity',
-        addressVerified: 'Address',
-        kycVerified: 'KYC'
-    };
-
-    // Refresh handler
     const handleRefresh = () => {
         initialFetchDone.current = false;
         dispatch(getAllUsers());
@@ -70,7 +28,7 @@ const UsersPage = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-800">Users Management</h1>
-                    <p className="text-sm text-gray-500 mt-1">Manage and verify user accounts</p>
+                    <p className="text-sm text-gray-500 mt-1">Manage user accounts</p>
                 </div>
                 <div className="flex items-center gap-3 mt-3 sm:mt-0">
                     <button 
@@ -105,10 +63,10 @@ const UsersPage = () => {
                 </div>
             </div>
 
-            {/* Users Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
+            {/* Users Table */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 {loading && (
-                    <div className="col-span-full bg-white rounded-xl border border-gray-200 p-6 text-sm text-gray-500">
+                    <div className="p-6 text-sm text-gray-500">
                         <div className="flex items-center justify-center gap-3">
                             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600"></div>
                             Loading users...
@@ -117,7 +75,7 @@ const UsersPage = () => {
                 )}
 
                 {error && (
-                    <div className="col-span-full bg-red-50 rounded-xl border border-red-200 p-6 text-sm text-red-600">
+                    <div className="p-6 text-sm text-red-600 bg-red-50">
                         <div className="flex items-center justify-between">
                             <span>{error}</span>
                             <button 
@@ -130,133 +88,84 @@ const UsersPage = () => {
                     </div>
                 )}
 
-                {!loading && !error && users && users.length > 0 && users.map((user) => {
-                    const userView = {
-                        ...user,
-                        id: user._id,
-                        name: user.fullName || user.mobile || 'Unnamed User',
-                        phone: user.mobile ? `+91 ${user.mobile}` : 'Not provided',
-                        joinedDate: user.createdAt,
-                        status: user.isVerified ? 'verified' : 'pending',
-                        verificationSteps: {
-                            emailVerified: Boolean(user.email),
-                            phoneVerified: Boolean(user.mobile && user.isVerified),
-                            identityVerified: false,
-                            addressVerified: false,
-                            kycVerified: false,
-                        },
-                    };
-                    const progress = getVerificationProgress(userView.verificationSteps);
-                    const statusBadge = getStatusBadge(userView.status);
-                    const StatusIcon = statusBadge.icon;
-
-                    return (
-                        <div key={userView.id} className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow p-5">
-                            {/* User Header */}
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-full flex items-center justify-center">
-                                        <UserCircle className="w-8 h-8 text-indigo-600" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold text-gray-800">{userView.name}</h3>
-                                        <p className="text-sm text-gray-500">{user.email || 'No email provided'}</p>
-                                    </div>
-                                </div>
-                                <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusBadge.color}`}>
-                                    <StatusIcon className="w-3.5 h-3.5" />
-                                    {userView.status.charAt(0).toUpperCase() + userView.status.slice(1)}
-                                </span>
-                            </div>
-
-                            {/* User Details */}
-                            <div className="space-y-2 text-sm mb-4">
-                                <div className="flex items-center gap-2 text-gray-600">
-                                    <Phone className="w-4 h-4 text-gray-400" />
-                                    <span>{userView.phone}</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-gray-600">
-                                    <Calendar className="w-4 h-4 text-gray-400" />
-                                    <span>Joined: {new Date(userView.joinedDate).toLocaleDateString('en-IN', {
-                                        day: '2-digit',
-                                        month: 'short',
-                                        year: 'numeric'
-                                    })}</span>
-                                </div>
-                            </div>
-
-                            {/* Verification Progress */}
-                            <div className="border-t border-gray-100 pt-4">
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className="text-sm font-medium text-gray-700">Verification Progress</span>
-                                    <span className="text-sm font-semibold text-indigo-600">
-                                        {progress.completed}/{progress.total} Steps
-                                    </span>
-                                </div>
-
-                                {/* Progress Bar */}
-                                <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
-                                    <div
-                                        className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
-                                        style={{ width: `${progress.percentage}%` }}
-                                    />
-                                </div>
-
-                                {/* Verification Steps */}
-                                <div className="grid grid-cols-5 gap-1 mt-3">
-                                    {Object.entries(userView.verificationSteps).map(([step, completed]) => {
-                                        const { icon: Icon, color } = getStepStatus(completed);
-                                        return (
-                                            <div key={step} className="flex flex-col items-center">
-                                                <div className="relative group">
-                                                    <Icon className={`w-5 h-5 ${color} transition-colors`} />
-                                                    <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-                                                        {stepLabels[step]}
+                {!loading && !error && users && users.length > 0 && (
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="bg-gray-50 border-b border-gray-200">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        User
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Email
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Phone
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Joined Date
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                                {users.map((user) => (
+                                    <tr key={user._id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-full flex items-center justify-center flex-shrink-0">
+                                                    <UserCircle className="w-6 h-6 text-indigo-600" />
+                                                </div>
+                                                <div>
+                                                    <div className="text-sm font-medium text-gray-900">
+                                                        {user.fullName || user.mobile || 'Unnamed User'}
                                                     </div>
                                                 </div>
-                                                <span className="text-[10px] text-gray-500 mt-0.5 truncate max-w-full">
-                                                    {stepLabels[step]}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center gap-2">
+                                                <Mail className="w-4 h-4 text-gray-400" />
+                                                <span className="text-sm text-gray-600">
+                                                    {user.email || 'Not provided'}
                                                 </span>
                                             </div>
-                                        );
-                                    })}
-                                </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center gap-2">
+                                                <Phone className="w-4 h-4 text-gray-400" />
+                                                <span className="text-sm text-gray-600">
+                                                    {user.mobile ? `+91 ${user.mobile}` : 'Not provided'}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center gap-2">
+                                                <Calendar className="w-4 h-4 text-gray-400" />
+                                                <span className="text-sm text-gray-600">
+                                                    {new Date(user.createdAt).toLocaleDateString('en-IN', {
+                                                        day: '2-digit',
+                                                        month: 'short',
+                                                        year: 'numeric'
+                                                    })}
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
 
-                                {/* Progress Summary */}
-                                <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
-                                    <span>Completed: {progress.completed}</span>
-                                    <span>Remaining: {progress.total - progress.completed}</span>
-                                    <span className={`font-medium ${progress.percentage === 100 ? 'text-emerald-600' :
-                                            progress.percentage >= 60 ? 'text-blue-600' :
-                                                'text-gray-500'
-                                        }`}>
-                                        {progress.percentage}%
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="mt-4 pt-4 border-t border-gray-100 flex gap-2">
-                                <button className="flex-1 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors">
-                                    View Profile
-                                </button>
-                                <button className="flex-1 px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
-                                    Verify
-                                </button>
-                            </div>
-                        </div>
-                    );
-                })}
+                {/* Empty State */}
+                {!loading && !error && (!users || users.length === 0) && (
+                    <div className="text-center py-12">
+                        <UserCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-600">No users found</h3>
+                        <p className="text-sm text-gray-400">Start adding users to your platform</p>
+                    </div>
+                )}
             </div>
-
-            {/* Empty State (if no users) */}
-            {!loading && !error && (!users || users.length === 0) && (
-                <div className="text-center py-12">
-                    <UserCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-600">No users found</h3>
-                    <p className="text-sm text-gray-400">Start adding users to your platform</p>
-                </div>
-            )}
 
             {/* Pagination */}
             {users && users.length > 0 && (

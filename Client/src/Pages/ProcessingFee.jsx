@@ -32,7 +32,7 @@ const PAYMENT_METHODS = [
 const getBreakdown = (totalAmount) => {
     const processingFee = totalAmount - (totalAmount * 18 / 118); // Reverse calculate processing fee (excluding GST)
     const gst = totalAmount * 18 / 118;
-    
+
     return [
         { label: "Processing Fee", value: `₹ ${Math.round(processingFee)}`, emphasis: false },
         { label: "GST (18%)", value: `₹ ${Math.round(gst)}`, emphasis: false },
@@ -53,11 +53,17 @@ export default function OnPocketProcessingFee() {
     );
 
     // Get order state from Redux store
-    const { 
-        loading: orderLoading, 
-        error: orderError, 
-        orderData 
+    const {
+        loading: orderLoading,
+        error: orderError,
+        orderData
     } = useSelector((state) => state.order || {});
+
+    const totalAmount = amount || 259; // Fallback to 259 if not fetched
+    const breakdown = getBreakdown(totalAmount);
+    const gstAmount = Math.round(totalAmount * 18 / 118);
+    const processingFeeAmount = Math.round(totalAmount - gstAmount);
+
 
     // Fetch amount settings on component mount
     useEffect(() => {
@@ -102,10 +108,6 @@ export default function OnPocketProcessingFee() {
     }, [orderError]);
 
     // Calculate total amount and breakdown
-    const totalAmount = amount || 259; // Fallback to 259 if not fetched
-    const breakdown = getBreakdown(totalAmount);
-    const gstAmount = Math.round(totalAmount * 18 / 118);
-    const processingFeeAmount = Math.round(totalAmount - gstAmount);
 
     const handlePayNow = async () => {
         try {
@@ -140,7 +142,7 @@ export default function OnPocketProcessingFee() {
 
             // Dispatch createOrder action
             const result = await dispatch(createOrder(orderData)).unwrap();
-            
+
             // If we reach here, order was created successfully
             // The useEffect for orderData will handle navigation
             console.log("Order created successfully:", result);
@@ -265,20 +267,18 @@ export default function OnPocketProcessingFee() {
                                                 type="button"
                                                 onClick={() => setSelectedMethod(method.id)}
                                                 disabled={loading || amountLoading || orderLoading}
-                                                className={`flex items-center justify-center gap-2.5 py-3 px-3 rounded-xl border-2 transition-all duration-200 ${
-                                                    isSelected
+                                                className={`flex items-center justify-center gap-2.5 py-3 px-3 rounded-xl border-2 transition-all duration-200 ${isSelected
                                                         ? "border-[#2A4BDE] bg-[#EEF4FF]"
                                                         : "border-[#E7E9F0] bg-white hover:border-[#BCC8F0]"
-                                                } ${(loading || amountLoading || orderLoading) ? "opacity-50 cursor-not-allowed" : ""}`}
+                                                    } ${(loading || amountLoading || orderLoading) ? "opacity-50 cursor-not-allowed" : ""}`}
                                             >
                                                 <Icon
                                                     size={16}
                                                     className={isSelected ? "text-[#2A4BDE]" : "text-[#5B6072]"}
                                                 />
                                                 <span
-                                                    className={`text-[12px] font-medium ${
-                                                        isSelected ? "text-[#2A4BDE]" : "text-[#0F1B3D]"
-                                                    }`}
+                                                    className={`text-[12px] font-medium ${isSelected ? "text-[#2A4BDE]" : "text-[#0F1B3D]"
+                                                        }`}
                                                 >
                                                     {method.label}
                                                 </span>
@@ -314,11 +314,10 @@ export default function OnPocketProcessingFee() {
                                     type="button"
                                     onClick={handlePayNow}
                                     disabled={loading || amountLoading || orderLoading || !amount}
-                                    className={`w-full h-12 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${
-                                        (loading || amountLoading || orderLoading || !amount)
+                                    className={`w-full h-12 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${(loading || amountLoading || orderLoading || !amount)
                                             ? "opacity-70 cursor-not-allowed"
                                             : "hover:bg-[#1A3BAE] active:scale-[0.99]"
-                                    }`}
+                                        }`}
                                 >
                                     {(loading || orderLoading) ? (
                                         <>

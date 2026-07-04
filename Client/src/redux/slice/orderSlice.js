@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import API from "./API";
 
 const API_URL = "/orders";
 
@@ -8,7 +8,7 @@ export const createOrder = createAsyncThunk(
   "order/createOrder",
   async (data, { rejectWithValue }) => {
     try {
-      const res = await axios.post(`/orders/create`, data, {
+      const res = await API.post(`/orders/create`, data, {
         withCredentials: true,
       });
 
@@ -26,7 +26,7 @@ export const getAllOrders = createAsyncThunk(
   "order/getAllOrders",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await axios.get(`/orders`, {
+      const res = await API.get(`/orders`, {
         withCredentials: true,
       });
 

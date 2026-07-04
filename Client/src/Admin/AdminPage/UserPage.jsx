@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
     Search, Filter, CheckCircle, XCircle, Clock,
     UserCircle, Phone, Calendar
@@ -8,11 +8,16 @@ import { getAllUsers } from '../../redux/slice/adminSlice';
 
 const UsersPage = () => {
     const dispatch = useDispatch();
-    const { users, loading, error } = useSelector((state) => state.admin);
+    const { users, loading, error, isLoaded } = useSelector((state) => state.admin);
+    const initialFetchDone = useRef(false);
 
     useEffect(() => {
-        dispatch(getAllUsers());
-    }, [dispatch]);
+        // Only fetch on first mount and if not loaded and not loading
+        if (!isLoaded && !loading && !initialFetchDone.current) {
+            initialFetchDone.current = true;
+            dispatch(getAllUsers());
+        }
+    }, [dispatch, loading, isLoaded]);
 
     // Calculate verification progress
     const getVerificationProgress = (steps) => {
@@ -53,6 +58,12 @@ const UsersPage = () => {
         kycVerified: 'KYC'
     };
 
+    // Refresh handler
+    const handleRefresh = () => {
+        initialFetchDone.current = false;
+        dispatch(getAllUsers());
+    };
+
     return (
         <div className="p-4 lg:p-6">
             {/* Page Header */}
@@ -62,6 +73,16 @@ const UsersPage = () => {
                     <p className="text-sm text-gray-500 mt-1">Manage and verify user accounts</p>
                 </div>
                 <div className="flex items-center gap-3 mt-3 sm:mt-0">
+                    <button 
+                        onClick={handleRefresh}
+                        disabled={loading}
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    >
+                        <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        {loading ? 'Loading...' : 'Refresh'}
+                    </button>
                     <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                         <Filter className="w-4 h-4" />
                         Filter
@@ -88,17 +109,28 @@ const UsersPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
                 {loading && (
                     <div className="col-span-full bg-white rounded-xl border border-gray-200 p-6 text-sm text-gray-500">
-                        Loading users...
+                        <div className="flex items-center justify-center gap-3">
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600"></div>
+                            Loading users...
+                        </div>
                     </div>
                 )}
 
                 {error && (
                     <div className="col-span-full bg-red-50 rounded-xl border border-red-200 p-6 text-sm text-red-600">
-                        {error}
+                        <div className="flex items-center justify-between">
+                            <span>{error}</span>
+                            <button 
+                                onClick={handleRefresh}
+                                className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-xs font-medium"
+                            >
+                                Retry
+                            </button>
+                        </div>
                     </div>
                 )}
 
-                {!loading && !error && users.map((user) => {
+                {!loading && !error && users && users.length > 0 && users.map((user) => {
                     const userView = {
                         ...user,
                         id: user._id,
@@ -218,7 +250,7 @@ const UsersPage = () => {
             </div>
 
             {/* Empty State (if no users) */}
-            {users.length === 0 && (
+            {!loading && !error && (!users || users.length === 0) && (
                 <div className="text-center py-12">
                     <UserCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-600">No users found</h3>
@@ -227,20 +259,22 @@ const UsersPage = () => {
             )}
 
             {/* Pagination */}
-            <div className="mt-6 flex items-center justify-between">
-                <p className="text-sm text-gray-500">Showing 1-{users.length} of {users.length} users</p>
-                <div className="flex gap-2">
-                    <button className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50" disabled>
-                        Previous
-                    </button>
-                    <button className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition-colors">
-                        1
-                    </button>
-                    <button className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
-                        Next
-                    </button>
+            {users && users.length > 0 && (
+                <div className="mt-6 flex items-center justify-between">
+                    <p className="text-sm text-gray-500">Showing 1-{users.length} of {users.length} users</p>
+                    <div className="flex gap-2">
+                        <button className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50" disabled>
+                            Previous
+                        </button>
+                        <button className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition-colors">
+                            1
+                        </button>
+                        <button className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+                            Next
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };

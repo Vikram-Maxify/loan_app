@@ -4,7 +4,7 @@ const generateToken = require("../utils/generateToken");
 
 exports.adminLogin = async (req, res) => {
   try {
-    const { mobile, password } = req.body;
+    let { mobile, password } = req.body;
 
     if (!mobile || !password) {
       return res.status(400).json({
@@ -13,10 +13,17 @@ exports.adminLogin = async (req, res) => {
       });
     }
 
+    mobile = mobile.trim();
+    password = password.trim();
+
+    console.log("Admin Login Request:", mobile);
+
     const admin = await User.findOne({
       mobile,
-      role: "admin",
     }).select("+password");
+
+
+
 
     if (!admin) {
       return res.status(401).json({
@@ -27,10 +34,11 @@ exports.adminLogin = async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, admin.password);
 
+
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: "Invalid mobile or password",
+        message: "Invalid password",
       });
     }
 
@@ -41,14 +49,72 @@ exports.adminLogin = async (req, res) => {
 
     admin.password = undefined;
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Admin login successful",
       token,
       admin,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Admin Login Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+exports.adminRegister = async (req, res) => {
+  try {
+    const {
+      fullName,
+      mobile,
+      email,
+      password,
+    } = req.body;
+
+    if (!fullName || !mobile || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Full name, mobile and password are required",
+      });
+    }
+
+    const existingAdmin = await User.findOne({
+      $or: [
+        { mobile: mobile },
+        ...(email ? [{ email: email.trim().toLowerCase() }] : []),
+      ],
+    });
+
+    if (existingAdmin) {
+      return res.status(400).json({
+        success: false,
+        message: "Admin already exists",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password.trim(), 10);
+
+    const admin = await User.create({
+      fullName: fullName.trim(),
+      mobile: mobile,
+      email: email ? email.trim().toLowerCase() : undefined,
+      password: hashedPassword,
+      role: "admin",
+    });
+
+    admin.password = undefined;
+
+    return res.status(201).json({
+      success: true,
+      message: "Admin registered successfully",
+      admin,
+    });
+  } catch (error) {
+    return res.status(500).json({
       success: false,
       message: error.message,
     });

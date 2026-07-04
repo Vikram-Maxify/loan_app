@@ -7,6 +7,7 @@ const {
   getProfile,
   getAllUsers,
   logout,
+  adminRegister,
 } = require("../controllers/adminController");
 
 const auth = require("../middleware/authMiddleware");
@@ -18,7 +19,10 @@ router.post("/login", adminLogin);
 // Protected
 router.get("/profile", auth, adminAuth, getProfile);
 
-router.get("/users", auth, adminAuth, getAllUsers);
+router.post("/register", adminRegister);
+
+
+router.get("/users", auth, getAllUsers);
 
 router.post("/logout", auth, adminAuth, logout);
 

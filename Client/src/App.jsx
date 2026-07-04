@@ -58,7 +58,6 @@ function App() {
       {/* Protected Admin Routes */}
       <Route element={<PrivateAdminRoute />}>
         <Route path="/admin" element={<AdminLayout />}>
-          <Route path="users" element={<UsersPage />} />
           {/* Aur admin pages yaha add karo */}
         </Route>
       </Route>

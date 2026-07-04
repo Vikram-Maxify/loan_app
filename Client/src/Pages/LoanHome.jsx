@@ -73,13 +73,13 @@ useEffect(() => {
         <OwnPocketLogo />
         <h1 className="text-xl font-bold text-gray-800">OwnPocket</h1>
     </div>
-    <button 
+    {/* <button 
         type="button" 
         aria-label="Open menu"
         className="p-2 rounded-lg hover:bg-gray-50 transition-colors"
     >
         <Menu size={22} className="text-[#2A4BDE]" strokeWidth={2.25} />
-    </button>
+    </button> */}
 </div>
 
                     {/* hero */}

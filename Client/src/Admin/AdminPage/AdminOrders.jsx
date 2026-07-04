@@ -13,27 +13,25 @@ const AdminOrders = () => {
     dispatch(getAllOrders());
   }, [dispatch]);
 
-  // Filter orders - prevent same user from having duplicate order IDs
+  // Filter orders and remove duplicate orderIds
   const filteredOrders = useMemo(() => {
     // First filter by search term
     const filtered = orders.filter((item) =>
       item.orderId?.toLowerCase().includes(search.toLowerCase())
     );
     
-    // Remove duplicate orderIds for the SAME user
-    // A user can have multiple orders but each orderId should be unique per user
-    const seenUserOrderMap = new Map();
+    // Remove duplicate orderIds (exact same orderId)
+    const seenOrderIds = new Set();
     
     return filtered.filter((order) => {
-      const userId = order.user?._id || order.user?.email || 'unknown';
       const orderId = order.orderId;
-      const key = `${userId}-${orderId}`;
       
-      // If this user already has this exact orderId, skip it (duplicate)
-      if (seenUserOrderMap.has(key)) {
+      // If this orderId already exists, skip it (duplicate)
+      if (seenOrderIds.has(orderId)) {
         return false;
       }
-      seenUserOrderMap.set(key, true);
+      // Otherwise, add to set and keep it
+      seenOrderIds.add(orderId);
       return true;
     });
   }, [orders, search]);

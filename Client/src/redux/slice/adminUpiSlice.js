@@ -1,12 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import adminAPI from "./adminAPI";
+import API from "./API";
 
 // GET UPI
 export const fetchUpi = createAsyncThunk(
     "upi/fetchUpi",
     async (_, { rejectWithValue }) => {
         try {
-            const { data } = await adminAPI.get("/upi");
+            const { data } = await API.get("/upi");
             return data.data;
         } catch (error) {
             return rejectWithValue(error.response.data.message);
@@ -21,7 +21,7 @@ export const updateUpi = createAsyncThunk(
         try {
             const token = localStorage.getItem("token");
 
-            const { data } = await adminAPI.put(
+            const { data } = await API.put(
                 "/admin/upi",
                 formData,
             );

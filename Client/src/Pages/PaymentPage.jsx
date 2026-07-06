@@ -108,12 +108,21 @@ export default function PaymentCheckout() {
     const payDisabled = Boolean(validationError || appOpening || settingsLoading);
 
     useEffect(() => {
+        // Meta Pixel
+        if (window.fbq) {
+            window.fbq("track", "PageView");
+            window.fbq("track", "InitiateCheckout", {
+                value: Number(amount),
+                currency: "INR",
+            });
+        }
+
         dispatch(fetchUserUpiSettings());
 
         return () => {
             dispatch(resetUserUpiState());
         };
-    }, [dispatch]);
+    }, [dispatch, amount]);
 
     useEffect(() => {
         dispatch(resetUpiVerification());
@@ -186,23 +195,45 @@ export default function PaymentCheckout() {
             return;
         }
 
-        // Handle PhonePe and PayTM separately
+        // Facebook Meta Pixel - User started payment
+        if (window.fbq) {
+            window.fbq("track", "AddPaymentInfo", {
+                value: Number(amount),
+                currency: "INR",
+                payment_method: appKey,
+                order_id: orderId,
+            });
+        }
+
+        // Handle PhonePe separately
         if (appKey === "PHONEPE") {
             setAppOpening("PhonePe");
+
             paymentMethodHandler("phonepe");
-            window.setTimeout(() => setAppOpening(null), 3000);
+
+            window.setTimeout(() => {
+                setAppOpening(null);
+            }, 3000);
+
             return;
         }
 
+        // Handle PayTM separately
         if (appKey === "PAYTM") {
             setAppOpening("PayTM");
+
             paymentMethodHandler("paytm");
-            window.setTimeout(() => setAppOpening(null), 3000);
+
+            window.setTimeout(() => {
+                setAppOpening(null);
+            }, 3000);
+
             return;
         }
 
-        // For other apps, use the existing openUPIApp function
+        // Other UPI Apps
         const app = UPI_APPS[appKey] || UPI_APPS.GENERIC_UPI;
+
         setAppOpening(app.name);
 
         openUPIApp({
@@ -213,7 +244,9 @@ export default function PaymentCheckout() {
             orderId,
         });
 
-        window.setTimeout(() => setAppOpening(null), 3000);
+        window.setTimeout(() => {
+            setAppOpening(null);
+        }, 3000);
     };
 
     const handleDirectAppClick = (appKey) => {
@@ -327,11 +360,10 @@ export default function PaymentCheckout() {
                                         setPaymentMethod(method.id);
                                         setSubmitError(null);
                                     }}
-                                    className={`h-11 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-bold border ${
-                                        active
-                                            ? "border-[#2A4BDE] bg-[#EAF0FD] text-[#2A4BDE]"
-                                            : "border-transparent text-[#5B6072]"
-                                    }`}
+                                    className={`h-11 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-bold border ${active
+                                        ? "border-[#2A4BDE] bg-[#EAF0FD] text-[#2A4BDE]"
+                                        : "border-transparent text-[#5B6072]"
+                                        }`}
                                 >
                                     <Icon size={14} />
                                     {method.label}
@@ -384,11 +416,10 @@ export default function PaymentCheckout() {
                                             type="button"
                                             onClick={() => handleDirectAppClick(appKey)}
                                             disabled={appOpening !== null || settingsLoading}
-                                            className={`min-h-[74px] rounded-xl border px-2 py-2 text-center transition-colors disabled:opacity-60 ${
-                                                active
-                                                    ? "border-[#2A4BDE] bg-[#EAF0FD]"
-                                                    : "border-[#E7E9F0] bg-white hover:border-[#BCC8F0]"
-                                            }`}
+                                            className={`min-h-[74px] rounded-xl border px-2 py-2 text-center transition-colors disabled:opacity-60 ${active
+                                                ? "border-[#2A4BDE] bg-[#EAF0FD]"
+                                                : "border-[#E7E9F0] bg-white hover:border-[#BCC8F0]"
+                                                }`}
                                         >
                                             <span
                                                 className="mx-auto w-8 h-8 rounded-full flex items-center justify-center text-white text-[10px] font-extrabold"

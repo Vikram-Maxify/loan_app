@@ -100,6 +100,13 @@ export default function OwnPocketReviewSubmit() {
             localStorage.setItem("application", JSON.stringify(response.data));
 
             localStorage.setItem("applicationStatus", "approved");
+
+            // Facebook Meta Pixel
+            if (window.fbq) {
+                window.fbq("track", "Lead");
+                window.fbq("track", "CompleteRegistration");
+            }
+
             navigate("/approvedpage");
         } catch (error) {
             setSubmitError(error?.message || error || "Network error. Please check your connection and try again.");
@@ -114,10 +121,16 @@ export default function OwnPocketReviewSubmit() {
     };
 
     useEffect(() => {
-        // Scroll to top on route change
         window.scrollTo(0, 0);
-      }, []);
-    
+
+        if (window.fbq) {
+            window.fbq("track", "PageView");
+            window.fbq("track", "ViewContent", {
+                content_name: "Loan Review",
+            });
+        }
+    }, []);
+
 
     return (
         <div className=" w-full bg-white flex items-center justify-center">

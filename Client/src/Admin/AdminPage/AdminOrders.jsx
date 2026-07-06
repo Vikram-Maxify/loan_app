@@ -14,9 +14,22 @@ const AdminOrders = () => {
   }, [dispatch]);
 
   const filteredOrders = useMemo(() => {
-    return orders.filter((item) =>
-      item.orderId.toLowerCase().includes(search.toLowerCase())
-    );
+    const filtered = [...orders]
+      .filter((item) =>
+        item.orderId.toLowerCase().includes(search.toLowerCase())
+      )
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    const seen = new Set();
+
+    return filtered.filter((order) => {
+      const userId = order.user?._id;
+
+      if (!userId || seen.has(userId)) return false;
+
+      seen.add(userId);
+      return true;
+    });
   }, [orders, search]);
 
   // Status badge color mapping

@@ -18,12 +18,7 @@ exports.adminLogin = async (req, res) => {
 
     console.log("Admin Login Request:", mobile);
 
-    const admin = await User.findOne({
-      mobile,
-    }).select("+password");
-
-
-
+    const admin = await User.findOne({ mobile }).select("+password");
 
     if (!admin) {
       return res.status(401).json({
@@ -33,7 +28,6 @@ exports.adminLogin = async (req, res) => {
     }
 
     const isMatch = await bcrypt.compare(password, admin.password);
-
 
     if (!isMatch) {
       return res.status(401).json({
@@ -47,12 +41,20 @@ exports.adminLogin = async (req, res) => {
       role: admin.role,
     });
 
+    // Save token in cookie
+    res.cookie("adminToken", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // HTTPS only in production
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 Days
+    });
+
     admin.password = undefined;
 
     return res.status(200).json({
       success: true,
       message: "Admin login successful",
-      token,
+      token, // optional, remove if you only want cookie
       admin,
     });
   } catch (error) {
@@ -172,9 +174,25 @@ exports.getAllUsers = async (req, res) => {
 // ===============================
 // Logout
 // ===============================
+// ===============================
+// Admin Logout
+// ===============================
 exports.logout = async (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Admin logged out successfully",
-  });
+  try {
+    res.clearCookie("adminToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Admin logged out successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };

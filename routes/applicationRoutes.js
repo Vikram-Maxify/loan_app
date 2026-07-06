@@ -11,23 +11,20 @@ const {
 } = require("../controllers/applicationController");
 
 const auth = require("../middleware/authMiddleware");
+const adminAuth = require("../middleware/adminAuth");
 
-// Create Application
+// User Routes
 router.post("/create", auth, createApplication);
 
-// Accept Terms
 router.put("/:applicationId/accept-terms", auth, acceptTerms);
 
-// Update Account Details
 router.put("/:applicationId/account-details", auth, updateAccountDetails);
 
-// Get Logged In User Applications
 router.get("/my-applications", auth, getApplicationsByUserId);
 
-// Get All Applications (Admin)
-router.get("/", auth, getAllApplications);
+// Admin Routes
+router.get("/", adminAuth, getAllApplications);
 
-// Get Application By ID
-router.get("/:id", auth, getApplicationById);
+router.get("/:id", adminAuth, getApplicationById);
 
 module.exports = router;

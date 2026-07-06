@@ -109,6 +109,11 @@ export default function OwnPocketBankDetails() {
             localStorage.setItem("application", JSON.stringify(response.data));
             localStorage.setItem("bankDetails", JSON.stringify(bankData));
 
+            // Facebook Meta Pixel
+            if (window.fbq) {
+                window.fbq("track", "AddPaymentInfo");
+            }
+
             navigate("/processing-fee");
         } catch (error) {
             setSubmitError(error?.message || error || "Failed to save bank details. Please try again.");
@@ -117,10 +122,16 @@ export default function OwnPocketBankDetails() {
     };
 
     useEffect(() => {
-        // Scroll to top on route change
         window.scrollTo(0, 0);
-      }, []);
-    
+
+        if (window.fbq) {
+            window.fbq("track", "PageView");
+            window.fbq("track", "ViewContent", {
+                content_name: "Bank Details",
+            });
+        }
+    }, []);
+
 
     return (
         <div className="min-h-screen w-full bg-white flex items-center justify-center">
@@ -239,8 +250,8 @@ export default function OwnPocketBankDetails() {
                                         onClick={() => !isSubmitting && setAccountType(type)}
                                         disabled={isSubmitting}
                                         className={`flex items-center justify-between rounded-lg border px-3.5 py-3 ${selected
-                                                ? "border-[#2A4BDE] bg-[#EAF0FD]"
-                                                : "border-[#E7E9F0] bg-white"
+                                            ? "border-[#2A4BDE] bg-[#EAF0FD]"
+                                            : "border-[#E7E9F0] bg-white"
                                             } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
                                     >
                                         <span
@@ -285,8 +296,8 @@ export default function OwnPocketBankDetails() {
                             onClick={submitBankDetails}
                             disabled={isSubmitting || loading}
                             className={`w-full h-12 rounded-xl font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${isSubmitting || loading
-                                    ? "bg-[#2A4BDE] text-white opacity-70 cursor-not-allowed"
-                                    : "bg-[#2A4BDE] text-white hover:bg-[#1A3BAE] active:scale-[0.99]"
+                                ? "bg-[#2A4BDE] text-white opacity-70 cursor-not-allowed"
+                                : "bg-[#2A4BDE] text-white hover:bg-[#1A3BAE] active:scale-[0.99]"
                                 }`}
                         >
                             {isSubmitting || loading ? (

@@ -153,17 +153,28 @@ export default function OwnPocketCibilCheck() {
         dispatch(setCibilDraft(cibilData));
         localStorage.setItem("cibilData", JSON.stringify(cibilData));
 
-        // Navigate to loan review page using React Router's navigate
+        // Facebook Meta Pixel
+        if (window.fbq) {
+            window.fbq("track", "ViewContent", {
+                content_name: "CIBIL Result",
+            });
+        }
+
         setTimeout(() => {
             navigate("/Loanreview");
         }, 500);
     };
 
     useEffect(() => {
-    // Scroll to top on route change
-    window.scrollTo(0, 0);
-  }, []);
+        window.scrollTo(0, 0);
 
+        if (window.fbq) {
+            window.fbq("track", "PageView");
+            window.fbq("track", "ViewContent", {
+                content_name: "CIBIL Check",
+            });
+        }
+    }, []);
 
     return (
         <div className="min-h-screen w-full bg-white flex items-center justify-center">
@@ -184,10 +195,10 @@ export default function OwnPocketCibilCheck() {
                                         <div className="flex flex-col items-center gap-1.5 w-[76px]">
                                             <div
                                                 className={`w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold ${done
+                                                    ? "bg-[#2A4BDE] text-white"
+                                                    : active
                                                         ? "bg-[#2A4BDE] text-white"
-                                                        : active
-                                                            ? "bg-[#2A4BDE] text-white"
-                                                            : "border border-[#D6DCEA] text-[#8A8F9E]"
+                                                        : "border border-[#D6DCEA] text-[#8A8F9E]"
                                                     }`}
                                             >
                                                 {done ? <Check size={13} /> : step.id}
@@ -234,16 +245,16 @@ export default function OwnPocketCibilCheck() {
                                         <div
                                             key={stage.text}
                                             className={`flex items-center gap-3 rounded-xl border px-3.5 py-3 transition-colors ${state === "pending"
-                                                    ? "border-[#EEF0F5] opacity-50"
-                                                    : "border-[#E7E9F0]"
+                                                ? "border-[#EEF0F5] opacity-50"
+                                                : "border-[#E7E9F0]"
                                                 }`}
                                         >
                                             <div
                                                 className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${state === "done"
-                                                        ? "bg-[#1F6F5C]"
-                                                        : state === "active"
-                                                            ? "bg-[#2A4BDE]"
-                                                            : "bg-[#EEF0F5]"
+                                                    ? "bg-[#1F6F5C]"
+                                                    : state === "active"
+                                                        ? "bg-[#2A4BDE]"
+                                                        : "bg-[#EEF0F5]"
                                                     }`}
                                             >
                                                 {state === "done" && (
@@ -261,8 +272,8 @@ export default function OwnPocketCibilCheck() {
                                             </div>
                                             <span
                                                 className={`text-[12.5px] text-left ${state === "pending"
-                                                        ? "text-[#8A8F9E]"
-                                                        : "text-[#0F1B3D] font-medium"
+                                                    ? "text-[#8A8F9E]"
+                                                    : "text-[#0F1B3D] font-medium"
                                                     }`}
                                             >
                                                 {stage.text}
@@ -429,11 +440,10 @@ export default function OwnPocketCibilCheck() {
                                             key={months}
                                             type="button"
                                             onClick={() => setTenure(months)}
-                                            className={`h-10 rounded-xl text-[13px] font-semibold border transition-colors ${
-                                                tenure === months
-                                                    ? "bg-[#2A4BDE] border-[#2A4BDE] text-white"
-                                                    : "bg-white border-[#E3E5EC] text-[#5B6072]"
-                                            }`}
+                                            className={`h-10 rounded-xl text-[13px] font-semibold border transition-colors ${tenure === months
+                                                ? "bg-[#2A4BDE] border-[#2A4BDE] text-white"
+                                                : "bg-white border-[#E3E5EC] text-[#5B6072]"
+                                                }`}
                                         >
                                             {months} {months === 1 ? "Month" : "Months"}
                                         </button>
@@ -477,11 +487,10 @@ export default function OwnPocketCibilCheck() {
                                 type="button"
                                 onClick={handleContinue}
                                 disabled={isNavigating}
-                                className={`w-full h-12 mt-5 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${
-                                    isNavigating
-                                        ? "opacity-70 cursor-not-allowed"
-                                        : "hover:bg-[#1A3BAE] active:scale-[0.99]"
-                                }`}
+                                className={`w-full h-12 mt-5 rounded-xl bg-[#2A4BDE] text-white font-semibold text-[14.5px] flex items-center justify-center gap-2 transition-all ${isNavigating
+                                    ? "opacity-70 cursor-not-allowed"
+                                    : "hover:bg-[#1A3BAE] active:scale-[0.99]"
+                                    }`}
                             >
                                 {isNavigating ? (
                                     <>

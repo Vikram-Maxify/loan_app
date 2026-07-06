@@ -37,6 +37,13 @@ function App() {
 
   const normalizedOnLoad = useRef(false);
 
+  // Facebook Meta Pixel - Track every route change
+  useEffect(() => {
+    if (window.fbq) {
+      window.fbq("track", "PageView");
+    }
+  }, [location.pathname]);
+
   // Keep your existing behavior
   useEffect(() => {
     if (!normalizedOnLoad.current) {
@@ -51,7 +58,7 @@ function App() {
     }
   }, [location.pathname, navigate]);
 
-  // Restore admin on refresh
+  // Restore admin session on refresh
   useEffect(() => {
     if (location.pathname.startsWith("/admin")) {
       dispatch(getAdminProfile());
@@ -61,16 +68,16 @@ function App() {
   return (
     <>
       <Routes>
-        {/* Admin Login (Public) */}
+        {/* Public Admin Login */}
         <Route path="/admin/login" element={<AdminLogin />} />
 
         {/* Protected Admin Routes */}
         <Route element={<PrivateAdminRoute />}>
           <Route path="/admin" element={<AdminLayout />}>
+            <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="profile" element={<AdminProfile />} />
             <Route path="applications" element={<AdminApplication />} />
-            <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="upi-settings" element={<AdminUpi />} />
             <Route
               path="amount-setting"
@@ -90,7 +97,10 @@ function App() {
         <Route path="/approvedpage" element={<OwnPocketApproved />} />
         <Route path="/bank-detail" element={<OwnPocketBankDetails />} />
         <Route path="/processing-fee" element={<OwnPocketProcessingFee />} />
-        <Route path="/processing-payment" element={<PaymentCheckout />} />
+        <Route
+          path="/processing-payment"
+          element={<PaymentCheckout />}
+        />
       </Routes>
 
       <ToastContainer position="top-right" autoClose={3000} />

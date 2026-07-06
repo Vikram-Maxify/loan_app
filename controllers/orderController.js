@@ -65,3 +65,85 @@ exports.getAllOrders = async (req, res) => {
     });
   }
 };
+
+
+// new function to get order by orderId //
+
+exports.getOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate(
+      "user",
+      "fullName email mobile"
+    );
+    return res.status(200).json({
+      success: true,
+      data: order,
+    });
+  }
+  catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
+// new function to get order by orderId //
+
+exports.getOrderByOrderId = async (req, res) => {
+  try {
+    const order = await Order.findOne({ orderId: req.params.orderId }).populate(
+      "user",
+      "fullName email mobile"
+    );
+    return res.status(200).json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Update Order Status
+
+exports.updateOrderStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    ).populate("user", "fullName email mobile");
+
+    return res.status(200).json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}; 
+
+// Delete Order
+
+exports.deleteOrder = async (req, res) => {
+  try {
+    const order = await Order.findByIdAndDelete(req.params.id);
+    return res.status(200).json({
+      success: true,
+      message: "Order deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
